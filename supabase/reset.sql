@@ -1,9 +1,23 @@
 
--- Enable UUID extension
+-- RESET SCRIPT: Drop all tables and recreate schema
+-- WARNING: THIS WILL DELETE ALL DATA IN THESE TABLES
+
+-- 1. Drop existing tables (Order matters for dependencies)
+drop table if exists system_config cascade;
+drop table if exists team_members cascade;
+drop table if exists feedbacks cascade;
+drop table if exists plans cascade;
+drop table if exists templates cascade;
+drop table if exists projects cascade;
+drop table if exists profiles cascade;
+
+-- 2. Re-enable extensions
 create extension if not exists "uuid-ossp";
 
+-- 3. Recreate Tables
+
 -- PROFILES (Users)
-create table if not exists profiles (
+create table profiles (
   id uuid references auth.users on delete cascade primary key,
   email text unique not null,
   name text,
@@ -16,7 +30,7 @@ create table if not exists profiles (
 );
 
 -- PROJECTS
-create table if not exists projects (
+create table projects (
   id uuid default gen_random_uuid() primary key,
   name text not null,
   owner_id uuid references profiles(id) on delete cascade not null,
@@ -27,7 +41,7 @@ create table if not exists projects (
 );
 
 -- TEMPLATES
-create table if not exists templates (
+create table templates (
   id uuid default gen_random_uuid() primary key,
   custom_label text,
   custom_description text,
@@ -35,7 +49,7 @@ create table if not exists templates (
   author_name text,
   nodes jsonb default '[]',
   edges jsonb default '[]',
-  status text default 'PENDING', -- PENDING, APPROVED, REJECTED
+  status text default 'PENDING',
   is_public boolean default false,
   is_featured boolean default false,
   is_pro boolean default false,
@@ -47,8 +61,8 @@ create table if not exists templates (
 );
 
 -- PLANS
-create table if not exists plans (
-  id text primary key, -- FREE, PRO, PREMIUM
+create table plans (
+  id text primary key,
   label text not null,
   price_monthly numeric default 0,
   price_yearly numeric default 0,
@@ -60,11 +74,11 @@ create table if not exists plans (
 );
 
 -- FEEDBACKS
-create table if not exists feedbacks (
+create table feedbacks (
   id uuid default gen_random_uuid() primary key,
   title text not null,
   description text,
-  type text not null, -- FEATURE, BUG, IMPROVEMENT, OTHER
+  type text not null,
   status text default 'PENDING',
   author_name text,
   votes integer default 0,
@@ -74,17 +88,17 @@ create table if not exists feedbacks (
 );
 
 -- TEAM MEMBERS
-create table if not exists team_members (
+create table team_members (
   id uuid default gen_random_uuid() primary key,
   email text not null,
-  role text default 'VIEWER', -- ADMIN, EDITOR, VIEWER
-  status text default 'PENDING', -- ACTIVE, PENDING
+  role text default 'VIEWER',
+  status text default 'PENDING',
   avatar_url text,
   created_at timestamptz default now()
 );
 
 -- SYSTEM CONFIG
-create table if not exists system_config (
+create table system_config (
   id uuid default gen_random_uuid() primary key,
   maintenance_mode boolean default false,
   allow_signups boolean default true,
@@ -93,7 +107,7 @@ create table if not exists system_config (
   updated_at timestamptz default now()
 );
 
--- Enable Row Level Security (RLS)
+-- 4. Enable RLS
 alter table profiles enable row level security;
 alter table projects enable row level security;
 alter table templates enable row level security;
@@ -102,42 +116,34 @@ alter table feedbacks enable row level security;
 alter table team_members enable row level security;
 alter table system_config enable row level security;
 
--- POLICIES (Basic examples - refine as needed)
+-- 5. Create Policies
 
--- Profiles: Users can read their own profile.
-create policy "Users can view own profile" on profiles
-  for select using (auth.uid() = id);
+-- Profiles
+create policy "Users can view own profile" on profiles for select using (auth.uid() = id);
+create policy "Users can update own profile" on profiles for update using (auth.uid() = id);
 
--- Profiles: Users can update their own profile.
-create policy "Users can update own profile" on profiles
-  for update using (auth.uid() = id);
+-- Projects
+create policy "Users can perform CRUD on own projects" on projects for all using (auth.uid() = owner_id);
 
--- Projects: Users can CRUD their own projects.
-create policy "Users can perform CRUD on own projects" on projects
-  for all using (auth.uid() = owner_id);
+-- Templates
+create policy "Public templates are viewable by everyone" on templates for select using (is_public = true);
+create policy "Users can CRUD own templates" on templates for all using (auth.uid() = owner_id);
 
--- Templates: Public templates are visible to everyone.
-create policy "Public templates are viewable by everyone" on templates
-  for select using (is_public = true);
+-- Plans
+create policy "Plans are viewable by everyone" on plans for select using (true);
 
--- Templates: Users can CRUD their own templates.
-create policy "Users can CRUD own templates" on templates
-  for all using (auth.uid() = owner_id);
+-- Feedbacks
+create policy "Feedbacks are viewable by everyone" on feedbacks for select using (true);
 
--- Plans: Everyone can view plans.
-create policy "Plans are viewable by everyone" on plans
-  for select using (true);
+-- System Config
+create policy "System config viewable by everyone" on system_config for select using (true);
 
--- Feedbacks: Everyone can view feedbacks.
-create policy "Feedbacks are viewable by everyone" on feedbacks
-  for select using (true);
+-- 6. Seed Initial Data
+insert into system_config (maintenance_mode, allow_signups) values (false, true);
 
--- System Config: viewable by everyone (or restrict if needed).
-create policy "System config viewable by everyone" on system_config
-  for select using (true);
-
--- Insert default system config if not exists
-insert into system_config (maintenance_mode, allow_signups)
-select false, true
-where not exists (select 1 from system_config);
-
+-- Default Plans (Optional but recommended)
+insert into plans (id, label, price_monthly, price_yearly, project_limit, node_limit, is_popular) values
+('FREE', 'Plano Gratuito', 0, 0, 1, 20, false),
+('PRO', 'Plano Pro', 69.90, 712.98, 5, 100, false),
+('PREMIUM', 'Plano Premium', 97.90, 881.10, 9999, 9999, true)
+on conflict (id) do nothing;

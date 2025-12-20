@@ -19,6 +19,7 @@ import { INITIAL_NODES, INITIAL_EDGES, TRANSLATIONS, PROJECT_TEMPLATES, NODE_CON
 import { Node, Edge } from 'reactflow';
 import { safeGet, safeSet, migrateFeedbacks } from './utils/storage';
 import { api } from './services/api';
+import { supabase } from './services/supabaseClient';
 
 const DEFAULT_PROJECT: Project = { id: 'proj_default', name: 'Funil Exemplo 1', nodes: INITIAL_NODES as any, edges: INITIAL_EDGES, updatedAt: new Date() };
 
@@ -36,6 +37,7 @@ const App = () => {
   const [showNotes, setShowNotes] = useState(true);
   const [lang, setLang] = useState<Language>('pt');
   const [authReturnView, setAuthReturnView] = useState<AppView | null>(null);
+  const [authInitialView, setAuthInitialView] = useState<'LOGIN' | 'FORGOT_PASSWORD' | 'RESET_SENT' | 'UPDATE_PASSWORD'>('LOGIN');
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showAIAssistant, setShowAIAssistant] = useState(false);
@@ -88,6 +90,12 @@ const App = () => {
         setLang(safeGet('lang', 'pt'));
         setSystemConfig(await api.system.get());
 
+        // Check for password recovery hash on initial load
+        if (window.location.hash.includes('type=recovery') || window.location.hash.includes('type=magiclink')) {
+          setCurrentView('AUTH');
+          setAuthReturnView(null);
+        }
+
         const dbPlans = await api.plans.list();
         if (dbPlans && dbPlans.length > 0) setPlans(dbPlans);
 
@@ -107,6 +115,18 @@ const App = () => {
       finally { setIsInitialized(true); setIsLoadingProjects(false); }
     };
     initApp();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setCurrentView('AUTH');
+        setAuthInitialView('UPDATE_PASSWORD'); // Force the specific view
+        setAuthReturnView(null);
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => { if (isInitialized) { safeSet('theme', isDark ? 'dark' : 'light'); if (isDark) document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark'); } }, [isDark, isInitialized]);
@@ -191,7 +211,23 @@ const App = () => {
   }
 
   if (currentView === 'LANDING') return <LandingPage onLoginClick={() => { setAuthReturnView('APP'); setCurrentView('AUTH'); }} onGetStartedClick={() => { setAuthReturnView('APP'); setCurrentView('AUTH'); }} onRoadmapClick={() => setCurrentView('ROADMAP')} onNavigate={setCurrentView} lang={lang} setLang={setLang} t={t} plans={plans} systemConfig={systemConfig} />;
-  if (currentView === 'AUTH') return <AuthPage onAuthSuccess={handleLogin} onBack={() => setCurrentView('LANDING')} t={t} lang={lang} />;
+  if (currentView === 'AUTH') {
+    // Priority: State from listener > Hash check
+    const viewToUse = authInitialView !== 'LOGIN' ? authInitialView :
+      (window.location.hash.includes('type=recovery') || window.location.hash.includes('type=magiclink')) ? 'UPDATE_PASSWORD' : 'LOGIN';
+
+    return (
+      <AuthPage
+        onAuthSuccess={handleLogin}
+        onBack={() => setCurrentView('LANDING')}
+        t={t}
+        lang={lang}
+        initialView={viewToUse}
+        onUpdatePassword={api.auth.updatePassword}
+        onResetPassword={api.auth.resetPassword}
+      />
+    );
+  }
   if (currentView === 'ROADMAP') return <RoadmapPage onBack={() => setCurrentView(user ? 'APP' : 'LANDING')} feedbacks={feedbacks} onSubmitFeedback={(item) => api.feedbacks.create(item)} onVote={(id) => api.feedbacks.update(id, {})} onAddComment={(id, text) => api.feedbacks.update(id, {})} isAuthenticated={!!user} currentUser={user} onLoginRequest={() => { setAuthReturnView('ROADMAP'); setCurrentView('AUTH'); }} t={t} isDark={isDark} />;
 
   if (currentView === 'ADMIN' && user?.isSystemAdmin) {

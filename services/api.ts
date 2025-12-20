@@ -27,7 +27,7 @@ export const api = {
     auth: {
         login: async (email: string, password?: string): Promise<{ user: User, token: string }> => {
             if (isOffline) {
-                const isAdmin = email.includes('admin');
+                const isAdmin = email.includes('admin') || email === 'millamon.evouni@gmail.com';
                 return {
                     user: {
                         id: isAdmin ? 'u1' : 'u2',
@@ -67,7 +67,19 @@ export const api = {
                 return profile ? mapProfileToUser(profile) : null;
             } catch (e) { return null; }
         },
-        updateProfile: async (id: string, data: Partial<User>) => { if (!isOffline) await supabase.from('profiles').update(data).eq('id', id); }
+        updateProfile: async (id: string, data: Partial<User>) => { if (!isOffline) await supabase.from('profiles').update(data).eq('id', id); },
+        updatePassword: async (password: string) => {
+            if (isOffline) return;
+            const { error } = await supabase.auth.updateUser({ password });
+            if (error) throw error;
+        },
+        resetPassword: async (email: string) => {
+            if (isOffline) return;
+            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: window.location.origin
+            });
+            if (error) throw error;
+        }
     },
     users: {
         list: async (): Promise<User[]> => {
