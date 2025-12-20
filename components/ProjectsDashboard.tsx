@@ -14,14 +14,14 @@ interface ProjectsDashboardProps {
     t: (key: any) => string;
     userPlan?: UserPlan;
     customTemplates?: Template[];
-    customTemplates?: Template[];
     onSaveAsTemplate?: (project: Project) => void;
     onRenameProject?: (id: string, newName: string) => Promise<void>;
+    onRefreshTemplates?: () => Promise<void>;
 }
 
 const ProjectsDashboard = ({
     projects, onCreateProject, onOpenProject, onDeleteProject, isDark, t,
-    userPlan = 'FREE', customTemplates = [], onSaveAsTemplate, onRenameProject
+    userPlan = 'FREE', customTemplates = [], onSaveAsTemplate, onRenameProject, onRefreshTemplates
 }: ProjectsDashboardProps) => {
     const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
     const [creationStep, setCreationStep] = useState<'SELECT' | 'NAME'>('SELECT');
@@ -55,6 +55,7 @@ const ProjectsDashboard = ({
                     authorName: 'Usuário Premium'
                 });
                 alert(t('publishSuccess'));
+                onRefreshTemplates?.();
             } catch (e) {
                 alert("Erro ao enviar para o Marketplace.");
             }
@@ -266,177 +267,174 @@ const ProjectsDashboard = ({
                     </div>
                 )}
 
-            </div>
+                {/* RENAME MODAL */}
+                {renamingProject && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in-up">
+                        <div className={`w-full max-w-md p-6 rounded-2xl shadow-2xl ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
+                            <h3 className={`text-xl font-bold mb-4 ${textTitle}`}>Renomear Projeto</h3>
+                            <input
+                                type="text"
+                                value={renamingProject.name}
+                                onChange={e => setRenamingProject(prev => prev ? { ...prev, name: e.target.value } : null)}
+                                className={`w-full p-3 rounded-xl border mb-6 text-lg font-medium outline-none focus:border-indigo-500 ${isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}
+                                placeholder="Nome do projeto"
+                                autoFocus
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        onRenameProject?.(renamingProject.id, renamingProject.name);
+                                        setRenamingProject(null);
+                                    }
+                                }}
+                            />
+                            <div className="flex justify-end gap-2">
+                                <button onClick={() => setRenamingProject(null)} className="px-4 py-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg font-bold">Cancelar</button>
+                                <button onClick={() => { onRenameProject?.(renamingProject.id, renamingProject.name); setRenamingProject(null); }} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold shadow-lg shadow-indigo-500/20">Salvar</button>
+                            </div>
+                        </div>
+                    </div>
                 )}
 
-            {/* RENAME MODAL */}
-            {renamingProject && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in-up">
-                    <div className={`w-full max-w-md p-6 rounded-2xl shadow-2xl ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
-                        <h3 className={`text-xl font-bold mb-4 ${textTitle}`}>Renomear Projeto</h3>
-                        <input
-                            type="text"
-                            value={renamingProject.name}
-                            onChange={e => setRenamingProject(prev => prev ? { ...prev, name: e.target.value } : null)}
-                            className={`w-full p-3 rounded-xl border mb-6 text-lg font-medium outline-none focus:border-indigo-500 ${isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`}
-                            placeholder="Nome do projeto"
-                            autoFocus
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                    onRenameProject?.(renamingProject.id, renamingProject.name);
-                                    setRenamingProject(null);
-                                }
-                            }}
-                        />
-                        <div className="flex justify-end gap-2">
-                            <button onClick={() => setRenamingProject(null)} className="px-4 py-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg font-bold">Cancelar</button>
-                            <button onClick={() => { onRenameProject?.(renamingProject.id, renamingProject.name); setRenamingProject(null); }} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold shadow-lg shadow-indigo-500/20">Salvar</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* MARKETPLACE SUBMISSIONS TAB */}
-            {dashboardTab === 'MARKETPLACE' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in-up">
-                    {mySubmissions.length === 0 && (
-                        <div className="col-span-full text-center py-20 text-slate-400">
-                            <ShoppingBag size={48} className="mx-auto mb-4 opacity-50" />
-                            <p>Você ainda não enviou nenhuma estratégia para o Marketplace.</p>
-                        </div>
-                    )}
-                    {mySubmissions.map(sub => (
-                        <div key={sub.id} className={`relative flex flex-col p-6 rounded-2xl border transition-all duration-300 group h-[220px] ${bgCard} shadow-sm hover:shadow-xl`}>
-                            <div className="flex items-start justify-between mb-4">
-                                <div className={`p-3 rounded-xl ${isDark ? 'bg-slate-700 text-amber-400' : 'bg-amber-50 text-amber-600'}`}>
-                                    <ShoppingBag size={24} />
+                {/* MARKETPLACE SUBMISSIONS TAB */}
+                {dashboardTab === 'MARKETPLACE' && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in-up">
+                        {mySubmissions.length === 0 && (
+                            <div className="col-span-full text-center py-20 text-slate-400">
+                                <ShoppingBag size={48} className="mx-auto mb-4 opacity-50" />
+                                <p>Você ainda não enviou nenhuma estratégia para o Marketplace.</p>
+                            </div>
+                        )}
+                        {mySubmissions.map(sub => (
+                            <div key={sub.id} className={`relative flex flex-col p-6 rounded-2xl border transition-all duration-300 group h-[220px] ${bgCard} shadow-sm hover:shadow-xl`}>
+                                <div className="flex items-start justify-between mb-4">
+                                    <div className={`p-3 rounded-xl ${isDark ? 'bg-slate-700 text-amber-400' : 'bg-amber-50 text-amber-600'}`}>
+                                        <ShoppingBag size={24} />
+                                    </div>
+                                    <div className={`shrink-0 flex items-center gap-1 text-[10px] font-black uppercase px-2 py-1 rounded-full border ${sub.status === 'APPROVED' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
+                                        sub.status === 'REJECTED' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
+                                            'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                                        }`}>
+                                        {sub.status || 'PENDENTE'}
+                                    </div>
                                 </div>
-                                <div className={`shrink-0 flex items-center gap-1 text-[10px] font-black uppercase px-2 py-1 rounded-full border ${sub.status === 'APPROVED' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
-                                    sub.status === 'REJECTED' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
-                                        'bg-amber-500/10 text-amber-500 border-amber-500/20'
-                                    }`}>
-                                    {sub.status || 'PENDENTE'}
+
+                                {sub.status === 'PENDENTE' && (
+                                    <div className="absolute top-4 right-20 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onClick={(e) => { e.stopPropagation(); setEditingSubmission({ id: sub.id, name: sub.customLabel || '', desc: sub.customDescription || '' }); }} className="p-2 text-slate-400 hover:text-indigo-500 rounded-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow-sm" title="Editar"><Edit size={16} /></button>
+                                        <button onClick={(e) => { e.stopPropagation(); if (window.confirm("Cancelar envio e excluir?")) { api.templates.delete(sub.id); alert(" excluído."); } }} className="p-2 text-slate-400 hover:text-red-500 rounded-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow-sm" title="Excluir"><Trash2 size={16} /></button>
+                                    </div>
+                                )}
+                                <h3 className={`text-xl font-bold ${textTitle} truncate mb-1`}>{sub.customLabel}</h3>
+                                <p className={`text-xs ${textSub} line-clamp-2 mb-auto`}>{sub.customDescription}</p>
+
+                                <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center text-xs text-slate-500">
+                                    <span>{sub.downloads || 0} Downloads</span>
+                                    <span>{sub.nodes.length} Elementos</span>
                                 </div>
                             </div>
-
-                            {sub.status === 'PENDENTE' && (
-                                <div className="absolute top-4 right-20 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={(e) => { e.stopPropagation(); setEditingSubmission({ id: sub.id, name: sub.customLabel || '', desc: sub.customDescription || '' }); }} className="p-2 text-slate-400 hover:text-indigo-500 rounded-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow-sm" title="Editar"><Edit size={16} /></button>
-                                    <button onClick={(e) => { e.stopPropagation(); if (window.confirm("Cancelar envio e excluir?")) { api.templates.delete(sub.id); alert(" excluído."); } }} className="p-2 text-slate-400 hover:text-red-500 rounded-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow-sm" title="Excluir"><Trash2 size={16} /></button>
-                                </div>
-                            )}
-                            <h3 className={`text-xl font-bold ${textTitle} truncate mb-1`}>{sub.customLabel}</h3>
-                            <p className={`text-xs ${textSub} line-clamp-2 mb-auto`}>{sub.customDescription}</p>
-
-                            <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center text-xs text-slate-500">
-                                <span>{sub.downloads || 0} Downloads</span>
-                                <span>{sub.nodes.length} Elementos</span>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {projects.length === 0 && (
-                <div className="mt-16 flex flex-col items-center justify-center text-center">
-                    <div className={`w-20 h-20 rounded-full mb-4 flex items-center justify-center ${isDark ? 'bg-slate-800 text-slate-600' : 'bg-slate-100 text-slate-400'}`}>
-                        <Folder size={40} />
+                        ))}
                     </div>
-                    <h3 className={`text-lg font-bold ${textTitle} mb-1`}>{t('noMapsCreated')}</h3>
-                    <p className={`text-sm ${textSub} mb-6`}>{t('startOrganizingNow')}</p>
-                    <button onClick={handleCreateClick} className="text-indigo-600 font-bold hover:underline">
-                        {t('createFirstProject')}
-                    </button>
-                </div>
-            )}
+                )}
 
-            {editingSubmission && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in-up">
-                    <div className={`w-full max-w-md p-6 rounded-2xl shadow-2xl ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
-                        <h3 className={`text-xl font-bold mb-4 ${textTitle}`}>Editar Publicação</h3>
-                        <input type="text" value={editingSubmission.name} onChange={e => setEditingSubmission(prev => prev ? { ...prev, name: e.target.value } : null)} className={`w-full p-3 rounded-xl border mb-4 ${isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`} placeholder="Nome..." />
-                        <textarea value={editingSubmission.desc} onChange={e => setEditingSubmission(prev => prev ? { ...prev, desc: e.target.value } : null)} className={`w-full p-3 rounded-xl border mb-4 h-32 resize-none ${isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`} placeholder="Descrição..." />
-                        <div className="flex justify-end gap-2">
-                            <button onClick={() => setEditingSubmission(null)} className="px-4 py-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg font-bold">Cancelar</button>
-                            <button onClick={async () => { await api.templates.update(editingSubmission.id, { custom_label: editingSubmission.name, custom_description: editingSubmission.desc }); setEditingSubmission(null); alert("Atualizado!"); }} className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold">Salvar</button>
+                {projects.length === 0 && (
+                    <div className="mt-16 flex flex-col items-center justify-center text-center">
+                        <div className={`w-20 h-20 rounded-full mb-4 flex items-center justify-center ${isDark ? 'bg-slate-800 text-slate-600' : 'bg-slate-100 text-slate-400'}`}>
+                            <Folder size={40} />
                         </div>
-                    </div>
-                </div>
-            )}
-        </div>
-
-            {
-        isTemplateModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in-up">
-                <div className={`w-full max-w-4xl rounded-2xl shadow-2xl border overflow-hidden flex flex-col max-h-[85vh] ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
-                    <div className={`px-8 py-6 border-b flex justify-between items-center shrink-0 ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
-                        <div>
-                            <h2 className={`text-2xl font-bold ${textTitle}`}>
-                                {creationStep === 'SELECT' ? t('createMapTitle') : t('projectName')}
-                            </h2>
-                            <p className={textSub}>
-                                {creationStep === 'SELECT' ? t('startOrganizingNow') : "Dê um nome para identificar seu mapa facilmente."}
-                            </p>
-                        </div>
-                        <button onClick={() => setIsTemplateModalOpen(false)} className={`p-2 rounded-full ${isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}>
-                            <X size={24} />
+                        <h3 className={`text-lg font-bold ${textTitle} mb-1`}>{t('noMapsCreated')}</h3>
+                        <p className={`text-sm ${textSub} mb-6`}>{t('startOrganizingNow')}</p>
+                        <button onClick={handleCreateClick} className="text-indigo-600 font-bold hover:underline">
+                            {t('createFirstProject')}
                         </button>
                     </div>
+                )}
 
-                    {creationStep === 'SELECT' && (
-                        <div className="flex-1 overflow-hidden flex flex-col">
-                            <div className={`flex px-8 border-b ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
-                                <button onClick={() => setTemplateTab('SYSTEM')} className={`py-4 mr-6 text-sm font-bold border-b-2 transition-colors ${templateTab === 'SYSTEM' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>{t('systemTemplates')}</button>
-                                <button onClick={() => setTemplateTab('CUSTOM')} className={`py-4 mr-6 text-sm font-bold border-b-2 transition-colors ${templateTab === 'CUSTOM' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>{t('myTemplates')}</button>
-                            </div>
-                            <div className="p-8 overflow-y-auto">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {templateTab === 'SYSTEM' ? (
-                                        PROJECT_TEMPLATES.map(template => {
-                                            const isLocked = userPlan === 'FREE' && template.isPro;
-                                            return (
-                                                <button key={template.id} onClick={() => !isLocked && handleTemplateSelect(template.id)} className={`group relative flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all h-[200px] text-center ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} ${!isLocked ? `hover:border-indigo-500 ${isDark ? 'hover:bg-slate-750' : 'hover:bg-white hover:shadow-lg'}` : 'opacity-70 cursor-not-allowed'}`}>
-                                                    {isLocked && <div className="absolute top-3 right-3 bg-black/50 p-1.5 rounded-full backdrop-blur-sm border border-white/10"><Lock size={14} className="text-white" /></div>}
-                                                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-transform ${!isLocked && 'group-hover:scale-110'} ${isDark ? 'bg-slate-900 shadow-inner' : 'bg-white shadow-sm border border-slate-100'}`}>{template.icon}</div>
-                                                    <h3 className={`text-lg font-bold mb-2 ${textTitle}`}>{getTemplateName(template)}</h3>
-                                                    <p className={`text-xs line-clamp-2 px-2 ${textSub}`}>{getTemplateDesc(template)}</p>
-                                                </button>
-                                            );
-                                        })
-                                    ) : (
-                                        customTemplates.map(template => (
-                                            <button key={template.id} onClick={() => handleTemplateSelect(template.id)} className={`group relative flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all h-[200px] text-center ${isDark ? 'bg-slate-800 border-slate-700 hover:border-indigo-500 hover:bg-slate-750' : 'bg-slate-50 border-slate-200 hover:border-indigo-500 hover:bg-white hover:shadow-lg'}`}>
-                                                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 ${isDark ? 'bg-slate-900 shadow-inner' : 'bg-white shadow-sm border border-slate-100'}`}><Folder size={32} className="text-indigo-500" /></div>
-                                                <h3 className={`text-lg font-bold mb-2 ${textTitle}`}>{getTemplateName(template)}</h3>
-                                                <p className={`text-xs line-clamp-2 px-2 ${textSub}`}>{getTemplateDesc(template)}</p>
-                                            </button>
-                                        ))
-                                    )}
-                                </div>
+                {editingSubmission && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in-up">
+                        <div className={`w-full max-w-md p-6 rounded-2xl shadow-2xl ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
+                            <h3 className={`text-xl font-bold mb-4 ${textTitle}`}>Editar Publicação</h3>
+                            <input type="text" value={editingSubmission.name} onChange={e => setEditingSubmission(prev => prev ? { ...prev, name: e.target.value } : null)} className={`w-full p-3 rounded-xl border mb-4 ${isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`} placeholder="Nome..." />
+                            <textarea value={editingSubmission.desc} onChange={e => setEditingSubmission(prev => prev ? { ...prev, desc: e.target.value } : null)} className={`w-full p-3 rounded-xl border mb-4 h-32 resize-none ${isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`} placeholder="Descrição..." />
+                            <div className="flex justify-end gap-2">
+                                <button onClick={() => setEditingSubmission(null)} className="px-4 py-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg font-bold">Cancelar</button>
+                                <button onClick={async () => { await api.templates.update(editingSubmission.id, { custom_label: editingSubmission.name, custom_description: editingSubmission.desc }); setEditingSubmission(null); alert("Atualizado!"); }} className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold">Salvar</button>
                             </div>
                         </div>
-                    )}
-
-                    {creationStep === 'NAME' && (
-                        <div className="p-10 flex flex-col items-center justify-center flex-1">
-                            <div className={`w-24 h-24 rounded-3xl flex items-center justify-center mb-8 shadow-xl ${isDark ? 'bg-slate-800' : 'bg-slate-100'}`}><Layout size={48} /></div>
-                            <div className="w-full max-w-md">
-                                <label className={`block text-sm font-bold mb-2 ml-1 ${textTitle}`}>Nome do Projeto</label>
-                                <div className="relative mb-8">
-                                    <Type className={`absolute left-4 top-3.5 ${textSub}`} size={20} />
-                                    <input type="text" value={newProjectName} onChange={(e) => setNewProjectName(e.target.value)} placeholder="Ex: Funil de Vendas VSL..." className={`w-full pl-12 pr-4 py-3.5 rounded-xl border-2 outline-none focus:ring-0 transition-all text-lg font-medium ${isDark ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 focus:border-indigo-500'}`} autoFocus />
-                                </div>
-                                <div className="flex gap-3">
-                                    <button onClick={handleBackToSelect} className={`flex-1 py-3.5 rounded-xl font-bold border-2 transition-all ${isDark ? 'border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800' : 'border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}>Voltar</button>
-                                    <button onClick={handleFinalCreate} disabled={!newProjectName.trim()} className="flex-[2] py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"><Sparkles size={20} /> Criar Projeto</button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
-        )
-    }
+
+            {
+                isTemplateModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in-up">
+                        <div className={`w-full max-w-4xl rounded-2xl shadow-2xl border overflow-hidden flex flex-col max-h-[85vh] ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
+                            <div className={`px-8 py-6 border-b flex justify-between items-center shrink-0 ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
+                                <div>
+                                    <h2 className={`text-2xl font-bold ${textTitle}`}>
+                                        {creationStep === 'SELECT' ? t('createMapTitle') : t('projectName')}
+                                    </h2>
+                                    <p className={textSub}>
+                                        {creationStep === 'SELECT' ? t('startOrganizingNow') : "Dê um nome para identificar seu mapa facilmente."}
+                                    </p>
+                                </div>
+                                <button onClick={() => setIsTemplateModalOpen(false)} className={`p-2 rounded-full ${isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}>
+                                    <X size={24} />
+                                </button>
+                            </div>
+
+                            {creationStep === 'SELECT' && (
+                                <div className="flex-1 overflow-hidden flex flex-col">
+                                    <div className={`flex px-8 border-b ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
+                                        <button onClick={() => setTemplateTab('SYSTEM')} className={`py-4 mr-6 text-sm font-bold border-b-2 transition-colors ${templateTab === 'SYSTEM' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>{t('systemTemplates')}</button>
+                                        <button onClick={() => setTemplateTab('CUSTOM')} className={`py-4 mr-6 text-sm font-bold border-b-2 transition-colors ${templateTab === 'CUSTOM' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>{t('myTemplates')}</button>
+                                    </div>
+                                    <div className="p-8 overflow-y-auto">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                            {templateTab === 'SYSTEM' ? (
+                                                PROJECT_TEMPLATES.map(template => {
+                                                    const isLocked = userPlan === 'FREE' && template.isPro;
+                                                    return (
+                                                        <button key={template.id} onClick={() => !isLocked && handleTemplateSelect(template.id)} className={`group relative flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all h-[200px] text-center ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} ${!isLocked ? `hover:border-indigo-500 ${isDark ? 'hover:bg-slate-750' : 'hover:bg-white hover:shadow-lg'}` : 'opacity-70 cursor-not-allowed'}`}>
+                                                            {isLocked && <div className="absolute top-3 right-3 bg-black/50 p-1.5 rounded-full backdrop-blur-sm border border-white/10"><Lock size={14} className="text-white" /></div>}
+                                                            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-transform ${!isLocked && 'group-hover:scale-110'} ${isDark ? 'bg-slate-900 shadow-inner' : 'bg-white shadow-sm border border-slate-100'}`}>{template.icon}</div>
+                                                            <h3 className={`text-lg font-bold mb-2 ${textTitle}`}>{getTemplateName(template)}</h3>
+                                                            <p className={`text-xs line-clamp-2 px-2 ${textSub}`}>{getTemplateDesc(template)}</p>
+                                                        </button>
+                                                    );
+                                                })
+                                            ) : (
+                                                customTemplates.map(template => (
+                                                    <button key={template.id} onClick={() => handleTemplateSelect(template.id)} className={`group relative flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all h-[200px] text-center ${isDark ? 'bg-slate-800 border-slate-700 hover:border-indigo-500 hover:bg-slate-750' : 'bg-slate-50 border-slate-200 hover:border-indigo-500 hover:bg-white hover:shadow-lg'}`}>
+                                                        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 ${isDark ? 'bg-slate-900 shadow-inner' : 'bg-white shadow-sm border border-slate-100'}`}><Folder size={32} className="text-indigo-500" /></div>
+                                                        <h3 className={`text-lg font-bold mb-2 ${textTitle}`}>{getTemplateName(template)}</h3>
+                                                        <p className={`text-xs line-clamp-2 px-2 ${textSub}`}>{getTemplateDesc(template)}</p>
+                                                    </button>
+                                                ))
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {creationStep === 'NAME' && (
+                                <div className="p-10 flex flex-col items-center justify-center flex-1">
+                                    <div className={`w-24 h-24 rounded-3xl flex items-center justify-center mb-8 shadow-xl ${isDark ? 'bg-slate-800' : 'bg-slate-100'}`}><Layout size={48} /></div>
+                                    <div className="w-full max-w-md">
+                                        <label className={`block text-sm font-bold mb-2 ml-1 ${textTitle}`}>Nome do Projeto</label>
+                                        <div className="relative mb-8">
+                                            <Type className={`absolute left-4 top-3.5 ${textSub}`} size={20} />
+                                            <input type="text" value={newProjectName} onChange={(e) => setNewProjectName(e.target.value)} placeholder="Ex: Funil de Vendas VSL..." className={`w-full pl-12 pr-4 py-3.5 rounded-xl border-2 outline-none focus:ring-0 transition-all text-lg font-medium ${isDark ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500 focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 focus:border-indigo-500'}`} autoFocus />
+                                        </div>
+                                        <div className="flex gap-3">
+                                            <button onClick={handleBackToSelect} className={`flex-1 py-3.5 rounded-xl font-bold border-2 transition-all ${isDark ? 'border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800' : 'border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}>Voltar</button>
+                                            <button onClick={handleFinalCreate} disabled={!newProjectName.trim()} className="flex-[2] py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"><Sparkles size={20} /> Criar Projeto</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )
+            }
         </div >
     );
 };
