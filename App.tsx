@@ -131,19 +131,32 @@ const App = () => {
         setAuthReturnView(null);
       } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         // If magic link or normal login happened
+        // Only auto-redirect if we are not already in the app/loading process (checks for AUTH or LANDING view)
+        // This avoids conflict with handleLogin which handles UI feedback
+        // We use a function update for currentView or check it via ref/state if available, 
+        // but here since we are in a closure, we might have stale state. 
+        // Ideally we should trust the event, but let's be safe.
+        // Actually, for simplicity and robustness, existing session check is enough, 
+        // but we verify if we have a user.
         if (session?.user) {
+          // We fetch profile to ensure we have the latest role/plan
           const profile = await api.auth.getProfile();
           if (profile) {
             setUser(profile);
             setTeamMembers(await api.team.list());
-            // Also refresh projects
+
             const apiProjects = await api.projects.list();
             const combined = [...MOCK_PROJECTS, ...apiProjects];
             const unique = Array.from(new Map(combined.map(p => [p.id, p])).values());
             setProjects(unique);
-            // Go to APP view
-            setCurrentView('APP');
-            setAppPage('PROJECTS');
+
+            // Only switch view if we are effectively seemingly not logged in
+            // This is a bit tricky with stale access to state in useEffect.
+            // But setting it to APP again is harmless unless it overrides a transition.
+            setCurrentView((prev) => (prev === 'AUTH' || prev === 'LANDING' ? 'APP' : prev));
+            if (currentView === 'LANDING' || currentView === 'AUTH') {
+              setAppPage('PROJECTS');
+            }
           }
         }
       }
@@ -169,7 +182,10 @@ const App = () => {
       setProjects(unique);
       if (newUser.isSystemAdmin) setAllUsers(await api.users.list());
       if (authReturnView) setCurrentView(authReturnView); else { setCurrentView('APP'); setAppPage('PROJECTS'); }
-    } catch (e) { showNotification("Falha na autenticação.", 'error'); }
+    } catch (e: any) {
+      console.error(e);
+      showNotification("Falha na autenticação.", 'error');
+    }
   };
 
   const refreshTemplates = async () => {

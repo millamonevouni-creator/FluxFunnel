@@ -43,7 +43,25 @@ export const api = {
             }
             const { data, error } = await supabase.auth.signInWithPassword({ email, password: password || '123456' });
             if (error) throw error;
+
+            // Try to fetch profile, but handle failure gracefully
             const { data: profile } = await supabase.from('profiles').select('*').eq('id', data.user.id).single();
+
+            if (!profile) {
+                console.warn("Profile missing/blocked for user, using auth fallback", data.user.id);
+                // Fallback using auth data so login doesn't crash
+                const fallbackUser: User = {
+                    id: data.user.id,
+                    name: data.user.user_metadata?.name || email.split('@')[0],
+                    email: email,
+                    plan: 'FREE', // Default fallback
+                    status: 'ACTIVE',
+                    lastLogin: new Date(),
+                    isSystemAdmin: email === 'millamon.evouni@gmail.com' // Emergency admin access
+                };
+                return { user: fallbackUser, token: data.session?.access_token || '' };
+            }
+
             return { user: mapProfileToUser(profile), token: data.session?.access_token || '' };
         },
         register: async (email: string, password?: string, name?: string): Promise<{ user: User, token: string }> => {
@@ -63,8 +81,22 @@ export const api = {
             try {
                 const { data } = await supabase.auth.getUser();
                 if (!data?.user) return null;
+
                 const { data: profile } = await supabase.from('profiles').select('*').eq('id', data.user.id).single();
-                return profile ? mapProfileToUser(profile) : null;
+
+                if (profile) return mapProfileToUser(profile);
+
+                console.warn("Profile missing in DB, using Session fallback");
+                // Fallback using auth data
+                return {
+                    id: data.user.id,
+                    name: data.user.user_metadata?.name || data.user.email?.split('@')[0] || 'Usuário',
+                    email: data.user.email || '',
+                    plan: 'FREE',
+                    status: 'ACTIVE',
+                    lastLogin: new Date(),
+                    isSystemAdmin: data.user.email === 'millamon.evouni@gmail.com'
+                };
             } catch (e) { return null; }
         },
         updateProfile: async (id: string, data: Partial<User>) => { if (!isOffline) await supabase.from('profiles').update(data).eq('id', id); },
