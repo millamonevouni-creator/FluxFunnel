@@ -5,7 +5,7 @@ import { TeamMember, UserPlan } from '../types';
 
 interface TeamDashboardProps {
     members: TeamMember[];
-    onInviteMember: (email: string, role: 'ADMIN' | 'EDITOR' | 'VIEWER') => void;
+    onInviteMember: (email: string, role: 'ADMIN' | 'EDITOR' | 'VIEWER') => Promise<void>;
     onUpdateRole: (id: string, newRole: 'ADMIN' | 'EDITOR' | 'VIEWER') => void;
     onRemoveMember: (id: string) => void;
     onUpgrade: () => void;
@@ -29,6 +29,7 @@ const TeamDashboard = ({ members = [], onInviteMember, onUpdateRole, onRemoveMem
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [inviteEmail, setInviteEmail] = useState('');
     const [inviteRole, setInviteRole] = useState<'ADMIN' | 'EDITOR' | 'VIEWER'>('VIEWER');
+    const [isInviteLoading, setIsInviteLoading] = useState(false);
 
     // --- PREMIUM LOCK CHECK ---
     if (safePlan !== 'PREMIUM') {
@@ -89,12 +90,21 @@ const TeamDashboard = ({ members = [], onInviteMember, onUpdateRole, onRemoveMem
     const usagePercentage = safeMaxMembers > 0 ? (safeMembers.length / safeMaxMembers) * 100 : 0;
     const isLimitReached = safeMembers.length >= safeMaxMembers && safeMaxMembers !== 9999;
 
-    const handleInviteSubmit = (e: React.FormEvent) => {
+    const handleInviteSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        onInviteMember(inviteEmail, inviteRole);
-        setInviteEmail('');
-        setShowInviteModal(false);
+        setIsInviteLoading(true);
+        try {
+            await onInviteMember(inviteEmail, inviteRole);
+            setInviteEmail('');
+            setShowInviteModal(false);
+        } catch (error) {
+            // Error is handled by parent notification, but we keep modal open
+            console.error(error);
+        } finally {
+            setIsInviteLoading(false);
+        }
     };
+
 
     return (
         <div className={`flex-1 overflow-y-auto h-full p-8 transition-colors duration-300 ${isDark ? 'bg-slate-950' : 'bg-slate-50'}`}>
@@ -297,9 +307,19 @@ const TeamDashboard = ({ members = [], onInviteMember, onUpdateRole, onRemoveMem
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-[2] py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+                                    disabled={isInviteLoading}
+                                    className={`flex-[2] py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold shadow-lg shadow-indigo-500/20 transition-all active:scale-95 flex items-center justify-center gap-2`}
                                 >
-                                    <Mail size={18} /> Enviar Convite
+                                    {isInviteLoading ? (
+                                        <>
+                                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            Enviando...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Mail size={18} /> Enviar Convite
+                                        </>
+                                    )}
                                 </button>
                             </div>
                         </form>

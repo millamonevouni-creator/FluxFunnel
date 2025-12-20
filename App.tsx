@@ -184,7 +184,7 @@ const App = () => {
       if (authReturnView) setCurrentView(authReturnView); else { setCurrentView('APP'); setAppPage('PROJECTS'); }
     } catch (e: any) {
       console.error(e);
-      showNotification("Falha na autenticação.", 'error');
+      showNotification(e.message || "Falha na autenticação.", 'error');
     }
   };
 
@@ -245,6 +245,7 @@ const App = () => {
     } catch (e: any) {
       console.error(e);
       showNotification(e.message || "Erro ao convidar membro.", 'error');
+      throw e;
     }
   };
 
