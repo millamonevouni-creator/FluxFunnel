@@ -72,7 +72,7 @@ const MarketplaceDashboard = ({ userPlan, onDownload, isDark, t, userId }: Marke
 
     const startEdit = (tpl: Template) => {
         setEditingTemplate(tpl);
-        setEditForm({ label: tpl.customLabel, description: tpl.customDescription || '' });
+        setEditForm({ label: tpl.customLabel || '', description: tpl.customDescription || '' });
     };
 
     const saveEdit = async () => {

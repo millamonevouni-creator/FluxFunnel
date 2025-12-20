@@ -309,21 +309,34 @@ const ProjectsDashboard = ({
                                     <div className={`p-3 rounded-xl ${isDark ? 'bg-slate-700 text-amber-400' : 'bg-amber-50 text-amber-600'}`}>
                                         <ShoppingBag size={24} />
                                     </div>
-                                    <div className={`shrink-0 flex items-center gap-1 text-[10px] font-black uppercase px-2 py-1 rounded-full border ${sub.status === 'APPROVED' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
-                                        sub.status === 'REJECTED' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
-                                            'bg-amber-500/10 text-amber-500 border-amber-500/20'
-                                        }`}>
-                                        {sub.status === 'PENDING' ? 'PENDENTE' : (sub.status || 'PENDENTE')}
+                                    <div className="flex flex-col items-end gap-2">
+                                        <div className={`shrink-0 flex items-center gap-1 text-[10px] font-black uppercase px-2 py-1 rounded-full border ${sub.status === 'APPROVED' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
+                                            sub.status === 'REJECTED' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
+                                                'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                                            }`}>
+                                            {sub.status === 'PENDING' ? 'PENDENTE' : (sub.status || 'PENDENTE')}
+                                        </div>
+
+                                        {(!sub.status || sub.status === 'PENDING') && (
+                                            <div className="flex gap-1">
+                                                <button onClick={(e) => { e.stopPropagation(); setEditingSubmission({ id: sub.id, name: sub.customLabel || '', desc: sub.customDescription || '' }); }} className="p-1.5 text-slate-400 hover:text-indigo-500 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Editar"><Edit size={16} /></button>
+                                                <button onClick={async (e) => {
+                                                    e.stopPropagation();
+                                                    if (window.confirm("Cancelar envio e excluir?")) {
+                                                        try {
+                                                            await api.templates.delete(sub.id);
+                                                            onRefreshTemplates?.();
+                                                        } catch (err) {
+                                                            console.error(err);
+                                                            alert("Erro ao excluir.");
+                                                        }
+                                                    }
+                                                }} className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Excluir"><Trash2 size={16} /></button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
-
-                                {(!sub.status || sub.status === 'PENDING') && (
-                                    <div className="absolute top-4 right-20 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button onClick={(e) => { e.stopPropagation(); setEditingSubmission({ id: sub.id, name: sub.customLabel || '', desc: sub.customDescription || '' }); }} className="p-2 text-slate-400 hover:text-indigo-500 rounded-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow-sm" title="Editar"><Edit size={16} /></button>
-                                        <button onClick={(e) => { e.stopPropagation(); if (window.confirm("Cancelar envio e excluir?")) { api.templates.delete(sub.id); alert(" excluído."); } }} className="p-2 text-slate-400 hover:text-red-500 rounded-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow-sm" title="Excluir"><Trash2 size={16} /></button>
-                                    </div>
-                                )}
-                                <h3 className={`text-xl font-bold ${textTitle} truncate mb-1`}>{sub.customLabel}</h3>
+                                <h3 className={`text-xl font-bold ${textTitle} truncate mb-4`}>{sub.customLabel}</h3>
                                 <p className={`text-xs ${textSub} line-clamp-2 mb-auto`}>{sub.customDescription}</p>
 
                                 <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center text-xs text-slate-500">
@@ -356,7 +369,16 @@ const ProjectsDashboard = ({
                             <textarea value={editingSubmission.desc} onChange={e => setEditingSubmission(prev => prev ? { ...prev, desc: e.target.value } : null)} className={`w-full p-3 rounded-xl border mb-4 h-32 resize-none ${isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'}`} placeholder="Descrição..." />
                             <div className="flex justify-end gap-2">
                                 <button onClick={() => setEditingSubmission(null)} className="px-4 py-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg font-bold">Cancelar</button>
-                                <button onClick={async () => { await api.templates.update(editingSubmission.id, { custom_label: editingSubmission.name, custom_description: editingSubmission.desc }); setEditingSubmission(null); alert("Atualizado!"); }} className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold">Salvar</button>
+                                <button onClick={async () => {
+                                    try {
+                                        await api.templates.update(editingSubmission.id, { custom_label: editingSubmission.name, custom_description: editingSubmission.desc });
+                                        setEditingSubmission(null);
+                                        alert("Atualizado com sucesso!");
+                                        onRefreshTemplates?.();
+                                    } catch (e) {
+                                        alert("Erro ao atualizar.");
+                                    }
+                                }} className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold">Salvar</button>
                             </div>
                         </div>
                     </div>
