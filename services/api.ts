@@ -29,14 +29,14 @@ export const api = {
             if (isOffline) {
                 const isAdmin = email.includes('admin');
                 return {
-                    user: { 
-                        id: isAdmin ? 'u1' : 'u2', 
-                        name: email.split('@')[0], 
-                        email, 
-                        plan: isAdmin ? 'PREMIUM' : 'PRO', 
-                        status: 'ACTIVE', 
-                        lastLogin: new Date(), 
-                        isSystemAdmin: isAdmin 
+                    user: {
+                        id: isAdmin ? 'u1' : 'u2',
+                        name: email.split('@')[0],
+                        email,
+                        plan: isAdmin ? 'PREMIUM' : 'PRO',
+                        status: 'ACTIVE',
+                        lastLogin: new Date(),
+                        isSystemAdmin: isAdmin
                     },
                     token: 'mock_token'
                 };
@@ -86,7 +86,14 @@ export const api = {
         },
         create: async (p: any) => {
             if (isOffline) return { ...p, id: 'proj_' + Date.now() };
-            const { data, error } = await supabase.from('projects').insert(p).select().single();
+            const dbPayload = {
+                name: p.name,
+                nodes: p.nodes,
+                edges: p.edges,
+                owner_id: p.ownerId,
+                updated_at: p.updatedAt
+            };
+            const { data, error } = await supabase.from('projects').insert(dbPayload).select().single();
             if (error) throw error;
             return mapDBProjectToApp(data);
         },
@@ -177,8 +184,8 @@ export const api = {
     system: {
         get: async () => { if (isOffline) return { maintenanceMode: false, allowSignups: true, announcements: [] }; const { data } = await supabase.from('system_config').select('*').single(); return data; },
         update: async (c: any) => { if (!isOffline) await supabase.from('system_config').upsert(c); },
-        healthCheck: async () => { 
-            return { profiles: true, projects: true, templates: true, system_config: true }; 
+        healthCheck: async () => {
+            return { profiles: true, projects: true, templates: true, system_config: true };
         }
     }
 };
