@@ -313,11 +313,11 @@ const ProjectsDashboard = ({
                                         sub.status === 'REJECTED' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
                                             'bg-amber-500/10 text-amber-500 border-amber-500/20'
                                         }`}>
-                                        {sub.status || 'PENDENTE'}
+                                        {sub.status === 'PENDING' ? 'PENDENTE' : (sub.status || 'PENDENTE')}
                                     </div>
                                 </div>
 
-                                {sub.status === 'PENDENTE' && (
+                                {(!sub.status || sub.status === 'PENDING') && (
                                     <div className="absolute top-4 right-20 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button onClick={(e) => { e.stopPropagation(); setEditingSubmission({ id: sub.id, name: sub.customLabel || '', desc: sub.customDescription || '' }); }} className="p-2 text-slate-400 hover:text-indigo-500 rounded-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow-sm" title="Editar"><Edit size={16} /></button>
                                         <button onClick={(e) => { e.stopPropagation(); if (window.confirm("Cancelar envio e excluir?")) { api.templates.delete(sub.id); alert(" excluído."); } }} className="p-2 text-slate-400 hover:text-red-500 rounded-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow-sm" title="Excluir"><Trash2 size={16} /></button>
