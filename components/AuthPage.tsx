@@ -445,9 +445,6 @@ const AuthPage = ({ onAuthSuccess, onBack, t, lang, customSubtitle, initialView 
                 )}
             </div>
 
-            <div className="mt-8 text-slate-400 text-xs">
-                <p>Acesso Admin Master: <strong>admin@fluxfunnel.io</strong></p>
-            </div>
         </div>
     );
 };

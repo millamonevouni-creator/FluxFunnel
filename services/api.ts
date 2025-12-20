@@ -123,13 +123,27 @@ export const api = {
                 rating: t.rating, downloads: t.downloads, isFeatured: t.is_featured
             }));
         },
-        listPublic: async (): Promise<Template[]> => {
+        listPublic: async (userId?: string): Promise<Template[]> => {
             if (isOffline) return [];
-            const { data } = await supabase.from('templates').select('*').eq('status', 'APPROVED').eq('is_public', true);
-            return (data || []).map((t: any) => ({
+            let query = supabase.from('templates').select('*').or(`status.eq.APPROVED,and(owner_id.eq.${userId || 'null'},status.eq.PENDING)`);
+
+            // If checking public only without user context, fallback to just approved
+            if (!userId) {
+                query = supabase.from('templates').select('*').eq('status', 'APPROVED');
+            } else {
+                // Supabase OR syntax is tricky, let's simplify: fetch matches where (status=APPROVED) OR (owner_id=userId)
+                // Then we filter in memory or trust the improved OR query if configured properly.
+                // safe approach for simple RLS/query: use the .or() simple syntax
+                // "status.eq.APPROVED,owner_id.eq.userId" means OR
+                query = supabase.from('templates').select('*').or(`status.eq.APPROVED,owner_id.eq.${userId}`);
+            }
+
+            const { data } = await query;
+            return (data || []).filter((t: any) => t.is_public).map((t: any) => ({
                 id: t.id, customLabel: t.custom_label, customDescription: t.custom_description,
                 icon: React.createElement(Folder), nodes: t.nodes, edges: t.edges,
-                rating: t.rating, downloads: t.downloads, authorName: t.author_name, isPro: true, isFeatured: t.is_featured
+                rating: t.rating, downloads: t.downloads, authorName: t.author_name, isPro: true, isFeatured: t.is_featured,
+                status: t.status, ownerId: t.owner_id
             }));
         },
         submitToMarketplace: async (template: Partial<Template>) => {
@@ -173,6 +187,7 @@ export const api = {
             if (error) throw error;
             return data;
         },
+        update: async (id: string, t: any) => { if (!isOffline) await supabase.from('templates').update(t).eq('id', id); },
         delete: async (id: string) => { if (!isOffline) await supabase.from('templates').delete().eq('id', id); }
     },
     plans: {
