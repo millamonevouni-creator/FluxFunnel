@@ -117,11 +117,35 @@ const App = () => {
     };
     initApp();
 
+
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Handle cleanup of hash params from URL
+      if (window.location.hash && (window.location.hash.includes('access_token') || window.location.hash.includes('type=magiclink'))) {
+        // Clear the hash without reloading
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+
       if (event === 'PASSWORD_RECOVERY') {
         setCurrentView('AUTH');
         setAuthInitialView('UPDATE_PASSWORD'); // Force the specific view
         setAuthReturnView(null);
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        // If magic link or normal login happened
+        if (session?.user) {
+          const profile = await api.auth.getProfile();
+          if (profile) {
+            setUser(profile);
+            setTeamMembers(await api.team.list());
+            // Also refresh projects
+            const apiProjects = await api.projects.list();
+            const combined = [...MOCK_PROJECTS, ...apiProjects];
+            const unique = Array.from(new Map(combined.map(p => [p.id, p])).values());
+            setProjects(unique);
+            // Go to APP view
+            setCurrentView('APP');
+            setAppPage('PROJECTS');
+          }
+        }
       }
     });
 
@@ -196,6 +220,24 @@ const App = () => {
   };
 
   const handleLogout = async () => { await api.auth.logout(); setUser(null); setProjects([]); setCurrentView('LANDING'); setAppPage('PROJECTS'); setCurrentProjectId(null); setIsProfileMenuOpen(false); };
+
+  const handleInviteMember = async (email: string, role: string) => {
+    await api.team.invite(email, role);
+    setTeamMembers(await api.team.list());
+    showNotification("Convite enviado com sucesso!");
+  };
+
+  const handleRemoveMember = async (id: string) => {
+    await api.team.remove(id);
+    setTeamMembers(await api.team.list());
+    showNotification("Membro removido.");
+  };
+
+  const handleUpdateMemberRole = async (id: string, role: string) => {
+    await api.team.updateRole(id, role);
+    setTeamMembers(await api.team.list());
+    showNotification("Permissão atualizada.");
+  };
 
   const handleAdminImpersonate = (userId: string) => {
     const targetUser = allUsers.find(u => u.id === userId);
@@ -371,7 +413,7 @@ const App = () => {
         <div className="flex-1 overflow-hidden relative flex">
           {appPage === 'PROJECTS' && <ProjectsDashboard projects={projects.filter(p => p.ownerId === user?.id)} onCreateProject={createProject} onOpenProject={(id) => { setCurrentProjectId(id); setAppPage('BUILDER'); }} onDeleteProject={handleDeleteProject} onRenameProject={handleRenameProject} onRefreshTemplates={refreshTemplates} isDark={isDark} t={t} userPlan={user?.plan} customTemplates={customTemplates} onSaveAsTemplate={(p) => api.templates.create({ customLabel: p.name, nodes: p.nodes, edges: p.edges, isCustom: true })} />}
           {appPage === 'MARKETPLACE' && <MarketplaceDashboard userPlan={user?.plan || 'FREE'} onDownload={(t) => createProject(t.id, t.customLabel)} isDark={isDark} t={t} userId={user?.id} />}
-          {appPage === 'TEAM' && <TeamDashboard members={teamMembers} onInviteMember={api.team.invite} onUpdateRole={api.team.updateRole} onRemoveMember={api.team.remove} onUpgrade={() => { }} plan={user?.plan || 'FREE'} maxMembers={plans.find(p => p.id === user?.plan)?.teamLimit ?? (user?.plan === 'PREMIUM' ? 10 : 0)} isDark={isDark} t={t} />}
+          {appPage === 'TEAM' && <TeamDashboard members={teamMembers} onInviteMember={handleInviteMember} onUpdateRole={handleUpdateMemberRole} onRemoveMember={handleRemoveMember} onUpgrade={() => { }} plan={user?.plan || 'FREE'} maxMembers={plans.find(p => p.id === user?.plan)?.teamLimit ?? (user?.plan === 'PREMIUM' ? 10 : 0)} isDark={isDark} t={t} />}
           {appPage === 'MASTER_ADMIN' && <MasterAdminDashboard
             onBack={() => setAppPage('PROJECTS')}
             feedbacks={feedbacks}
@@ -380,7 +422,7 @@ const App = () => {
             onUpdateFeedback={api.feedbacks.update}
             onReplyFeedback={(id, text) => console.log('Reply:', id, text)}
             onDeleteComment={(fid, cid) => console.log('Delete comment', fid, cid)}
-            users={users || []}
+            users={allUsers || []}
             onUpdateUser={async (u) => { await api.admin.updateUserStatus(u.id, u.status); await api.admin.updateUserPlan(u.id, u.plan); }}
             onDeleteUser={(id) => api.admin.updateUserStatus(id, 'BANNED')}
             onCreateUser={() => { }}

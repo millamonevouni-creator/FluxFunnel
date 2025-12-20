@@ -201,15 +201,33 @@ export const api = {
         list: async () => { if (isOffline) return []; const { data } = await supabase.from('team_members').select('*'); return data || []; },
         invite: async (email: string, role: string) => {
             if (!isOffline) {
-                await supabase.from('team_members').insert({ email, role });
-                await supabase.auth.signInWithOtp({ email });
+                // 1. Add to team table
+                const { error: dbError } = await supabase.from('team_members').insert({ email, role });
+                if (dbError) throw dbError;
+
+                // 2. Send Magic Link
+                const { error: authError } = await supabase.auth.signInWithOtp({
+                    email,
+                    options: {
+                        emailRedirectTo: window.location.origin
+                    }
+                });
+
+                if (authError) {
+                    console.error("Auth Error:", authError);
+                    throw authError;
+                }
             }
         },
         updateRole: async (id: string, role: string) => { if (!isOffline) await supabase.from('team_members').update({ role }).eq('id', id); },
         remove: async (id: string) => { if (!isOffline) await supabase.from('team_members').delete().eq('id', id); }
     },
     system: {
-        get: async () => { if (isOffline) return { maintenanceMode: false, allowSignups: true, announcements: [] }; const { data } = await supabase.from('system_config').select('*').single(); return data; },
+        get: async () => {
+            if (isOffline) return { maintenanceMode: false, allowSignups: true, announcements: [] };
+            const { data } = await supabase.from('system_config').select('*').single();
+            return data || { maintenanceMode: false, allowSignups: true, announcements: [] };
+        },
         update: async (c: any) => { if (!isOffline) await supabase.from('system_config').upsert(c); },
         healthCheck: async () => {
             return { profiles: true, projects: true, templates: true, system_config: true };
