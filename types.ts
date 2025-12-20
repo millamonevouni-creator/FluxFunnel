@@ -149,6 +149,7 @@ export interface PlanConfig {
   nodeLimit: number;
   features: string[];
   isPopular?: boolean;
+  teamLimit?: number; // Added for dynamic team limits
 }
 
 export interface Announcement {

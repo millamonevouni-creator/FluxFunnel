@@ -217,15 +217,18 @@ const App = () => {
       (window.location.hash.includes('type=recovery') || window.location.hash.includes('type=magiclink')) ? 'UPDATE_PASSWORD' : 'LOGIN';
 
     return (
-      <AuthPage
-        onAuthSuccess={handleLogin}
-        onBack={() => setCurrentView('LANDING')}
-        t={t}
-        lang={lang}
-        initialView={viewToUse}
-        onUpdatePassword={api.auth.updatePassword}
-        onResetPassword={api.auth.resetPassword}
-      />
+      <>
+        {toast?.show && <div className={`fixed top-14 left-1/2 -translate-x-1/2 z-[300] px-6 py-3 rounded-xl shadow-2xl border ${toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>{toast.message}</div>}
+        <AuthPage
+          onAuthSuccess={handleLogin}
+          onBack={() => setCurrentView('LANDING')}
+          t={t}
+          lang={lang}
+          initialView={viewToUse}
+          onUpdatePassword={api.auth.updatePassword}
+          onResetPassword={api.auth.resetPassword}
+        />
+      </>
     );
   }
   if (currentView === 'ROADMAP') return <RoadmapPage onBack={() => setCurrentView(user ? 'APP' : 'LANDING')} feedbacks={feedbacks} onSubmitFeedback={(item) => api.feedbacks.create(item)} onVote={(id) => api.feedbacks.update(id, {})} onAddComment={(id, text) => api.feedbacks.update(id, {})} isAuthenticated={!!user} currentUser={user} onLoginRequest={() => { setAuthReturnView('ROADMAP'); setCurrentView('AUTH'); }} t={t} isDark={isDark} />;
