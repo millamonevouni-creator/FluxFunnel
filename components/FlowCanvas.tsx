@@ -49,12 +49,14 @@ export interface FlowCanvasProps {
   onToggleAIAssistant?: () => void;
   isSharedView?: boolean;
   onShareToMarketplace?: (name: string, description: string) => void;
+  openSaveModalSignal?: number;
 }
 
 const FlowCanvas = ({
   project, onSaveProject, onSaveTemplate, onUnsavedChanges, triggerSaveSignal,
   isDark, toggleTheme, isPresentationMode, showNotesInPresentation,
-  t, userPlan, showAIAssistant, onToggleAIAssistant, isSharedView, onShareToMarketplace
+  t, userPlan, showAIAssistant, onToggleAIAssistant, isSharedView, onShareToMarketplace,
+  openSaveModalSignal
 }: FlowCanvasProps) => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition, getNodes, getEdges } = useReactFlow();
@@ -126,6 +128,12 @@ const FlowCanvas = ({
       onSaveProject(nodes, edges);
     }
   }, [triggerSaveSignal]);
+
+  useEffect(() => {
+    if (openSaveModalSignal && openSaveModalSignal > 0) {
+      setShowSaveOptions(true);
+    }
+  }, [openSaveModalSignal]);
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
@@ -300,24 +308,15 @@ const FlowCanvas = ({
           <div className={`w-full max-w-lg rounded-2xl shadow-2xl p-8 border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
             <button onClick={() => setShowSaveOptions(false)} className="absolute top-4 right-4 p-2 text-slate-400"><X size={20} /></button>
             {saveStep === 'OPTIONS' ? (
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <button onClick={() => { onSaveProject(nodes, edges); setShowSaveOptions(false); alert("Salvo!"); }} className="flex flex-col items-center p-4 rounded-xl border-2 hover:border-indigo-500 transition-all"><FileText size={28} className="mb-2 text-indigo-600" /> <span className="font-bold text-sm">Projeto</span></button>
                 <button onClick={() => { if (userPlan === 'FREE') setShowUpgradeModal(true); else { setTemplateNameInput(''); setSaveStep('TEMPLATE_NAME'); } }} className="flex flex-col items-center p-4 rounded-xl border-2 hover:border-purple-500 transition-all"><Layout size={28} className="mb-2 text-purple-600" /> <span className="font-bold text-sm">Modelo</span></button>
-                <button onClick={() => { if (userPlan === 'FREE') setShowUpgradeModal(true); else { setTemplateNameInput(''); setMarketplaceDescInput(''); setSaveStep('MARKETPLACE_DETAILS'); } }} className="flex flex-col items-center p-4 rounded-xl border-2 hover:border-pink-500 transition-all"><ShoppingBag size={28} className="mb-2 text-pink-600" /> <span className="font-bold text-sm">Marketplace</span></button>
               </div>
-            ) : saveStep === 'TEMPLATE_NAME' ? (
+            ) : (
               <div className="flex flex-col gap-4">
                 <h3 className="text-lg font-bold">Salvar como Modelo</h3>
                 <input type="text" value={templateNameInput} onChange={e => setTemplateNameInput(e.target.value)} placeholder="Nome do modelo" className="p-3 rounded-xl border-2 outline-none" />
                 <button onClick={() => { onSaveTemplate?.(nodes, edges, templateNameInput); setShowSaveOptions(false); }} className="py-3 bg-purple-600 text-white rounded-xl font-bold">Salvar Modelo</button>
-                <button onClick={() => setSaveStep('OPTIONS')} className="text-sm text-slate-500 hover:underline">Voltar</button>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-4">
-                <h3 className="text-lg font-bold">Publicar no Marketplace</h3>
-                <input type="text" value={templateNameInput} onChange={e => setTemplateNameInput(e.target.value)} placeholder="Nome da estratégia" className="p-3 rounded-xl border-2 outline-none" />
-                <textarea value={marketplaceDescInput} onChange={e => setMarketplaceDescInput(e.target.value)} placeholder="Descreva como funciona esta estratégia..." className="p-3 rounded-xl border-2 outline-none h-24 resize-none"></textarea>
-                <button onClick={() => { onShareToMarketplace?.(templateNameInput, marketplaceDescInput); setShowSaveOptions(false); }} className="py-3 bg-pink-600 text-white rounded-xl font-bold">Enviar para Análise</button>
                 <button onClick={() => setSaveStep('OPTIONS')} className="text-sm text-slate-500 hover:underline">Voltar</button>
               </div>
             )}
@@ -356,7 +355,6 @@ const FlowCanvas = ({
           <MiniMap />
           <Panel position="top-right" className="flex gap-2">
             <button onClick={toggleTheme} className="p-2 rounded-lg bg-white dark:bg-slate-800 border">{isDark ? <Sun /> : <Moon />}</button>
-            <button onClick={() => setShowSaveOptions(true)} className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold">Salvar</button>
           </Panel>
         </ReactFlow>
       </div>

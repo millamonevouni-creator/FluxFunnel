@@ -146,6 +146,9 @@ export const api = {
                 status: t.status, ownerId: t.owner_id
             }));
         },
+        create: async (t: any) => { if (!isOffline) await supabase.from('templates').insert({ ...t, author_name: 'User', is_public: false }); },
+        delete: async (id: string) => { if (!isOffline) await supabase.from('templates').delete().eq('id', id); },
+        update: async (id: string, updates: any) => { if (!isOffline) await supabase.from('templates').update(updates).eq('id', id); },
         submitToMarketplace: async (template: Partial<Template>) => {
             if (isOffline) return;
             const { data: { user } } = await supabase.auth.getUser();
@@ -213,6 +216,20 @@ export const api = {
         update: async (c: any) => { if (!isOffline) await supabase.from('system_config').upsert(c); },
         healthCheck: async () => {
             return { profiles: true, projects: true, templates: true, system_config: true };
+        }
+    },
+    admin: {
+        getUsers: async () => {
+            if (isOffline) return [];
+            const { data, error } = await supabase.from('profiles').select('*');
+            if (error) throw error;
+            return data || [];
+        },
+        updateUserStatus: async (id: string, status: string) => {
+            if (!isOffline) await supabase.from('profiles').update({ status }).eq('id', id);
+        },
+        updateUserPlan: async (id: string, plan: string) => {
+            if (!isOffline) await supabase.from('profiles').update({ plan }).eq('id', id);
         }
     }
 };

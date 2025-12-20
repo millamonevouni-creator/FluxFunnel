@@ -315,8 +315,8 @@ const MarketplaceDashboard = ({ userPlan, onDownload, isDark, t, userId }: Marke
                         </div>
                         <div className="flex-1 bg-slate-50 dark:bg-slate-900 overflow-hidden relative">
                             <ReactFlow
-                                nodes={quickLookTemplate.nodes.map(n => ({ ...n, draggable: false, selectable: false }))}
-                                edges={quickLookTemplate.edges.map(e => ({ ...e, animated: false }))} // Static preview
+                                nodes={quickLookTemplate.nodes.map(n => ({ ...n, draggable: false, selectable: false, data: { ...n.data, isPresentationMode: true } }))}
+                                edges={quickLookTemplate.edges.map(e => ({ ...e, type: 'default', animated: true, style: { ...e.style, stroke: isDark ? '#94a3b8' : '#475569', strokeWidth: 2 } }))}
                                 nodeTypes={nodeTypes}
                                 edgeTypes={edgeTypes}
                                 fitView
