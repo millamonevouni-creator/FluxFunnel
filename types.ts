@@ -150,6 +150,7 @@ export interface PlanConfig {
   features: string[];
   isPopular?: boolean;
   teamLimit?: number; // Added for dynamic team limits
+  order?: number; // Added for display ordering
 }
 
 export interface Announcement {
@@ -179,7 +180,7 @@ export interface TeamMember {
 
 export type Language = 'pt' | 'en' | 'es';
 
-export type AppPage = 'PROJECTS' | 'BUILDER' | 'SETTINGS' | 'TEAM' | 'MARKETPLACE';
+export type AppPage = 'PROJECTS' | 'BUILDER' | 'SETTINGS' | 'TEAM' | 'MARKETPLACE' | 'MASTER_ADMIN';
 
 export type AppView = 'LANDING' | 'AUTH' | 'APP' | 'ROADMAP' | 'ADMIN' | 'GALLERY' | 'ICONS' | 'SHARED';
 

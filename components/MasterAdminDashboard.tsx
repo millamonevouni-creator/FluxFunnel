@@ -241,7 +241,7 @@ const MasterAdminDashboard = ({
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-1">
-                        {plans.map(plan => (
+                        {[...plans].sort((a, b) => (a.order || 0) - (b.order || 0)).map((plan, index, array) => (
                             <div
                                 key={plan.id}
                                 className={`
@@ -253,12 +253,48 @@ const MasterAdminDashboard = ({
                                     <div className={`p-4 rounded-2xl shadow-lg ${plan.id === 'PREMIUM' ? 'bg-purple-600/20 text-purple-400 border border-purple-500/30' : (plan.id === 'PRO' ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30' : 'bg-slate-800/40 text-slate-400 border border-slate-700/50')}`}>
                                         {plan.id === 'PREMIUM' ? <Crown size={24} /> : (plan.id === 'PRO' ? <Zap size={24} /> : <Layout size={24} />)}
                                     </div>
-                                    <button
-                                        onClick={() => setEditingPlan(plan)}
-                                        className="p-3 bg-slate-900/80 border border-slate-800 hover:bg-indigo-600 text-slate-500 hover:text-white rounded-xl transition-all shadow-md hover:scale-105 active:scale-95"
-                                    >
-                                        <Pencil size={16} />
-                                    </button>
+                                    <div className="flex gap-2">
+                                        {index > 0 && (
+                                            <button
+                                                onClick={() => {
+                                                    const prevPlan = array[index - 1];
+                                                    const currentOrder = plan.order ?? index;
+                                                    const prevOrder = prevPlan.order ?? (index - 1);
+
+                                                    // Swap orders
+                                                    onUpdatePlan({ ...plan, order: prevOrder });
+                                                    onUpdatePlan({ ...prevPlan, order: currentOrder });
+                                                }}
+                                                className="p-3 bg-slate-900/80 border border-slate-800 hover:bg-slate-700 text-slate-500 hover:text-white rounded-xl transition-all shadow-md active:scale-95"
+                                                title="Mover para esquerda"
+                                            >
+                                                <ArrowLeft size={16} />
+                                            </button>
+                                        )}
+                                        {index < array.length - 1 && (
+                                            <button
+                                                onClick={() => {
+                                                    const nextPlan = array[index + 1];
+                                                    const currentOrder = plan.order ?? index;
+                                                    const nextOrder = nextPlan.order ?? (index + 1);
+
+                                                    // Swap orders
+                                                    onUpdatePlan({ ...plan, order: nextOrder });
+                                                    onUpdatePlan({ ...nextPlan, order: currentOrder });
+                                                }}
+                                                className="p-3 bg-slate-900/80 border border-slate-800 hover:bg-slate-700 text-slate-500 hover:text-white rounded-xl transition-all shadow-md active:scale-95"
+                                                title="Mover para direita"
+                                            >
+                                                <ChevronRight size={16} />
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={() => setEditingPlan(plan)}
+                                            className="p-3 bg-slate-900/80 border border-slate-800 hover:bg-indigo-600 text-slate-500 hover:text-white rounded-xl transition-all shadow-md hover:scale-105 active:scale-95"
+                                        >
+                                            <Pencil size={16} />
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div className="mb-8">
@@ -350,7 +386,7 @@ const MasterAdminDashboard = ({
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-8">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                                 <div className="space-y-4">
                                     <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Capacidade de Projetos</label>
                                     <div className="relative">
@@ -364,6 +400,13 @@ const MasterAdminDashboard = ({
                                     <div className="relative">
                                         <Activity className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
                                         <input type="number" value={editingPlan.nodeLimit} onChange={e => setEditingPlan({ ...editingPlan, nodeLimit: parseInt(e.target.value) })} className="w-full p-6 pl-14 bg-[#020617] border border-slate-800 rounded-2xl outline-none focus:border-indigo-500 transition-all text-sm font-black" />
+                                    </div>
+                                </div>
+                                <div className="space-y-4">
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Limite da Equipe</label>
+                                    <div className="relative">
+                                        <Users className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
+                                        <input type="number" value={editingPlan.teamLimit || 0} onChange={e => setEditingPlan({ ...editingPlan, teamLimit: parseInt(e.target.value) })} className="w-full p-6 pl-14 bg-[#020617] border border-slate-800 rounded-2xl outline-none focus:border-indigo-500 transition-all text-sm font-black" />
                                     </div>
                                 </div>
                             </div>

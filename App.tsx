@@ -67,9 +67,9 @@ const App = () => {
   useEffect(() => {
     if (!plansInitializedRef.current && plans.length === 0) {
       const generatedPlans: PlanConfig[] = [
-        { id: 'FREE', label: 'Plano Gratuito', priceMonthly: 0, priceYearly: 0, projectLimit: 1, nodeLimit: 20, features: [t('pricingFreeFeat1'), t('pricingFreeFeat2'), t('pricingFreeFeat3'), t('pricingFreeFeat4'), t('pricingFreeFeat5'), t('pricingFreeFeat6')], isPopular: false },
-        { id: 'PRO', label: 'Plano Pro', priceMonthly: 69.90, priceYearly: 712.98, projectLimit: 5, nodeLimit: 100, features: [t('pricingProFeat1'), t('pricingProFeat2'), t('pricingProFeat3'), t('pricingProFeat4'), t('pricingProFeat5'), t('pricingProFeat6')], isPopular: false },
-        { id: 'PREMIUM', label: 'Plano Premium', priceMonthly: 97.90, priceYearly: 881.10, projectLimit: 9999, nodeLimit: 9999, features: [t('pricingPremiumFeat1'), t('pricingPremiumFeat2'), t('pricingPremiumFeat3'), t('pricingPremiumFeat4'), t('pricingPremiumFeat5'), t('pricingPremiumFeat6')], isPopular: true },
+        { id: 'FREE', label: 'Plano Gratuito', priceMonthly: 0, priceYearly: 0, projectLimit: 1, nodeLimit: 20, features: [t('pricingFreeFeat1'), t('pricingFreeFeat2'), t('pricingFreeFeat3'), t('pricingFreeFeat4'), t('pricingFreeFeat5'), t('pricingFreeFeat6')], isPopular: false, teamLimit: 0, order: 0 },
+        { id: 'PRO', label: 'Plano Pro', priceMonthly: 69.90, priceYearly: 712.98, projectLimit: 5, nodeLimit: 100, features: [t('pricingProFeat1'), t('pricingProFeat2'), t('pricingProFeat3'), t('pricingProFeat4'), t('pricingProFeat5'), t('pricingProFeat6')], isPopular: false, teamLimit: 0, order: 1 },
+        { id: 'PREMIUM', label: 'Plano Premium', priceMonthly: 97.90, priceYearly: 881.10, projectLimit: 9999, nodeLimit: 9999, features: [t('pricingPremiumFeat1'), t('pricingPremiumFeat2'), t('pricingPremiumFeat3'), t('pricingPremiumFeat4'), t('pricingPremiumFeat5'), t('pricingPremiumFeat6')], isPopular: true, teamLimit: 10, order: 2 },
       ];
       setPlans(generatedPlans);
       plansInitializedRef.current = true;
@@ -371,7 +371,7 @@ const App = () => {
         <div className="flex-1 overflow-hidden relative flex">
           {appPage === 'PROJECTS' && <ProjectsDashboard projects={projects.filter(p => p.ownerId === user?.id)} onCreateProject={createProject} onOpenProject={(id) => { setCurrentProjectId(id); setAppPage('BUILDER'); }} onDeleteProject={handleDeleteProject} onRenameProject={handleRenameProject} onRefreshTemplates={refreshTemplates} isDark={isDark} t={t} userPlan={user?.plan} customTemplates={customTemplates} onSaveAsTemplate={(p) => api.templates.create({ customLabel: p.name, nodes: p.nodes, edges: p.edges, isCustom: true })} />}
           {appPage === 'MARKETPLACE' && <MarketplaceDashboard userPlan={user?.plan || 'FREE'} onDownload={(t) => createProject(t.id, t.customLabel)} isDark={isDark} t={t} userId={user?.id} />}
-          {appPage === 'TEAM' && <TeamDashboard members={teamMembers} onInviteMember={api.team.invite} onUpdateRole={api.team.updateRole} onRemoveMember={api.team.remove} onUpgrade={() => { }} plan={user?.plan || 'FREE'} maxMembers={user?.plan === 'PREMIUM' ? 9999 : 0} isDark={isDark} t={t} />}
+          {appPage === 'TEAM' && <TeamDashboard members={teamMembers} onInviteMember={api.team.invite} onUpdateRole={api.team.updateRole} onRemoveMember={api.team.remove} onUpgrade={() => { }} plan={user?.plan || 'FREE'} maxMembers={plans.find(p => p.id === user?.plan)?.teamLimit ?? (user?.plan === 'PREMIUM' ? 10 : 0)} isDark={isDark} t={t} />}
           {appPage === 'MASTER_ADMIN' && <MasterAdminDashboard
             onBack={() => setAppPage('PROJECTS')}
             feedbacks={feedbacks}

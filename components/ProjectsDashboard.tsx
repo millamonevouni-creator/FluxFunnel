@@ -304,7 +304,7 @@ const ProjectsDashboard = ({
                             </div>
                         )}
                         {mySubmissions.map(sub => (
-                            <div key={sub.id} className={`relative flex flex-col p-6 rounded-2xl border transition-all duration-300 group h-[220px] ${bgCard} shadow-sm hover:shadow-xl`}>
+                            <div key={sub.id} className={`relative flex flex-col p-6 rounded-2xl border transition-all duration-300 group h-[300px] ${bgCard} shadow-sm hover:shadow-xl`}>
                                 <div className="flex items-start justify-between mb-4">
                                     <div className={`p-3 rounded-xl ${isDark ? 'bg-slate-700 text-amber-400' : 'bg-amber-50 text-amber-600'}`}>
                                         <ShoppingBag size={24} />
@@ -337,7 +337,7 @@ const ProjectsDashboard = ({
                                     </div>
                                 </div>
                                 <h3 className={`text-xl font-bold ${textTitle} truncate mb-4`}>{sub.customLabel}</h3>
-                                <p className={`text-xs ${textSub} line-clamp-2 mb-auto`}>{sub.customDescription}</p>
+                                <p className={`text-sm ${textSub} line-clamp-3 mb-auto mt-2`}>{sub.customDescription}</p>
 
                                 <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center text-xs text-slate-500">
                                     <span>{sub.downloads || 0} Downloads</span>

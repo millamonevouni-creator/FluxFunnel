@@ -183,15 +183,7 @@ export const api = {
             const newCount = (data?.rating_count || 0) + 1;
             const newRating = ((data?.rating || 0) * (data?.rating_count || 0) + stars) / newCount;
             await supabase.from('templates').update({ rating: newRating, rating_count: newCount }).eq('id', id);
-        },
-        create: async (t: any) => {
-            if (isOffline) return { ...t, id: 'mock_t' + Date.now() };
-            const { data, error } = await supabase.from('templates').insert(t).select().single();
-            if (error) throw error;
-            return data;
-        },
-        update: async (id: string, t: any) => { if (!isOffline) await supabase.from('templates').update(t).eq('id', id); },
-        delete: async (id: string) => { if (!isOffline) await supabase.from('templates').delete().eq('id', id); }
+        }
     },
     plans: {
         list: async () => { if (isOffline) return []; const { data } = await supabase.from('plans').select('*'); return data || []; },
@@ -207,7 +199,12 @@ export const api = {
     },
     team: {
         list: async () => { if (isOffline) return []; const { data } = await supabase.from('team_members').select('*'); return data || []; },
-        invite: async (email: string, role: string) => { if (!isOffline) await supabase.from('team_members').insert({ email, role }); },
+        invite: async (email: string, role: string) => {
+            if (!isOffline) {
+                await supabase.from('team_members').insert({ email, role });
+                await supabase.auth.signInWithOtp({ email });
+            }
+        },
         updateRole: async (id: string, role: string) => { if (!isOffline) await supabase.from('team_members').update({ role }).eq('id', id); },
         remove: async (id: string) => { if (!isOffline) await supabase.from('team_members').delete().eq('id', id); }
     },

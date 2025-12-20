@@ -313,12 +313,28 @@ const MarketplaceDashboard = ({ userPlan, onDownload, isDark, t, userId }: Marke
                                 <X size={28} />
                             </button>
                         </div>
-                        <div className="flex-1 bg-slate-50 dark:bg-slate-900 overflow-hidden relative">
+                        <div key={quickLookTemplate.id} className="flex-1 bg-slate-50 dark:bg-slate-900 overflow-hidden relative">
                             <ReactFlow
-                                nodes={quickLookTemplate.nodes.map(n => ({ ...n, draggable: false, selectable: false, data: { ...n.data, isPresentationMode: true } }))}
-                                edges={quickLookTemplate.edges.map(e => ({ ...e, type: 'default', animated: true, style: { ...e.style, stroke: isDark ? '#94a3b8' : '#475569', strokeWidth: 2 } }))}
+                                nodes={quickLookTemplate.nodes.map(n => ({
+                                    ...n,
+                                    id: `preview-${n.id}`,
+                                    draggable: false,
+                                    selectable: false,
+                                    data: { ...n.data, isPresentationMode: true }
+                                }))}
+                                edges={quickLookTemplate.edges.map(e => ({
+                                    ...e,
+                                    id: `preview-${e.id}`,
+                                    source: `preview-${e.source}`,
+                                    target: `preview-${e.target}`,
+                                    type: 'default',
+                                    animated: true,
+                                    style: {
+                                        stroke: isDark ? '#a5b4fc' : '#64748b',
+                                        strokeWidth: 2,
+                                    }
+                                }))}
                                 nodeTypes={nodeTypes}
-                                edgeTypes={edgeTypes}
                                 fitView
                                 proOptions={{ hideAttribution: true }}
                                 nodesDraggable={false}
