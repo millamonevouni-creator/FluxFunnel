@@ -138,6 +138,8 @@ export interface User {
   lastLogin: Date;
   avatarUrl?: string;
   isSystemAdmin?: boolean;
+  company_name?: string;
+  job_title?: string;
 }
 
 export interface PlanConfig {

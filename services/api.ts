@@ -151,7 +151,7 @@ export const api = {
             return (data || []).map((t: any) => ({
                 id: t.id, customLabel: t.custom_label, customDescription: t.custom_description,
                 icon: React.createElement(Folder), nodes: t.nodes, edges: t.edges,
-                status: t.status, isPublic: t.is_public, authorName: t.author_name, authorId: t.owner_id,
+                status: t.status, isPublic: t.is_public, isCustom: t.is_custom, authorName: t.author_name, authorId: t.owner_id,
                 rating: t.rating, downloads: t.downloads, isFeatured: t.is_featured
             }));
         },
@@ -171,14 +171,26 @@ export const api = {
             }
 
             const { data } = await query;
-            return (data || []).filter((t: any) => t.is_public).map((t: any) => ({
+            return (data || []).map((t: any) => ({
                 id: t.id, customLabel: t.custom_label, customDescription: t.custom_description,
                 icon: React.createElement(Folder), nodes: t.nodes, edges: t.edges,
                 rating: t.rating, downloads: t.downloads, authorName: t.author_name, isPro: true, isFeatured: t.is_featured,
-                status: t.status, ownerId: t.owner_id
+                status: t.status, ownerId: t.owner_id, isPublic: t.is_public, isCustom: t.is_custom
             }));
         },
-        create: async (t: any) => { if (!isOffline) await supabase.from('templates').insert({ ...t, author_name: 'User', is_public: false }); },
+        create: async (t: any) => {
+            if (isOffline) return;
+            const { data: { user } } = await supabase.auth.getUser();
+            await supabase.from('templates').insert({
+                custom_label: t.customLabel,
+                nodes: t.nodes,
+                edges: t.edges,
+                owner_id: user?.id,
+                author_name: user?.user_metadata?.name || 'User',
+                is_custom: true,
+                is_public: false
+            });
+        },
         delete: async (id: string) => { if (!isOffline) await supabase.from('templates').delete().eq('id', id); },
         update: async (id: string, updates: any) => { if (!isOffline) await supabase.from('templates').update(updates).eq('id', id); },
         submitToMarketplace: async (template: Partial<Template>) => {
@@ -190,8 +202,9 @@ export const api = {
                 nodes: template.nodes,
                 edges: template.edges,
                 owner_id: user?.id,
-                author_name: template.authorName,
+                author_name: template.authorName || user?.user_metadata?.name || 'Premium User',
                 is_public: true,
+                is_custom: true,
                 status: 'PENDING',
                 downloads: 0,
                 rating: 0,
@@ -224,10 +237,50 @@ export const api = {
         delete: async (id: string) => { if (!isOffline) await supabase.from('plans').delete().eq('id', id); }
     },
     feedbacks: {
-        list: async () => { if (isOffline) return []; const { data } = await supabase.from('feedbacks').select('*'); return data || []; },
-        create: async (f: any) => { if (!isOffline) await supabase.from('feedbacks').insert(f); },
+        list: async () => { if (isOffline) return []; const { data } = await supabase.from('feedbacks').select('*').order('created_at', { ascending: false }); return data || []; },
+        create: async (f: any) => { if (!isOffline) await supabase.from('feedbacks').insert({ ...f, votes: 0, voted_user_ids: [], status: 'PENDING' }); },
         update: async (id: string, f: any) => { if (!isOffline) await supabase.from('feedbacks').update(f).eq('id', id); },
-        delete: async (id: string) => { if (!isOffline) await supabase.from('feedbacks').delete().eq('id', id); }
+        delete: async (id: string) => { if (!isOffline) await supabase.from('feedbacks').delete().eq('id', id); },
+        vote: async (id: string) => {
+            if (isOffline) return;
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error("Login required to vote");
+
+            const { data } = await supabase.from('feedbacks').select('votes, voted_user_ids').eq('id', id).single();
+            const votedIds = Array.isArray(data?.voted_user_ids) ? data.voted_user_ids : [];
+
+            if (votedIds.includes(user.id)) {
+                // Remove vote (toggle)
+                const newIds = votedIds.filter((uid: string) => uid !== user.id);
+                await supabase.from('feedbacks').update({ votes: Math.max(0, (data?.votes || 1) - 1), voted_user_ids: newIds }).eq('id', id);
+            } else {
+                // Add vote
+                await supabase.from('feedbacks').update({ votes: (data?.votes || 0) + 1, voted_user_ids: [...votedIds, user.id] }).eq('id', id);
+            }
+        },
+        addComment: async (id: string, text: string) => {
+            if (isOffline) return;
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error("Login required to comment");
+
+            const { data } = await supabase.from('feedbacks').select('comments').eq('id', id).single();
+            const comments = Array.isArray(data?.comments) ? data.comments : [];
+            const newComment = {
+                id: 'c' + Date.now(),
+                text,
+                authorName: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+                authorId: user.id,
+                createdAt: new Date().toISOString(),
+                isAdmin: user.email === 'millamon.evouni@gmail.com' // Simplistic check, ideally use role from profile
+            };
+            await supabase.from('feedbacks').update({ comments: [...comments, newComment] }).eq('id', id);
+        },
+        deleteComment: async (feedbackId: string, commentId: string) => {
+            if (isOffline) return;
+            const { data } = await supabase.from('feedbacks').select('comments').eq('id', feedbackId).single();
+            const comments = Array.isArray(data?.comments) ? data.comments : [];
+            await supabase.from('feedbacks').update({ comments: comments.filter((c: any) => c.id !== commentId) }).eq('id', feedbackId);
+        }
     },
     team: {
         list: async () => { if (isOffline) return []; const { data } = await supabase.from('team_members').select('*'); return data || []; },
@@ -260,7 +313,17 @@ export const api = {
             }
         },
         updateRole: async (id: string, role: string) => { if (!isOffline) await supabase.from('team_members').update({ role }).eq('id', id); },
-        remove: async (id: string) => { if (!isOffline) await supabase.from('team_members').delete().eq('id', id); }
+        remove: async (id: string) => { if (!isOffline) await supabase.from('team_members').delete().eq('id', id); },
+        resendInvite: async (email: string) => {
+            if (isOffline) return;
+            const { error } = await supabase.auth.signInWithOtp({
+                email,
+                options: {
+                    emailRedirectTo: window.location.origin
+                }
+            });
+            if (error) throw error;
+        }
     },
     system: {
         get: async () => {

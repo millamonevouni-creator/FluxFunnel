@@ -17,11 +17,13 @@ interface ProjectsDashboardProps {
     onSaveAsTemplate?: (project: Project) => void;
     onRenameProject?: (id: string, newName: string) => Promise<void>;
     onRefreshTemplates?: () => Promise<void>;
+    showNotification?: (msg: string, type?: 'success' | 'error') => void;
 }
 
 const ProjectsDashboard = ({
     projects, onCreateProject, onOpenProject, onDeleteProject, isDark, t,
-    userPlan = 'FREE', customTemplates = [], onSaveAsTemplate, onRenameProject, onRefreshTemplates
+    userPlan = 'FREE', customTemplates = [], onSaveAsTemplate, onRenameProject, onRefreshTemplates,
+    showNotification
 }: ProjectsDashboardProps) => {
     const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
     const [creationStep, setCreationStep] = useState<'SELECT' | 'NAME'>('SELECT');
@@ -250,7 +252,19 @@ const ProjectsDashboard = ({
                                         <Folder size={24} />
                                     </div>
                                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button onClick={(e) => { e.stopPropagation(); if (window.confirm('Excluir modelo?')) api.templates.delete(tpl.id); }} className="p-2 text-slate-400 hover:text-red-500 rounded-lg"><Trash2 size={18} /></button>
+                                        <button
+                                            onClick={async (e) => {
+                                                e.stopPropagation();
+                                                if (window.confirm('Excluir modelo?')) {
+                                                    await api.templates.delete(tpl.id);
+                                                    onRefreshTemplates?.();
+                                                }
+                                            }}
+                                            className="p-2 text-slate-400 hover:text-red-500 rounded-lg"
+                                            title="Excluir"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
                                     </div>
                                 </div>
                                 <h3 className={`text-xl font-bold ${textTitle} truncate mb-1`}>{tpl.customLabel}</h3>
@@ -373,10 +387,10 @@ const ProjectsDashboard = ({
                                     try {
                                         await api.templates.update(editingSubmission.id, { custom_label: editingSubmission.name, custom_description: editingSubmission.desc });
                                         setEditingSubmission(null);
-                                        alert("Atualizado com sucesso!");
+                                        showNotification?.("Publicação atualizada!");
                                         onRefreshTemplates?.();
                                     } catch (e) {
-                                        alert("Erro ao atualizar.");
+                                        showNotification?.("Erro ao atualizar", 'error');
                                     }
                                 }} className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold">Salvar</button>
                             </div>
@@ -398,8 +412,8 @@ const ProjectsDashboard = ({
                                         {creationStep === 'SELECT' ? t('startOrganizingNow') : "Dê um nome para identificar seu mapa facilmente."}
                                     </p>
                                 </div>
-                                <button onClick={() => setIsTemplateModalOpen(false)} className={`p-2 rounded-full ${isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}>
-                                    <X size={24} />
+                                <button onClick={() => setIsTemplateModalOpen(false)} className={`p-2 rounded-full ${isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`} title="Fechar" aria-label="Fechar">
+                                    <X size={24} aria-hidden="true" />
                                 </button>
                             </div>
 
@@ -415,7 +429,12 @@ const ProjectsDashboard = ({
                                                 PROJECT_TEMPLATES.map(template => {
                                                     const isLocked = userPlan === 'FREE' && template.isPro;
                                                     return (
-                                                        <button key={template.id} onClick={() => !isLocked && handleTemplateSelect(template.id)} className={`group relative flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all h-[200px] text-center ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} ${!isLocked ? `hover:border-indigo-500 ${isDark ? 'hover:bg-slate-750' : 'hover:bg-white hover:shadow-lg'}` : 'opacity-70 cursor-not-allowed'}`}>
+                                                        <button
+                                                            key={template.id}
+                                                            onClick={() => !isLocked && handleTemplateSelect(template.id)}
+                                                            className={`group relative flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all h-[200px] text-center ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'} ${!isLocked ? `hover:border-indigo-500 ${isDark ? 'hover:bg-slate-750' : 'hover:bg-white hover:shadow-lg'}` : 'opacity-70 cursor-not-allowed'}`}
+                                                            title={getTemplateName(template)}
+                                                        >
                                                             {isLocked && <div className="absolute top-3 right-3 bg-black/50 p-1.5 rounded-full backdrop-blur-sm border border-white/10"><Lock size={14} className="text-white" /></div>}
                                                             <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-transform ${!isLocked && 'group-hover:scale-110'} ${isDark ? 'bg-slate-900 shadow-inner' : 'bg-white shadow-sm border border-slate-100'}`}>{template.icon}</div>
                                                             <h3 className={`text-lg font-bold mb-2 ${textTitle}`}>{getTemplateName(template)}</h3>
@@ -425,7 +444,12 @@ const ProjectsDashboard = ({
                                                 })
                                             ) : (
                                                 customTemplates.map(template => (
-                                                    <button key={template.id} onClick={() => handleTemplateSelect(template.id)} className={`group relative flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all h-[200px] text-center ${isDark ? 'bg-slate-800 border-slate-700 hover:border-indigo-500 hover:bg-slate-750' : 'bg-slate-50 border-slate-200 hover:border-indigo-500 hover:bg-white hover:shadow-lg'}`}>
+                                                    <button
+                                                        key={template.id}
+                                                        onClick={() => handleTemplateSelect(template.id)}
+                                                        className={`group relative flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all h-[200px] text-center ${isDark ? 'bg-slate-800 border-slate-700 hover:border-indigo-500 hover:bg-slate-750' : 'bg-slate-50 border-slate-200 hover:border-indigo-500 hover:bg-white hover:shadow-lg'}`}
+                                                        title={getTemplateName(template)}
+                                                    >
                                                         <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 ${isDark ? 'bg-slate-900 shadow-inner' : 'bg-white shadow-sm border border-slate-100'}`}><Folder size={32} className="text-indigo-500" /></div>
                                                         <h3 className={`text-lg font-bold mb-2 ${textTitle}`}>{getTemplateName(template)}</h3>
                                                         <p className={`text-xs line-clamp-2 px-2 ${textSub}`}>{getTemplateDesc(template)}</p>

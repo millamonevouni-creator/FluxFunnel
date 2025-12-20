@@ -18,8 +18,8 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
     const [activeTab, setActiveTab] = useState<'PROFILE' | 'PLAN' | 'PREFERENCES' | 'SECURITY' | 'NOTIFICATIONS'>('PROFILE');
     const [name, setName] = useState(user.name);
     const [email, setEmail] = useState(user.email);
-    const [company, setCompany] = useState('');
-    const [jobTitle, setJobTitle] = useState('');
+    const [company, setCompany] = useState(user.company_name || '');
+    const [jobTitle, setJobTitle] = useState(user.job_title || '');
     const [isSaving, setIsSaving] = useState(false);
 
     // Notification States
@@ -29,16 +29,16 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
     // Security States
     const [twoFactor, setTwoFactor] = useState(false);
 
-    const handleSaveProfile = (e: React.FormEvent) => {
+    const handleSaveProfile = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSaving(true);
-        // Simulate API call
-        setTimeout(() => {
-            onUpdateUser({ name, email });
+        try {
+            await onUpdateUser({ name, company_name: company, job_title: jobTitle });
             setIsSaving(false);
-            // Using a simple alert for now, in real app use toast
-            // alert('Perfil atualizado com sucesso!');
-        }, 800);
+        } catch (error) {
+            console.error(error);
+            setIsSaving(false);
+        }
     };
 
     const tabs = [
@@ -124,34 +124,39 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
                                 <form onSubmit={handleSaveProfile} className="space-y-6">
                                     <div className="grid md:grid-cols-2 gap-6">
                                         <div>
-                                            <label className={labelClass}>{t('fullName')}</label>
+                                            <label htmlFor="full-name" className={labelClass}>{t('fullName')}</label>
                                             <div className="relative">
-                                                <UserIcon className={`absolute left-3 top-3.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} size={18} />
+                                                <UserIcon className={`absolute left-3 top-3.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} size={18} aria-hidden="true" />
                                                 <input
+                                                    id="full-name"
                                                     type="text"
                                                     value={name}
                                                     onChange={e => setName(e.target.value)}
                                                     className={`${inputClass} pl-10`}
+                                                    placeholder={t('fullName')}
                                                 />
                                             </div>
                                         </div>
                                         <div>
-                                            <label className={labelClass}>{t('emailAddr')}</label>
+                                            <label htmlFor="email-addr" className={labelClass}>{t('emailAddr')}</label>
                                             <input
+                                                id="email-addr"
                                                 type="email"
                                                 value={email}
                                                 disabled
                                                 className={`${inputClass} opacity-70 cursor-not-allowed`}
+                                                placeholder={t('emailAddr')}
                                             />
                                         </div>
                                     </div>
 
                                     <div className="grid md:grid-cols-2 gap-6">
                                         <div>
-                                            <label className={labelClass}>{t('companyName')}</label>
+                                            <label htmlFor="company-name" className={labelClass}>{t('companyName')}</label>
                                             <div className="relative">
-                                                <Building className={`absolute left-3 top-3.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} size={18} />
+                                                <Building className={`absolute left-3 top-3.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} size={18} aria-hidden="true" />
                                                 <input
+                                                    id="company-name"
                                                     type="text"
                                                     value={company}
                                                     onChange={e => setCompany(e.target.value)}
@@ -161,10 +166,11 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
                                             </div>
                                         </div>
                                         <div>
-                                            <label className={labelClass}>{t('jobTitle')}</label>
+                                            <label htmlFor="job-title" className={labelClass}>{t('jobTitle')}</label>
                                             <div className="relative">
-                                                <Briefcase className={`absolute left-3 top-3.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} size={18} />
+                                                <Briefcase className={`absolute left-3 top-3.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} size={18} aria-hidden="true" />
                                                 <input
+                                                    id="job-title"
                                                     type="text"
                                                     value={jobTitle}
                                                     onChange={e => setJobTitle(e.target.value)}
@@ -206,6 +212,8 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
                                         </div>
                                         <button
                                             onClick={toggleTheme}
+                                            aria-label={isDark ? "Ativar Modo Claro" : "Ativar Modo Escuro"}
+                                            title={isDark ? "Ativar Modo Claro" : "Ativar Modo Escuro"}
                                             className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${isDark ? 'bg-indigo-600' : 'bg-slate-300'}`}
                                         >
                                             <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition duration-200 ease-in-out ${isDark ? 'translate-x-6' : 'translate-x-1'}`} />
@@ -213,19 +221,21 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
                                     </div>
 
                                     <div>
-                                        <label className={labelClass}>{t('systemLang')}</label>
+                                        <label htmlFor="system-lang" className={labelClass}>{t('systemLang')}</label>
                                         <div className="relative max-w-sm mt-2">
-                                            <Globe className={`absolute left-3 top-3.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} size={18} />
+                                            <Globe className={`absolute left-3 top-3.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} size={18} aria-hidden="true" />
                                             <select
+                                                id="system-lang"
                                                 value={lang}
                                                 onChange={(e) => setLang(e.target.value as Language)}
                                                 className={`${inputClass} pl-10 cursor-pointer appearance-none`}
+                                                title={t('systemLang')}
                                             >
                                                 <option value="pt">Português (Brasil)</option>
                                                 <option value="en">English (US)</option>
                                                 <option value="es">Español</option>
                                             </select>
-                                            <ChevronDown className={`absolute right-3 top-3.5 pointer-events-none ${isDark ? 'text-slate-500' : 'text-slate-400'}`} size={16} />
+                                            <ChevronDown className={`absolute right-3 top-3.5 pointer-events-none ${isDark ? 'text-slate-500' : 'text-slate-400'}`} size={16} aria-hidden="true" />
                                         </div>
                                     </div>
                                 </div>
@@ -312,8 +322,16 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
                                                 {projectsCount} / {limits.projects === 9999 ? '∞' : limits.projects}
                                             </span>
                                         </div>
-                                        <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden">
-                                            <div className={`h-full rounded-full transition-all duration-1000 ${projectPercentage > 90 ? 'bg-red-500' : 'bg-indigo-600'}`} style={{ width: `${projectPercentage}%` }}></div>
+                                        <div
+                                            className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden"
+                                            role="progressbar"
+                                            aria-valuenow={Math.round(projectPercentage)}
+                                            aria-valuemin={0}
+                                            aria-valuemax={100}
+                                            aria-label={t('projectsUsed')}
+                                            title={t('projectsUsed')}
+                                        >
+                                            <div className={`h-full rounded-full transition-all duration-1000 ${projectPercentage > 90 ? 'bg-red-500' : 'bg-indigo-600'}`} style={{ ['width' as any]: `${projectPercentage}%` }}></div>
                                         </div>
                                     </div>
 

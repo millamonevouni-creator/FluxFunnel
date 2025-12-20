@@ -8,6 +8,7 @@ interface TeamDashboardProps {
     onInviteMember: (email: string, role: 'ADMIN' | 'EDITOR' | 'VIEWER') => Promise<void>;
     onUpdateRole: (id: string, newRole: 'ADMIN' | 'EDITOR' | 'VIEWER') => void;
     onRemoveMember: (id: string) => void;
+    onResendInvite: (email: string) => Promise<void>;
     onUpgrade: () => void;
     plan: UserPlan;
     maxMembers: number;
@@ -15,7 +16,7 @@ interface TeamDashboardProps {
     t: (key: any) => string;
 }
 
-const TeamDashboard = ({ members = [], onInviteMember, onUpdateRole, onRemoveMember, onUpgrade, plan, maxMembers, isDark, t }: TeamDashboardProps) => {
+const TeamDashboard = ({ members = [], onInviteMember, onUpdateRole, onRemoveMember, onResendInvite, onUpgrade, plan, maxMembers, isDark, t }: TeamDashboardProps) => {
     const bgCard = isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200';
     const textTitle = isDark ? 'text-white' : 'text-slate-900';
     const textSub = isDark ? 'text-slate-400' : 'text-slate-500';
@@ -150,12 +151,16 @@ const TeamDashboard = ({ members = [], onInviteMember, onUpdateRole, onRemoveMem
                         </div>
                     </div>
 
-                    {/* Progress Bar */}
-                    <div className="w-full bg-black/20 rounded-full h-3 overflow-hidden">
-                        <div
-                            className="h-full bg-white/90 rounded-full transition-all duration-1000 ease-out"
-                            style={{ width: `${Math.min(usagePercentage, 100)}%` }}
-                        ></div>
+                    <div
+                        className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden"
+                        role="progressbar"
+                        aria-valuenow={Math.round(usagePercentage)}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-label={`Uso da equipe: ${Math.round(usagePercentage)}%`}
+                        title={`Uso da equipe: ${Math.round(usagePercentage)}%`}
+                    >
+                        <div className={`h-full rounded-full transition-all duration-1000 ${usagePercentage > 90 ? 'bg-red-500' : 'bg-indigo-600'}`} style={{ ['width' as any]: `${usagePercentage}%` }}></div>
                     </div>
 
                     {usagePercentage >= 100 && safeMaxMembers !== 9999 && (
@@ -211,6 +216,8 @@ const TeamDashboard = ({ members = [], onInviteMember, onUpdateRole, onRemoveMem
                                                 <select
                                                     value={member.role || 'VIEWER'}
                                                     onChange={(e) => onUpdateRole(member.id, e.target.value as any)}
+                                                    title="Alterar função do membro"
+                                                    aria-label="Selecionar função do membro"
                                                     className={`appearance-none pl-3 pr-8 py-1.5 rounded-lg border text-xs font-bold uppercase cursor-pointer outline-none focus:ring-2 focus:ring-indigo-500 transition-all
                                             ${member.role === 'ADMIN'
                                                             ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800'
@@ -224,24 +231,43 @@ const TeamDashboard = ({ members = [], onInviteMember, onUpdateRole, onRemoveMem
                                                 <ChevronDown size={12} className={`absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none ${member.role === 'ADMIN' ? 'text-amber-600' : 'text-indigo-600'}`} />
                                             </div>
 
-                                            {/* Status Badge */}
-                                            <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded
-                                     ${member.status === 'ACTIVE' ? 'text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400' : 'text-slate-500 bg-slate-100 dark:bg-slate-800 dark:text-slate-400'}
-                                `}>
-                                                {member.status === 'ACTIVE' ? <CheckCircle size={14} /> : <Clock size={14} />}
-                                                {member.status === 'ACTIVE' ? 'Ativo' : 'Pendente'}
-                                            </div>
+                                            {/* Status and Actions */}
+                                            <div className="flex items-center gap-3">
+                                                <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded
+                                                    ${member.status === 'ACTIVE' ? 'text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400' : 'text-slate-500 bg-slate-100 dark:bg-slate-800 dark:text-slate-400'}
+                                                `}>
+                                                    {member.status === 'ACTIVE' ? <CheckCircle size={14} /> : <Clock size={14} />}
+                                                    {member.status === 'ACTIVE' ? 'Ativo' : 'Pendente'}
+                                                </div>
 
-                                            <button
-                                                onClick={() => onRemoveMember(member.id)}
-                                                className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                                                title="Remover"
-                                            >
-                                                <MoreHorizontal size={18} />
-                                            </button>
+                                                {member.status === 'PENDING' && (
+                                                    <button
+                                                        onClick={async () => {
+                                                            try {
+                                                                await onResendInvite(member.email);
+                                                                alert("Convite enviado novamente!");
+                                                            } catch (e) {
+                                                                alert("Erro ao reenviar convite.");
+                                                            }
+                                                        }}
+                                                        className="px-3 py-1.5 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg text-xs font-bold transition-all"
+                                                    >
+                                                        Reenviar
+                                                    </button>
+                                                )}
+
+                                                <button
+                                                    onClick={() => onRemoveMember(member.id)}
+                                                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                                                    title={`Remover ${displayName}`}
+                                                    aria-label={`Remover ${displayName}`}
+                                                >
+                                                    <MoreHorizontal size={18} aria-hidden="true" />
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                )
+                                );
                             })
                         )}
                     </div>
@@ -254,15 +280,16 @@ const TeamDashboard = ({ members = [], onInviteMember, onUpdateRole, onRemoveMem
                     <div className={`w-full max-w-md rounded-2xl shadow-2xl p-6 border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
                         <div className="flex justify-between items-center mb-6">
                             <h3 className={`text-xl font-bold ${textTitle}`}>Convidar Membro</h3>
-                            <button onClick={() => setShowInviteModal(false)} className={`p-1.5 rounded-full ${isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}>
-                                <X size={20} />
+                            <button onClick={() => setShowInviteModal(false)} className={`p-1.5 rounded-full ${isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`} title="Fechar modal" aria-label="Fechar modal">
+                                <X size={20} aria-hidden="true" />
                             </button>
                         </div>
 
                         <form onSubmit={handleInviteSubmit} className="space-y-4">
                             <div>
-                                <label className={`block text-sm font-bold mb-1 ${textSub}`}>E-mail do Colaborador</label>
+                                <label htmlFor="invite-email" className={`block text-sm font-bold mb-1 ${textSub}`}>E-mail do Colaborador</label>
                                 <input
+                                    id="invite-email"
                                     type="email"
                                     required
                                     autoFocus
@@ -294,6 +321,9 @@ const TeamDashboard = ({ members = [], onInviteMember, onUpdateRole, onRemoveMem
                                     {inviteRole === 'VIEWER' && 'Pode apenas visualizar os projetos. Não pode editar.'}
                                     {inviteRole === 'EDITOR' && 'Pode editar fluxos e configurações do projeto.'}
                                     {inviteRole === 'ADMIN' && 'Controle total sobre a equipe e cobranças.'}
+                                </p>
+                                <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-2 font-medium flex items-center gap-1">
+                                    <AlertCircle size={10} /> O convite é enviado via e-mail. Peça para o membro verificar a pasta de spam.
                                 </p>
                             </div>
 

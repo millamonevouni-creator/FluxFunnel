@@ -21,12 +21,7 @@ import { safeGet, safeSet, migrateFeedbacks } from './utils/storage';
 import { api } from './services/api';
 import { supabase } from './services/supabaseClient';
 
-const DEFAULT_PROJECT: Project = { id: 'proj_default', name: 'Funil Exemplo 1', nodes: INITIAL_NODES as any, edges: INITIAL_EDGES, updatedAt: new Date() };
-
-const MOCK_PROJECTS: Project[] = [
-  { id: 'p_admin_1', name: 'Ecossistema Enterprise Q4', nodes: [], edges: [], updatedAt: new Date(), ownerId: 'u1' },
-  { id: 'p_admin_2', name: 'Funil High Ticket', nodes: PROJECT_TEMPLATES[1].nodes as any, edges: PROJECT_TEMPLATES[1].edges, updatedAt: new Date(), ownerId: 'u1' }
-];
+const DEFAULT_PROJECT = (t: any): Project => ({ id: 'proj_default', name: t('newProject'), nodes: INITIAL_NODES as any, edges: INITIAL_EDGES, updatedAt: new Date() });
 
 const App = () => {
   const [currentView, setCurrentView] = useState<AppView>('LANDING');
@@ -37,7 +32,7 @@ const App = () => {
   const [showNotes, setShowNotes] = useState(true);
   const [lang, setLang] = useState<Language>('pt');
   const [authReturnView, setAuthReturnView] = useState<AppView | null>(null);
-  const [authInitialView, setAuthInitialView] = useState<'LOGIN' | 'FORGOT_PASSWORD' | 'RESET_SENT' | 'UPDATE_PASSWORD'>('LOGIN');
+  const [authInitialView, setAuthInitialView] = useState<'LOGIN' | 'FORGOT_PASSWORD' | 'RESET_SENT' | 'UPDATE_PASSWORD' | 'SIGNUP_SUCCESS'>('LOGIN');
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showAIAssistant, setShowAIAssistant] = useState(false);
@@ -105,11 +100,9 @@ const App = () => {
         setIsSidebarCollapsed(safeGet('sidebarCollapsed', false));
         setIsLoadingProjects(true);
         const apiProjects = await api.projects.list();
-        const combined = [...MOCK_PROJECTS, ...apiProjects];
-        const unique = Array.from(new Map(combined.map(p => [p.id, p])).values());
-        setProjects(unique.length ? unique : [DEFAULT_PROJECT]);
+        setProjects(apiProjects.length ? apiProjects : [DEFAULT_PROJECT(t)]);
         if (shareId) {
-          const found = unique.find(p => p.id === shareId);
+          const found = apiProjects.find(p => p.id === shareId);
           if (found) { setSharedProject(found); setCurrentView('SHARED'); }
         }
       } catch (e) { console.error(e); }
@@ -146,9 +139,7 @@ const App = () => {
             setTeamMembers(await api.team.list());
 
             const apiProjects = await api.projects.list();
-            const combined = [...MOCK_PROJECTS, ...apiProjects];
-            const unique = Array.from(new Map(combined.map(p => [p.id, p])).values());
-            setProjects(unique);
+            setProjects(apiProjects);
 
             // Only switch view if we are effectively seemingly not logged in
             // This is a bit tricky with stale access to state in useEffect.
@@ -171,20 +162,60 @@ const App = () => {
   useEffect(() => { if (isInitialized) safeSet('lang', lang); }, [lang, isInitialized]);
 
   const handleLogin = async (data: any) => {
-    if (!systemConfig.allowSignups && data.isSignup) { showNotification("Cadastros suspensos.", 'error'); return; }
+    if (!systemConfig.allowSignups && data.isSignup) {
+      showNotification("Cadastros suspensos pelo administrador.", 'error');
+      throw new Error("Cadastros estão temporariamente suspensos.");
+    }
+
     try {
-      const { user: newUser } = data.isSignup ? await api.auth.register(data.email, data.password, data.name) : await api.auth.login(data.email, data.password);
-      if (newUser.status === 'BANNED') { await api.auth.logout(); showNotification("Conta banida.", 'error'); return; }
+      const result = data.isSignup ?
+        await api.auth.register(data.email, data.password, data.name) :
+        await api.auth.login(data.email, data.password);
+
+      const newUser = result.user;
+
+      if (data.isSignup && !result.token) {
+        // Email confirmation is likely required (Supabase default for many configs)
+        setAuthInitialView('SIGNUP_SUCCESS');
+        return; // Don't proceed to dashboard
+      }
+
+      if (newUser.status === 'BANNED') {
+        await api.auth.logout();
+        showNotification("Sua conta está suspensa.", 'error');
+        throw new Error("Conta banida ou suspensa.");
+      }
+
       setUser(newUser);
-      const apiProjects = await api.projects.list();
-      const combined = [...MOCK_PROJECTS, ...apiProjects];
-      const unique = Array.from(new Map(combined.map(p => [p.id, p])).values());
-      setProjects(unique);
-      if (newUser.isSystemAdmin) setAllUsers(await api.users.list());
-      if (authReturnView) setCurrentView(authReturnView); else { setCurrentView('APP'); setAppPage('PROJECTS'); }
+
+      // Load initial data
+      const [apiProjects, members, templates] = await Promise.all([
+        api.projects.list(),
+        api.team.list(),
+        api.templates.list()
+      ]);
+
+      setProjects(apiProjects);
+      setTeamMembers(members);
+      setCustomTemplates(templates);
+
+      if (newUser.isSystemAdmin) {
+        setAllUsers(await api.users.list());
+      }
+
+      showNotification(data.isSignup ? "Conta criada com sucesso!" : "Login realizado com sucesso!");
+
+      if (authReturnView) {
+        setCurrentView(authReturnView);
+      } else {
+        setCurrentView('APP');
+        setAppPage('PROJECTS');
+      }
     } catch (e: any) {
-      console.error(e);
-      showNotification(e.message || "Falha na autenticação.", 'error');
+      console.error("Auth process error:", e);
+      // We don't show the notification here because AuthPage will catch it and show it locally
+      // unless we want both. Let's keep it in AuthPage for better UX.
+      throw e;
     }
   };
 
@@ -322,7 +353,7 @@ const App = () => {
       </>
     );
   }
-  if (currentView === 'ROADMAP') return <RoadmapPage onBack={() => setCurrentView(user ? 'APP' : 'LANDING')} feedbacks={feedbacks} onSubmitFeedback={(item) => api.feedbacks.create(item)} onVote={(id) => api.feedbacks.update(id, {})} onAddComment={(id, text) => api.feedbacks.update(id, {})} isAuthenticated={!!user} currentUser={user} onLoginRequest={() => { setAuthReturnView('ROADMAP'); setCurrentView('AUTH'); }} t={t} isDark={isDark} />;
+  if (currentView === 'ROADMAP') return <RoadmapPage onBack={() => setCurrentView(user ? 'APP' : 'LANDING')} feedbacks={feedbacks} onSubmitFeedback={async (item) => { await api.feedbacks.create(item); setFeedbacks(await api.feedbacks.list()); }} onVote={async (id) => { await api.feedbacks.vote(id); setFeedbacks(await api.feedbacks.list()); }} onAddComment={async (id, text) => { await api.feedbacks.addComment(id, text); setFeedbacks(await api.feedbacks.list()); }} isAuthenticated={!!user} currentUser={user} onLoginRequest={() => { setAuthReturnView('ROADMAP'); setCurrentView('AUTH'); }} t={t} isDark={isDark} />;
 
   if (currentView === 'ADMIN' && user?.isSystemAdmin) {
     return (
@@ -433,32 +464,32 @@ const App = () => {
         </header>
 
         <div className="flex-1 overflow-hidden relative flex">
-          {appPage === 'PROJECTS' && <ProjectsDashboard projects={projects.filter(p => p.ownerId === user?.id)} onCreateProject={createProject} onOpenProject={(id) => { setCurrentProjectId(id); setAppPage('BUILDER'); }} onDeleteProject={handleDeleteProject} onRenameProject={handleRenameProject} onRefreshTemplates={refreshTemplates} isDark={isDark} t={t} userPlan={user?.plan} customTemplates={customTemplates} onSaveAsTemplate={(p) => api.templates.create({ customLabel: p.name, nodes: p.nodes, edges: p.edges, isCustom: true })} />}
-          {appPage === 'MARKETPLACE' && <MarketplaceDashboard userPlan={user?.plan || 'FREE'} onDownload={(t) => createProject(t.id, t.customLabel)} isDark={isDark} t={t} userId={user?.id} />}
-          {appPage === 'TEAM' && <TeamDashboard members={teamMembers} onInviteMember={handleInviteMember} onUpdateRole={handleUpdateMemberRole} onRemoveMember={handleRemoveMember} onUpgrade={() => { }} plan={user?.plan || 'FREE'} maxMembers={plans.find(p => p.id === user?.plan)?.teamLimit ?? (user?.plan === 'PREMIUM' ? 10 : 0)} isDark={isDark} t={t} />}
+          {appPage === 'PROJECTS' && <ProjectsDashboard projects={projects.filter(p => p.ownerId === user?.id)} onCreateProject={createProject} onOpenProject={(id) => { setCurrentProjectId(id); setAppPage('BUILDER'); }} onDeleteProject={handleDeleteProject} onRenameProject={handleRenameProject} onRefreshTemplates={refreshTemplates} showNotification={showNotification} isDark={isDark} t={t} userPlan={user?.plan} customTemplates={customTemplates} onSaveAsTemplate={async (p) => { await api.templates.create({ customLabel: p.name, nodes: p.nodes, edges: p.edges, isCustom: true }); refreshTemplates(); }} />}
+          {appPage === 'MARKETPLACE' && <MarketplaceDashboard userPlan={user?.plan || 'FREE'} onDownload={async (t) => { await createProject(t.id, t.customLabel); showNotification("Template baixado!"); }} isDark={isDark} t={t} userId={user?.id} />}
+          {appPage === 'TEAM' && <TeamDashboard members={teamMembers} onInviteMember={handleInviteMember} onUpdateRole={handleUpdateMemberRole} onRemoveMember={handleRemoveMember} onResendInvite={api.team.resendInvite} onUpgrade={() => { }} plan={user?.plan || 'FREE'} maxMembers={plans.find(p => p.id === user?.plan)?.teamLimit ?? (user?.plan === 'PREMIUM' ? 10 : 0)} isDark={isDark} t={t} />}
           {appPage === 'MASTER_ADMIN' && <MasterAdminDashboard
             onBack={() => setAppPage('PROJECTS')}
+            onReplyFeedback={async (id, text) => { await api.feedbacks.addComment(id, text); setFeedbacks(await api.feedbacks.list()); }}
+            onDeleteComment={async (fid, cid) => { await api.feedbacks.deleteComment(fid, cid); setFeedbacks(await api.feedbacks.list()); }}
             feedbacks={feedbacks}
-            onUpdateStatus={api.feedbacks.update}
-            onDeleteFeedback={api.feedbacks.delete}
-            onUpdateFeedback={api.feedbacks.update}
-            onReplyFeedback={(id, text) => console.log('Reply:', id, text)}
-            onDeleteComment={(fid, cid) => console.log('Delete comment', fid, cid)}
+            onUpdateStatus={async (id, status) => { await api.feedbacks.update(id, { status }); setFeedbacks(await api.feedbacks.list()); }}
+            onDeleteFeedback={async (id) => { await api.feedbacks.delete(id); setFeedbacks(await api.feedbacks.list()); }}
+            onUpdateFeedback={async (id, f) => { await api.feedbacks.update(id, f); setFeedbacks(await api.feedbacks.list()); }}
             users={allUsers || []}
-            onUpdateUser={async (u) => { await api.admin.updateUserStatus(u.id, u.status); await api.admin.updateUserPlan(u.id, u.plan); }}
-            onDeleteUser={(id) => api.admin.updateUserStatus(id, 'BANNED')}
+            onUpdateUser={async (u) => { await api.admin.updateUserStatus(u.id, u.status); await api.admin.updateUserPlan(u.id, u.plan); setAllUsers(await api.users.list()); }}
+            onDeleteUser={async (id) => { await api.admin.updateUserStatus(id, 'BANNED'); setAllUsers(await api.users.list()); }}
             onCreateUser={() => { }}
-            onImpersonate={(id) => console.log('Impersonate', id)}
+            onImpersonate={handleAdminImpersonate}
             plans={plans}
-            onUpdatePlan={(p) => setPlans(prev => prev.map(pl => pl.id === p.id ? p : pl))}
-            onDeletePlan={(id) => setPlans(prev => prev.filter(p => p.id !== id))}
-            onCreatePlan={(p) => setPlans(prev => [...prev, p])}
+            onUpdatePlan={async (p) => { await api.plans.update(p.id, p); setPlans(await api.plans.list()); }}
+            onDeletePlan={async (id) => { await api.plans.delete(id); setPlans(await api.plans.list()); }}
+            onCreatePlan={async (p) => { await api.plans.create(p); setPlans(await api.plans.list()); }}
             systemConfig={systemConfig}
-            onUpdateSystemConfig={api.system.update}
+            onUpdateSystemConfig={async (c) => { await api.system.update(c); setSystemConfig(await api.system.get()); }}
             t={t}
           />}
           {appPage === 'BUILDER' && (currentProjectId ? <FlowCanvasWrapped project={projects.find(p => p.id === currentProjectId)!} onSaveProject={triggerSaveProject} onUnsavedChanges={() => setHasUnsavedChanges(true)} triggerSaveSignal={saveSignal} openSaveModalSignal={openSaveModalSignal} isDark={isDark} toggleTheme={() => setIsDark(!isDark)} isPresentationMode={appMode === AppMode.PRESENTATION} showNotesInPresentation={showNotes} t={t} userPlan={user?.plan || 'FREE'} showAIAssistant={showAIAssistant} onToggleAIAssistant={() => setShowAIAssistant(!showAIAssistant)} onSaveTemplate={async (nodes, edges, name) => { if (!user) return; try { await api.templates.create({ customLabel: name, nodes, edges, isCustom: true, owner_id: user.id }); showNotification("Modelo salvo com sucesso!"); setCustomTemplates(await api.templates.list()); } catch (e) { showNotification("Erro ao salvar modelo", 'error'); } }} onShareToMarketplace={async (name, desc) => { if (!user) return; const p = projects.find(p => p.id === currentProjectId); if (p) { await api.templates.submitToMarketplace({ customLabel: name, customDescription: desc, nodes: p.nodes, edges: p.edges, authorName: user.name }); showNotification("Enviado para análise com sucesso!"); } }} /> : <div className="flex flex-col items-center justify-center h-full text-slate-400"><Folder size={64} className="mb-4 opacity-50" /><p>{t('noProjectSelected')}</p></div>)}
-          {appPage === 'SETTINGS' && user && <SettingsDashboard user={user} onUpdateUser={(updated) => api.auth.updateProfile(user.id, updated)} isDark={isDark} toggleTheme={() => setIsDark(!isDark)} lang={lang} setLang={setLang} t={t} projectsCount={projects.filter(p => p.ownerId === user.id).length} />}
+          {appPage === 'SETTINGS' && user && <SettingsDashboard user={user} onUpdateUser={async (updated) => { await api.auth.updateProfile(user.id, updated); setUser({ ...user, ...updated }); showNotification("Perfil atualizado!"); }} isDark={isDark} toggleTheme={() => setIsDark(!isDark)} lang={lang} setLang={setLang} t={t} projectsCount={projects.filter(p => p.ownerId === user.id).length} />}
         </div>
       </main>
     </div>

@@ -188,8 +188,8 @@ const MasterAdminDashboard = ({
             {/* Header Unificado Estilo Enterprise - Compacto */}
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 p-4 bg-[#0f172a]/40 border border-slate-800/60 rounded-2xl backdrop-blur-xl shrink-0">
                 <div className="flex items-center gap-4">
-                    <button onClick={onBack} className="p-2.5 bg-slate-900/80 hover:bg-indigo-600 rounded-xl text-slate-400 hover:text-white transition-all shadow-md border border-slate-800">
-                        <ArrowLeft size={18} />
+                    <button onClick={onBack} className="p-2.5 bg-slate-900/80 hover:bg-indigo-600 rounded-xl text-slate-400 hover:text-white transition-all shadow-md border border-slate-800" title="Voltar" aria-label="Voltar">
+                        <ArrowLeft size={18} aria-hidden="true" />
                     </button>
                     <div>
                         <div className="flex items-center gap-2">
@@ -212,6 +212,8 @@ const MasterAdminDashboard = ({
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id as any)}
                             className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20' : 'text-slate-500 hover:text-slate-300'}`}
+                            title={`Aba ${tab.label}`}
+                            aria-label={`Aba ${tab.label}`}
                         >
                             {tab.label}
                         </button>
@@ -235,8 +237,10 @@ const MasterAdminDashboard = ({
                         <button
                             onClick={() => setEditingPlan({ id: `NEW_${Date.now()}`, label: 'Novo Plano', priceMonthly: 0, priceYearly: 0, projectLimit: 1, nodeLimit: 20, features: [], isPopular: false })}
                             className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-black text-[10px] uppercase tracking-[0.1em] flex items-center gap-2 shadow-lg shadow-indigo-500/20 active:scale-95 transition-all transform hover:-translate-y-0.5"
+                            title="Adicionar Modelo de Plano"
+                            aria-label="Adicionar Modelo de Plano"
                         >
-                            <Plus size={16} /> Adicionar Modelo
+                            <Plus size={16} aria-hidden="true" /> Adicionar Modelo
                         </button>
                     </div>
 
@@ -267,8 +271,9 @@ const MasterAdminDashboard = ({
                                                 }}
                                                 className="p-3 bg-slate-900/80 border border-slate-800 hover:bg-slate-700 text-slate-500 hover:text-white rounded-xl transition-all shadow-md active:scale-95"
                                                 title="Mover para esquerda"
+                                                aria-label="Mover plano para esquerda"
                                             >
-                                                <ArrowLeft size={16} />
+                                                <ArrowLeft size={16} aria-hidden="true" />
                                             </button>
                                         )}
                                         {index < array.length - 1 && (
@@ -284,15 +289,18 @@ const MasterAdminDashboard = ({
                                                 }}
                                                 className="p-3 bg-slate-900/80 border border-slate-800 hover:bg-slate-700 text-slate-500 hover:text-white rounded-xl transition-all shadow-md active:scale-95"
                                                 title="Mover para direita"
+                                                aria-label="Mover plano para direita"
                                             >
-                                                <ChevronRight size={16} />
+                                                <ChevronRight size={16} aria-hidden="true" />
                                             </button>
                                         )}
                                         <button
                                             onClick={() => setEditingPlan(plan)}
                                             className="p-3 bg-slate-900/80 border border-slate-800 hover:bg-indigo-600 text-slate-500 hover:text-white rounded-xl transition-all shadow-md hover:scale-105 active:scale-95"
+                                            title="Editar Plano"
+                                            aria-label="Editar Plano"
                                         >
-                                            <Pencil size={16} />
+                                            <Pencil size={16} aria-hidden="true" />
                                         </button>
                                     </div>
                                 </div>
@@ -339,8 +347,8 @@ const MasterAdminDashboard = ({
                                 <h3 className="text-3xl font-black uppercase tracking-tight">Editor de Produto</h3>
                                 <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-1">REDEFININDO OFERTA GLOBAL: {editingPlan.label}</p>
                             </div>
-                            <button onClick={() => setEditingPlan(null)} className="p-4 bg-slate-900 hover:bg-slate-800 rounded-3xl text-slate-500 transition-all border border-slate-800 shadow-2xl hover:scale-110 active:scale-95">
-                                <X size={28} />
+                            <button onClick={() => setEditingPlan(null)} className="p-4 bg-slate-900 hover:bg-slate-800 rounded-3xl text-slate-500 transition-all border border-slate-800 shadow-2xl hover:scale-110 active:scale-95" title="Fechar" aria-label="Fechar">
+                                <X size={28} aria-hidden="true" />
                             </button>
                         </div>
                         <form onSubmit={handleSavePlan} className="p-12 space-y-10 overflow-y-auto max-h-[75vh] scrollbar-thin">
@@ -359,6 +367,8 @@ const MasterAdminDashboard = ({
                                     type="button"
                                     onClick={() => setEditingPlan({ ...editingPlan, isPopular: !editingPlan.isPopular })}
                                     className={`w-16 h-9 rounded-full relative transition-all duration-500 ${editingPlan.isPopular ? 'bg-indigo-600 shadow-[0_0_20px_rgba(79,70,229,0.3)]' : 'bg-slate-800'}`}
+                                    title={editingPlan.isPopular ? "Remover destaque" : "Destacar plano"}
+                                    aria-label={editingPlan.isPopular ? "Remover destaque" : "Destacar plano"}
                                 >
                                     <div className={`absolute top-1.5 w-6 h-6 bg-white rounded-full shadow-sm transition-all duration-300 ${editingPlan.isPopular ? 'right-1.5' : 'left-1.5'}`}></div>
                                 </button>
@@ -371,42 +381,42 @@ const MasterAdminDashboard = ({
 
                             <div className="grid grid-cols-2 gap-8">
                                 <div className="space-y-4">
-                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Preço Mensal (R$)</label>
+                                    <label htmlFor="plan-price-monthly" className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Preço Mensal (R$)</label>
                                     <div className="relative">
-                                        <div className="absolute left-6 top-1/2 -translate-y-1/2 text-indigo-500 font-black text-xs">R$</div>
-                                        <input type="number" step="0.01" value={editingPlan.priceMonthly} onChange={e => setEditingPlan({ ...editingPlan, priceMonthly: parseFloat(e.target.value) })} className="w-full p-6 pl-14 bg-[#020617] border border-slate-800 rounded-2xl outline-none focus:border-indigo-500 transition-all text-sm font-black" />
+                                        <div className="absolute left-6 top-1/2 -translate-y-1/2 text-indigo-500 font-black text-xs" aria-hidden="true">R$</div>
+                                        <input id="plan-price-monthly" title="Preço Mensal" type="number" step="0.01" value={editingPlan.priceMonthly} onChange={e => setEditingPlan({ ...editingPlan, priceMonthly: parseFloat(e.target.value) })} className="w-full p-6 pl-14 bg-[#020617] border border-slate-800 rounded-2xl outline-none focus:border-indigo-500 transition-all text-sm font-black" />
                                     </div>
                                 </div>
                                 <div className="space-y-4">
-                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Preço Anual (R$)</label>
+                                    <label htmlFor="plan-price-yearly" className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Preço Anual (R$)</label>
                                     <div className="relative">
-                                        <div className="absolute left-6 top-1/2 -translate-y-1/2 text-purple-500 font-black text-xs">R$</div>
-                                        <input type="number" step="0.01" value={editingPlan.priceYearly} onChange={e => setEditingPlan({ ...editingPlan, priceYearly: parseFloat(e.target.value) })} className="w-full p-6 pl-14 bg-[#020617] border border-slate-800 rounded-2xl outline-none focus:border-indigo-500 transition-all text-sm font-black" />
+                                        <div className="absolute left-6 top-1/2 -translate-y-1/2 text-purple-500 font-black text-xs" aria-hidden="true">R$</div>
+                                        <input id="plan-price-yearly" title="Preço Anual" type="number" step="0.01" value={editingPlan.priceYearly} onChange={e => setEditingPlan({ ...editingPlan, priceYearly: parseFloat(e.target.value) })} className="w-full p-6 pl-14 bg-[#020617] border border-slate-800 rounded-2xl outline-none focus:border-indigo-500 transition-all text-sm font-black" />
                                     </div>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                                 <div className="space-y-4">
-                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Capacidade de Projetos</label>
+                                    <label htmlFor="plan-project-limit" className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Capacidade de Projetos</label>
                                     <div className="relative">
-                                        <Folder className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
-                                        <input type="number" value={editingPlan.projectLimit} onChange={e => setEditingPlan({ ...editingPlan, projectLimit: parseInt(e.target.value) })} className="w-full p-6 pl-14 bg-[#020617] border border-slate-800 rounded-2xl outline-none focus:border-indigo-500 transition-all text-sm font-black" />
+                                        <Folder className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-600" size={18} aria-hidden="true" />
+                                        <input id="plan-project-limit" title="Capacidade de Projetos" type="number" value={editingPlan.projectLimit} onChange={e => setEditingPlan({ ...editingPlan, projectLimit: parseInt(e.target.value) })} className="w-full p-6 pl-14 bg-[#020617] border border-slate-800 rounded-2xl outline-none focus:border-indigo-500 transition-all text-sm font-black" />
                                     </div>
                                     <p className="text-[9px] text-slate-600 font-bold uppercase px-2 italic">*Use 9999 para ilimitado</p>
                                 </div>
                                 <div className="space-y-4">
-                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Elementos no Fluxo</label>
+                                    <label htmlFor="plan-node-limit" className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Elementos no Fluxo</label>
                                     <div className="relative">
-                                        <Activity className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
-                                        <input type="number" value={editingPlan.nodeLimit} onChange={e => setEditingPlan({ ...editingPlan, nodeLimit: parseInt(e.target.value) })} className="w-full p-6 pl-14 bg-[#020617] border border-slate-800 rounded-2xl outline-none focus:border-indigo-500 transition-all text-sm font-black" />
+                                        <Activity className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-600" size={18} aria-hidden="true" />
+                                        <input id="plan-node-limit" title="Elementos no Fluxo" type="number" value={editingPlan.nodeLimit} onChange={e => setEditingPlan({ ...editingPlan, nodeLimit: parseInt(e.target.value) })} className="w-full p-6 pl-14 bg-[#020617] border border-slate-800 rounded-2xl outline-none focus:border-indigo-500 transition-all text-sm font-black" />
                                     </div>
                                 </div>
                                 <div className="space-y-4">
                                     <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Limite da Equipe</label>
                                     <div className="relative">
-                                        <Users className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
-                                        <input type="number" value={editingPlan.teamLimit || 0} onChange={e => setEditingPlan({ ...editingPlan, teamLimit: parseInt(e.target.value) })} className="w-full p-6 pl-14 bg-[#020617] border border-slate-800 rounded-2xl outline-none focus:border-indigo-500 transition-all text-sm font-black" />
+                                        <Users className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-600" size={18} aria-hidden="true" />
+                                        <input id="team-limit" title="Limite da Equipe" type="number" value={editingPlan.teamLimit || 0} onChange={e => setEditingPlan({ ...editingPlan, teamLimit: parseInt(e.target.value) })} className="w-full p-6 pl-14 bg-[#020617] border border-slate-800 rounded-2xl outline-none focus:border-indigo-500 transition-all text-sm font-black" />
                                     </div>
                                 </div>
                             </div>
@@ -423,8 +433,8 @@ const MasterAdminDashboard = ({
                             </div>
 
                             <div className="pt-6 flex gap-6">
-                                <button type="button" onClick={() => { if (window.confirm("Ação irreversível. Excluir este modelo de plano?")) { onDeletePlan(editingPlan.id); setEditingPlan(null); } }} className="p-8 bg-red-600/10 text-red-500 border border-red-600/20 rounded-3xl font-black shadow-xl hover:bg-red-600 hover:text-white transition-all active:scale-90">
-                                    <Trash2 size={28} />
+                                <button type="button" onClick={() => { if (window.confirm("Ação irreversível. Excluir este modelo de plano?")) { onDeletePlan(editingPlan.id); setEditingPlan(null); } }} className="p-8 bg-red-600/10 text-red-500 border border-red-600/20 rounded-3xl font-black shadow-xl hover:bg-red-600 hover:text-white transition-all active:scale-90" title="Excluir Plano" aria-label="Excluir Plano">
+                                    <Trash2 size={28} aria-hidden="true" />
                                 </button>
                                 <button type="submit" className="flex-1 py-8 bg-indigo-600 hover:bg-indigo-500 text-white rounded-[2.5rem] font-black uppercase tracking-[0.4em] text-[11px] shadow-2xl shadow-indigo-500/30 transition-all active:scale-95">
                                     Publicar Alterações Globais
@@ -561,7 +571,7 @@ const MasterAdminDashboard = ({
                         </div>
                         <div className="flex gap-2">
                             {['ALL', 'ACTIVE', 'PREMIUM', 'BANNED'].map(f => (
-                                <button key={f} onClick={() => setUserFilter(f as any)} className={`px-4 py-3 rounded-xl font-bold uppercase tracking-wider text-[10px] border transition-all ${userFilter === f ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-[#0f172a]/60 border-slate-800 text-slate-500 hover:text-slate-300'}`}>
+                                <button key={f} onClick={() => setUserFilter(f as any)} className={`px-4 py-3 rounded-xl font-bold uppercase tracking-wider text-[10px] border transition-all ${userFilter === f ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-[#0f172a]/60 border-slate-800 text-slate-500 hover:text-slate-300'}`} title={`Filtrar usuários: ${f}`} aria-label={`Filtrar usuários: ${f}`}>
                                     {f}
                                 </button>
                             ))}
@@ -607,11 +617,11 @@ const MasterAdminDashboard = ({
                                         <td className="p-4 text-[10px] font-mono text-center">{new Date(user.lastLogin).toLocaleDateString()}</td>
                                         <td className="p-4 text-right">
                                             <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button onClick={() => onImpersonate(user.id)} title="Acessar conta" className="p-1.5 bg-indigo-600/10 hover:bg-indigo-600 text-indigo-400 hover:text-white rounded-lg transition-colors">
-                                                    <LogIn size={14} />
+                                                <button onClick={() => onImpersonate(user.id)} title="Acessar conta" aria-label="Acessar conta" className="p-1.5 bg-indigo-600/10 hover:bg-indigo-600 text-indigo-400 hover:text-white rounded-lg transition-colors">
+                                                    <LogIn size={14} aria-hidden="true" />
                                                 </button>
-                                                <button onClick={() => onUpdateUser({ ...user, status: user.status === 'ACTIVE' ? 'BANNED' : 'ACTIVE' })} title={user.status === 'ACTIVE' ? 'Banir' : 'Reativar'} className="p-1.5 bg-slate-800 hover:bg-red-600 text-slate-400 hover:text-white rounded-lg transition-colors">
-                                                    <ShieldAlert size={14} />
+                                                <button onClick={() => onUpdateUser({ ...user, status: user.status === 'ACTIVE' ? 'BANNED' : 'ACTIVE' })} title={user.status === 'ACTIVE' ? 'Banir' : 'Reativar'} aria-label={user.status === 'ACTIVE' ? 'Banir usuário' : 'Reativar usuário'} className="p-1.5 bg-slate-800 hover:bg-red-600 text-slate-400 hover:text-white rounded-lg transition-colors">
+                                                    <ShieldAlert size={14} aria-hidden="true" />
                                                 </button>
                                             </div>
                                         </td>
@@ -630,9 +640,9 @@ const MasterAdminDashboard = ({
                     <div className="flex gap-4">
                         <div className="flex-1 relative">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
-                            <input type="text" value={tplSearch} onChange={(e) => setTplSearch(e.target.value)} placeholder="Filtrar templates..." className="w-full pl-10 pr-4 py-3 bg-[#0f172a]/60 border border-slate-800 rounded-xl outline-none focus:border-indigo-500 text-slate-200 transition-all font-medium text-sm" />
+                            <input type="text" value={tplSearch} onChange={(e) => setTplSearch(e.target.value)} placeholder="Filtrar templates..." title="Filtrar templates" className="w-full pl-10 pr-4 py-3 bg-[#0f172a]/60 border border-slate-800 rounded-xl outline-none focus:border-indigo-500 text-slate-200 transition-all font-medium text-sm" />
                         </div>
-                        <select value={tplFilter} onChange={(e) => setTplFilter(e.target.value as any)} className="px-4 py-3 bg-[#0f172a]/60 border border-slate-800 rounded-xl text-slate-400 font-bold outline-none focus:border-indigo-500 uppercase text-[10px] tracking-wider cursor-pointer">
+                        <select value={tplFilter} onChange={(e) => setTplFilter(e.target.value as any)} title="Filtrar por status" className="px-4 py-3 bg-[#0f172a]/60 border border-slate-800 rounded-xl text-slate-400 font-bold outline-none focus:border-indigo-500 uppercase text-[10px] tracking-wider cursor-pointer">
                             <option value="ALL">Todos Status</option>
                             <option value="PENDING">Pendentes</option>
                             <option value="APPROVED">Aprovados</option>
@@ -663,16 +673,16 @@ const MasterAdminDashboard = ({
                                 <div className="mt-auto flex gap-2">
                                     {tpl.status === 'PENDING' && (
                                         <>
-                                            <button onClick={() => handleModerateTemplate(tpl.id, 'APPROVED')} className="flex-1 py-2 bg-emerald-600/10 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-600/20 rounded-lg font-bold text-[10px] uppercase transition-all">Aprovar</button>
-                                            <button onClick={() => handleModerateTemplate(tpl.id, 'REJECTED')} className="flex-1 py-2 bg-red-600/10 hover:bg-red-600 text-red-400 hover:text-white border border-red-600/20 rounded-lg font-bold text-[10px] uppercase transition-all">Rejeitar</button>
+                                            <button onClick={() => handleModerateTemplate(tpl.id, 'APPROVED')} className="flex-1 py-2 bg-emerald-600/10 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-600/20 rounded-lg font-bold text-[10px] uppercase transition-all" title="Aprovar Template" aria-label="Aprovar Template">Aprovar</button>
+                                            <button onClick={() => handleModerateTemplate(tpl.id, 'REJECTED')} className="flex-1 py-2 bg-red-600/10 hover:bg-red-600 text-red-400 hover:text-white border border-red-600/20 rounded-lg font-bold text-[10px] uppercase transition-all" title="Rejeitar Template" aria-label="Rejeitar Template">Rejeitar</button>
                                         </>
                                     )}
                                     {tpl.status === 'APPROVED' && (
-                                        <button onClick={() => handleToggleFeatured(tpl.id, !tpl.isFeatured)} className={`flex-1 py-2 rounded-lg font-bold text-[10px] uppercase transition-all border ${tpl.isFeatured ? 'bg-amber-500 text-white border-amber-500' : 'bg-slate-900 text-slate-500 border-slate-800 hover:text-amber-400'}`}>
+                                        <button onClick={() => handleToggleFeatured(tpl.id, !tpl.isFeatured)} className={`flex-1 py-2 rounded-lg font-bold text-[10px] uppercase transition-all border ${tpl.isFeatured ? 'bg-amber-500 text-white border-amber-500' : 'bg-slate-900 text-slate-500 border-slate-800 hover:text-amber-400'}`} title={tpl.isFeatured ? "Remover destaque" : "Destacar template"} aria-label={tpl.isFeatured ? "Remover destaque" : "Destacar template"}>
                                             {tpl.isFeatured ? 'Destaque Ativo' : 'Destacar'}
                                         </button>
                                     )}
-                                    <button onClick={() => handleRemoveTemplate(tpl.id)} className="p-2 bg-slate-900 border border-slate-800 rounded-lg text-slate-500 hover:text-red-400 transition-all"><Trash2 size={14} /></button>
+                                    <button onClick={() => handleRemoveTemplate(tpl.id)} className="p-2 bg-slate-900 border border-slate-800 rounded-lg text-slate-500 hover:text-red-400 transition-all" title="Remover Template" aria-label="Remover Template"><Trash2 size={14} aria-hidden="true" /></button>
                                 </div>
                             </div>
                         ))}
@@ -692,8 +702,8 @@ const MasterAdminDashboard = ({
                                     <input type="text" value={fbSearch} onChange={e => setFbSearch(e.target.value)} className="w-full pl-10 pr-4 py-2 bg-slate-900/50 border border-slate-800/60 rounded-lg text-xs font-bold text-slate-300 outline-none focus:border-indigo-500" placeholder="Buscar..." />
                                 </div>
                                 <div className="flex gap-2">
-                                    <select value={fbStatusFilter} onChange={e => setFbStatusFilter(e.target.value as any)} className="w-1/2 p-2 bg-slate-900/50 border border-slate-800/60 rounded-lg text-[9px] font-bold text-slate-400 uppercase outline-none"><option value="ALL">Status</option><option value="PENDING">Pendente</option><option value="PLANNED">Planejado</option><option value="IN_PROGRESS">Em Exec.</option><option value="COMPLETED">Feito</option></select>
-                                    <select value={fbTypeFilter} onChange={e => setFbTypeFilter(e.target.value as any)} className="w-1/2 p-2 bg-slate-900/50 border border-slate-800/60 rounded-lg text-[9px] font-bold text-slate-400 uppercase outline-none"><option value="ALL">Tipo</option><option value="BUG">Bug</option><option value="FEATURE">Feature</option><option value="IMPROVEMENT">Melhoria</option></select>
+                                    <select value={fbStatusFilter} onChange={e => setFbStatusFilter(e.target.value as any)} title="Filtrar por status do feedback" className="w-1/2 p-2 bg-slate-900/50 border border-slate-800/60 rounded-lg text-[9px] font-bold text-slate-400 uppercase outline-none"><option value="ALL">Status</option><option value="PENDING">Pendente</option><option value="PLANNED">Planejado</option><option value="IN_PROGRESS">Em Exec.</option><option value="COMPLETED">Feito</option></select>
+                                    <select value={fbTypeFilter} onChange={e => setFbTypeFilter(e.target.value as any)} title="Filtrar por tipo do feedback" className="w-1/2 p-2 bg-slate-900/50 border border-slate-800/60 rounded-lg text-[9px] font-bold text-slate-400 uppercase outline-none"><option value="ALL">Tipo</option><option value="BUG">Bug</option><option value="FEATURE">Feature</option><option value="IMPROVEMENT">Melhoria</option></select>
                                 </div>
                             </div>
                         </div>
@@ -741,6 +751,8 @@ const MasterAdminDashboard = ({
                                             value={selectedFb.status}
                                             onChange={(e) => { onUpdateStatus(selectedFb.id, e.target.value as any); setSelectedFb({ ...selectedFb, status: e.target.value as any }); }}
                                             className="bg-slate-900 border border-slate-700 text-slate-300 text-[10px] font-bold uppercase rounded-lg px-3 py-2 outline-none focus:border-indigo-500"
+                                            title="Alterar status do feedback"
+                                            aria-label="Alterar status do feedback"
                                         >
                                             <option value="PENDING">Pendente</option>
                                             <option value="PLANNED">Planejado</option>
@@ -748,7 +760,9 @@ const MasterAdminDashboard = ({
                                             <option value="COMPLETED">Concluído</option>
                                             <option value="REJECTED">Arquivar</option>
                                         </select>
-                                        <button onClick={() => { if (window.confirm('Apagar feedback?')) { onDeleteFeedback(selectedFb.id); setSelectedFb(null); } }} className="p-2 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white rounded-lg transition-colors border border-red-600/20"><Trash2 size={14} /></button>
+                                        <button onClick={() => { if (window.confirm('Apagar feedback?')) { onDeleteFeedback(selectedFb.id); setSelectedFb(null); } }} className="p-2 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white rounded-lg transition-colors border border-red-600/20" title="Excluir Feedback" aria-label="Excluir Feedback">
+                                            <Trash2 size={14} aria-hidden="true" />
+                                        </button>
                                     </div>
                                 </div>
 
@@ -782,8 +796,11 @@ const MasterAdminDashboard = ({
                                         onChange={e => setReplyText(e.target.value)}
                                         placeholder="Escreva uma resposta oficial..."
                                         className="w-full pl-5 pr-12 py-3 bg-slate-900 border border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-200 transition-all font-medium text-xs"
+                                        title="Texto da resposta"
                                     />
-                                    <button type="submit" disabled={!replyText.trim()} className="absolute right-2 top-2 p-1.5 bg-indigo-600 disabled:opacity-50 text-white rounded-lg shadow-lg hover:scale-105 active:scale-95 transition-all"><Send size={14} /></button>
+                                    <button type="submit" disabled={!replyText.trim()} className="absolute right-2 top-2 p-1.5 bg-indigo-600 disabled:opacity-50 text-white rounded-lg shadow-lg hover:scale-105 active:scale-95 transition-all" title="Enviar resposta" aria-label="Enviar resposta">
+                                        <Send size={14} aria-hidden="true" />
+                                    </button>
                                 </form>
                             </>
                         ) : (
@@ -817,6 +834,8 @@ const MasterAdminDashboard = ({
                                 <button
                                     onClick={() => onUpdateSystemConfig({ ...systemConfig, maintenanceMode: !systemConfig.maintenanceMode })}
                                     className={`relative w-14 h-7 rounded-full transition-all duration-300 ${systemConfig.maintenanceMode ? 'bg-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.4)]' : 'bg-slate-700'}`}
+                                    title={systemConfig.maintenanceMode ? "Desativar Modo de Manutenção" : "Ativar Modo de Manutenção"}
+                                    aria-label={systemConfig.maintenanceMode ? "Desativar Modo de Manutenção" : "Ativar Modo de Manutenção"}
                                 >
                                     <span className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-md transition-all duration-300 ${systemConfig.maintenanceMode ? 'left-7.5' : 'left-0.5'}`}></span>
                                 </button>
@@ -830,6 +849,8 @@ const MasterAdminDashboard = ({
                                 <button
                                     onClick={() => onUpdateSystemConfig({ ...systemConfig, allowSignups: !systemConfig.allowSignups })}
                                     className={`relative w-14 h-7 rounded-full transition-all duration-300 ${systemConfig.allowSignups ? 'bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.4)]' : 'bg-slate-700'}`}
+                                    title={systemConfig.allowSignups ? "Desativar Novos Cadastros" : "Ativar Novos Cadastros"}
+                                    aria-label={systemConfig.allowSignups ? "Desativar Novos Cadastros" : "Ativar Novos Cadastros"}
                                 >
                                     <span className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-md transition-all duration-300 ${systemConfig.allowSignups ? 'left-7.5' : 'left-0.5'}`}></span>
                                 </button>
@@ -853,14 +874,16 @@ const MasterAdminDashboard = ({
                                         placeholder="Título do Comunicado"
                                         className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-xs font-bold text-slate-200 outline-none focus:border-indigo-500"
                                         id="announcementTitle"
+                                        title="Título do Comunicado"
                                     />
                                     <textarea
                                         placeholder="Mensagem detalhada..."
                                         className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-xs font-medium text-slate-300 outline-none focus:border-indigo-500 min-h-[80px]"
                                         id="announcementMessage"
+                                        title="Mensagem do Comunicado"
                                     ></textarea>
                                     <div className="flex gap-3">
-                                        <select id="announcementType" className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-[10px] font-bold text-slate-400 uppercase outline-none focus:border-indigo-500">
+                                        <select id="announcementType" title="Tipo do Comunicado" className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-[10px] font-bold text-slate-400 uppercase outline-none focus:border-indigo-500">
                                             <option value="INFO">Informativo</option>
                                             <option value="WARNING">Aviso</option>
                                             <option value="ALERT">Alerta Crítico</option>
@@ -891,6 +914,8 @@ const MasterAdminDashboard = ({
                                                 (document.getElementById('announcementMessage') as HTMLTextAreaElement).value = '';
                                             }}
                                             className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-all"
+                                            title="Publicar Comunicado"
+                                            aria-label="Publicar Comunicado"
                                         >
                                             Publicar
                                         </button>
@@ -916,8 +941,10 @@ const MasterAdminDashboard = ({
                                                         });
                                                     }}
                                                     className="text-slate-600 hover:text-red-500 transition-colors"
+                                                    title="Excluir Comunicado"
+                                                    aria-label="Excluir Comunicado"
                                                 >
-                                                    <Trash2 size={12} />
+                                                    <Trash2 size={12} aria-hidden="true" />
                                                 </button>
                                             </div>
                                             <p className="text-[10px] text-slate-400 leading-relaxed">{ann.message}</p>

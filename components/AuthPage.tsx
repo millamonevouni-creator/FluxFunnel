@@ -24,7 +24,7 @@ const GoogleIcon = () => (
     </svg>
 );
 
-type AuthView = 'LOGIN' | 'FORGOT_PASSWORD' | 'RESET_SENT' | 'UPDATE_PASSWORD';
+type AuthView = 'LOGIN' | 'FORGOT_PASSWORD' | 'RESET_SENT' | 'UPDATE_PASSWORD' | 'SIGNUP_SUCCESS';
 
 const AuthPage = ({ onAuthSuccess, onBack, t, lang, customSubtitle, initialView = 'LOGIN', onUpdatePassword, onResetPassword }: AuthPageProps) => {
     const [currentView, setCurrentView] = useState<AuthView>(initialView);
@@ -44,7 +44,7 @@ const AuthPage = ({ onAuthSuccess, onBack, t, lang, customSubtitle, initialView 
     const [name, setName] = useState('');
     const [error, setError] = useState<string | null>(null);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
 
@@ -64,17 +64,19 @@ const AuthPage = ({ onAuthSuccess, onBack, t, lang, customSubtitle, initialView 
 
         setIsLoading(true);
 
-        // Simulate network request UI delay then callback
-        setTimeout(() => {
-            setIsLoading(false);
+        try {
             // Pass the input data back to App.tsx including intent (login vs signup)
-            onAuthSuccess({
+            await onAuthSuccess({
                 email: email.toLowerCase(),
                 name: isLogin ? undefined : name,
                 password: password,
                 isSignup: !isLogin
             });
-        }, 1200);
+        } catch (err: any) {
+            setError(err.message || 'Erro inesperado na autenticação.');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleResetSubmit = async (e: React.FormEvent) => {
@@ -144,7 +146,7 @@ const AuthPage = ({ onAuthSuccess, onBack, t, lang, customSubtitle, initialView 
                 <span className="font-bold text-2xl text-slate-800 tracking-tight">FluxFunnel</span>
             </div>
 
-            <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-8 shadow-xl relative overflow-hidden transition-all duration-300">
+            <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl p-8 shadow-[0_20px_50px_rgba(0,0,0,0.1)] relative overflow-hidden transition-all duration-500 hover:shadow-[0_20px_60px_rgba(79,70,229,0.15)]">
 
                 {/* Loading Overlay */}
                 {isLoading && (
@@ -153,8 +155,28 @@ const AuthPage = ({ onAuthSuccess, onBack, t, lang, customSubtitle, initialView 
                         <p className="text-sm font-bold text-slate-600 animate-pulse">
                             {currentView === 'FORGOT_PASSWORD' ? 'Enviando link...' :
                                 currentView === 'UPDATE_PASSWORD' ? 'Atualizando senha...' :
-                                    (isLogin ? 'Autenticando...' : 'Criando conta...')}
+                                    (isLogin ? 'Autenticando...' : 'Criando sua conta...')}
                         </p>
+                    </div>
+                )}
+
+                {/* --- VIEW: SIGNUP SUCCESS / EMAIL VERIFICATION --- */}
+                {currentView === 'SIGNUP_SUCCESS' && (
+                    <div className="text-center py-4 animate-fade-in-up">
+                        <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                            <Mail className="text-indigo-600" size={36} />
+                        </div>
+                        <h2 className="text-2xl font-bold text-slate-900 mb-2">Quase lá!</h2>
+                        <p className="text-slate-500 mb-8 leading-relaxed">
+                            Enviamos um e-mail de confirmação para <strong>{email}</strong>. <br />
+                            Por favor, verifique sua caixa de entrada para ativar sua conta.
+                        </p>
+                        <button
+                            onClick={() => { setCurrentView('LOGIN'); setIsLogin(true); setError(null); }}
+                            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-2xl transition-all shadow-lg shadow-indigo-500/25 active:scale-95"
+                        >
+                            Ir para Login
+                        </button>
                     </div>
                 )}
 
@@ -445,7 +467,7 @@ const AuthPage = ({ onAuthSuccess, onBack, t, lang, customSubtitle, initialView 
                 )}
             </div>
 
-        </div>
+        </div >
     );
 };
 
