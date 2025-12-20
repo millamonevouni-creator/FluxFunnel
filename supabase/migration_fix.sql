@@ -30,3 +30,11 @@ create policy "Public templates are viewable by everyone" on templates for selec
 -- drop policy if exists "Users can perform CRUD on own projects" on projects;
 create policy "Users can perform CRUD on own projects" on projects for all using (auth.uid() = owner_id);
 
+-- 5. Fix 'team_members' table (Adding owner_id and Policies)
+alter table if exists team_members add column if not exists owner_id uuid references profiles(id) on delete cascade;
+
+-- RLS for team_members
+drop policy if exists "Users can manage their own team members" on team_members;
+create policy "Users can manage their own team members" on team_members
+  for all using (auth.uid() = owner_id);
+

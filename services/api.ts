@@ -233,8 +233,16 @@ export const api = {
         list: async () => { if (isOffline) return []; const { data } = await supabase.from('team_members').select('*'); return data || []; },
         invite: async (email: string, role: string) => {
             if (!isOffline) {
+                // Get current user id
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) throw new Error("User not valid");
+
                 // 1. Add to team table
-                const { error: dbError } = await supabase.from('team_members').insert({ email, role });
+                const { error: dbError } = await supabase.from('team_members').insert({
+                    email,
+                    role,
+                    owner_id: user.id
+                });
                 if (dbError) throw dbError;
 
                 // 2. Send Magic Link

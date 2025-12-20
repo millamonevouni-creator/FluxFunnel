@@ -238,9 +238,14 @@ const App = () => {
   const handleLogout = async () => { await api.auth.logout(); setUser(null); setProjects([]); setCurrentView('LANDING'); setAppPage('PROJECTS'); setCurrentProjectId(null); setIsProfileMenuOpen(false); };
 
   const handleInviteMember = async (email: string, role: string) => {
-    await api.team.invite(email, role);
-    setTeamMembers(await api.team.list());
-    showNotification("Convite enviado com sucesso!");
+    try {
+      await api.team.invite(email, role);
+      setTeamMembers(await api.team.list());
+      showNotification("Convite enviado com sucesso!");
+    } catch (e: any) {
+      console.error(e);
+      showNotification(e.message || "Erro ao convidar membro.", 'error');
+    }
   };
 
   const handleRemoveMember = async (id: string) => {

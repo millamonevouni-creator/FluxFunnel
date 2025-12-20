@@ -176,6 +176,7 @@ export interface TeamMember {
   role: 'ADMIN' | 'EDITOR' | 'VIEWER';
   status: 'ACTIVE' | 'PENDING';
   avatarUrl?: string;
+  ownerId?: string;
 }
 
 export type Language = 'pt' | 'en' | 'es';
