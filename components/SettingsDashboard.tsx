@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { User as UserIcon, Lock, CreditCard, Bell, Moon, Sun, Globe, Save, CheckCircle, Shield, Camera, Briefcase, Building, Laptop, ToggleLeft, ToggleRight, AlertTriangle, ChevronDown, Mail, Rocket } from 'lucide-react';
 import { User, Language, UserPlan } from '../types';
 import { api } from '../services/api';
@@ -21,6 +21,7 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
     const [company, setCompany] = useState(user.company_name || '');
     const [jobTitle, setJobTitle] = useState(user.job_title || '');
     const [isSaving, setIsSaving] = useState(false);
+    const progressRef = useRef<HTMLDivElement>(null);
 
     // Notification States
     const [notifMarketing, setNotifMarketing] = useState(true);
@@ -68,6 +69,21 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
     const limits = getPlanLimits(user.plan);
     const projectPercentage = limits.projects === 9999 ? 0 : Math.min((projectsCount / limits.projects) * 100, 100);
 
+    useEffect(() => {
+        if (progressRef.current) {
+            const val = Math.min(Math.max(projectPercentage, 0), 100);
+            const parent = progressRef.current.parentElement;
+            if (parent) {
+                parent.style.width = '100%'; // Ensure parent width
+                progressRef.current.style.width = `${val}%`;
+                parent.setAttribute('role', 'progressbar');
+                parent.setAttribute('aria-valuenow', Math.round(val).toString());
+                parent.setAttribute('aria-valuemin', '0');
+                parent.setAttribute('aria-valuemax', '100');
+            }
+        }
+    }, [projectPercentage]);
+
     return (
         <div className={`flex-1 overflow-y-auto h-full p-8 transition-colors duration-300 ${isDark ? 'bg-slate-950' : 'bg-slate-50'}`}>
             <div className="max-w-5xl mx-auto">
@@ -87,6 +103,8 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
                                             ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400'
                                             : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50'}
                             `}
+                                    title={tab.label}
+                                    aria-label={tab.label}
                                 >
                                     {tab.icon}
                                     {tab.label}
@@ -186,6 +204,8 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
                                             type="submit"
                                             disabled={isSaving}
                                             className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold flex items-center gap-2 transition-all disabled:opacity-70 shadow-lg shadow-indigo-500/20 active:scale-95"
+                                            title={t('saveChanges')}
+                                            aria-label={t('saveChanges')}
                                         >
                                             {isSaving ? t('saving') : <><Save size={18} /> {t('saveChanges')}</>}
                                         </button>
@@ -258,7 +278,12 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
                                                 <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t('marketingEmailsDesc')}</p>
                                             </div>
                                         </div>
-                                        <button onClick={() => setNotifMarketing(!notifMarketing)} className={`text-2xl ${notifMarketing ? 'text-indigo-600' : 'text-slate-300'}`}>
+                                        <button
+                                            onClick={() => setNotifMarketing(!notifMarketing)}
+                                            className={`text-2xl ${notifMarketing ? 'text-indigo-600' : 'text-slate-300'}`}
+                                            title="Alternar notificações de marketing"
+                                            aria-label="Alternar notificações de marketing"
+                                        >
                                             {notifMarketing ? <ToggleRight size={40} /> : <ToggleLeft size={40} />}
                                         </button>
                                     </div>
@@ -275,7 +300,12 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
                                                 <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t('securityEmailsDesc')}</p>
                                             </div>
                                         </div>
-                                        <button onClick={() => setNotifSecurity(!notifSecurity)} className={`text-2xl ${notifSecurity ? 'text-indigo-600' : 'text-slate-300'}`}>
+                                        <button
+                                            onClick={() => setNotifSecurity(!notifSecurity)}
+                                            className={`text-2xl ${notifSecurity ? 'text-indigo-600' : 'text-slate-300'}`}
+                                            title="Alternar notificações de segurança"
+                                            aria-label="Alternar notificações de segurança"
+                                        >
                                             {notifSecurity ? <ToggleRight size={40} /> : <ToggleLeft size={40} />}
                                         </button>
                                     </div>
@@ -324,14 +354,10 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
                                         </div>
                                         <div
                                             className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden"
-                                            role="progressbar"
-                                            aria-valuenow={Math.round(projectPercentage)}
-                                            aria-valuemin={0}
-                                            aria-valuemax={100}
                                             aria-label={t('projectsUsed')}
                                             title={t('projectsUsed')}
                                         >
-                                            <div className={`h-full rounded-full transition-all duration-1000 ${projectPercentage > 90 ? 'bg-red-500' : 'bg-indigo-600'}`} style={{ ['width' as any]: `${projectPercentage}%` }}></div>
+                                            <div ref={progressRef} className={`h-full rounded-full transition-all duration-1000 ${projectPercentage > 90 ? 'bg-red-500' : 'bg-indigo-600'}`}></div>
                                         </div>
                                     </div>
 
@@ -343,7 +369,7 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
                                             <div className="flex-1">
                                                 <p className="text-sm font-bold text-indigo-900 dark:text-indigo-100">{t('upgradeToIncrease')}</p>
                                             </div>
-                                            <button className="text-xs font-bold bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                                            <button className="text-xs font-bold bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-700 transition-colors" title="Fazer upgrade de plano" aria-label="Fazer upgrade de plano">
                                                 Upgrade
                                             </button>
                                         </div>
@@ -364,7 +390,7 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
                                                     <p className="text-xs text-slate-500">{t('expires')} 12/28</p>
                                                 </div>
                                             </div>
-                                            <button className="text-sm font-bold text-indigo-600 hover:underline">{t('updateMethod')}</button>
+                                            <button className="text-sm font-bold text-indigo-600 hover:underline" title={t('updateMethod')} aria-label={t('updateMethod')}>{t('updateMethod')}</button>
                                         </div>
                                     </div>
                                 )}
@@ -444,7 +470,7 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
                                             <input name="confirmPass" type="password" placeholder="••••••••" className={inputClass} required />
                                         </div>
                                         <div className="pt-2">
-                                            <button type="submit" disabled={isSaving} className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 text-white rounded-xl font-bold transition-all shadow-md disabled:opacity-50">
+                                            <button type="submit" disabled={isSaving} className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 text-white rounded-xl font-bold transition-all shadow-md disabled:opacity-50" title={t('updatePwd')} aria-label={t('updatePwd')}>
                                                 {isSaving ? (t('saving') || 'Salvando...') : t('updatePwd')}
                                             </button>
                                         </div>
@@ -458,7 +484,7 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
                                             <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{t('twoFactor')}</h3>
                                             <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t('twoFactorDesc')}</p>
                                         </div>
-                                        <button onClick={() => setTwoFactor(!twoFactor)} className={`text-3xl ${twoFactor ? 'text-green-500' : 'text-slate-300'}`}>
+                                        <button onClick={() => setTwoFactor(!twoFactor)} className={`text-3xl ${twoFactor ? 'text-green-500' : 'text-slate-300'}`} title={twoFactor ? "Desativar 2FA" : "Ativar 2FA"} aria-label={twoFactor ? "Desativar autenticação de dois fatores" : "Ativar autenticação de dois fatores"}>
                                             {twoFactor ? <ToggleRight size={48} /> : <ToggleLeft size={48} />}
                                         </button>
                                     </div>
@@ -492,7 +518,7 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
                                 <div className="mt-8 pt-8 border-t border-red-100 dark:border-red-900/30">
                                     <h4 className="text-red-600 font-bold mb-2 flex items-center gap-2"><AlertTriangle size={18} /> {t('dangerZone')}</h4>
                                     <p className="text-sm text-slate-500 mb-4">{t('deleteWarning')}</p>
-                                    <button className="px-5 py-2.5 border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl text-sm font-bold transition-colors">
+                                    <button className="px-5 py-2.5 border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl text-sm font-bold transition-colors" title={t('deleteAccount')} aria-label={t('deleteAccount')}>
                                         {t('deleteAccount')}
                                     </button>
                                 </div>

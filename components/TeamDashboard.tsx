@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Users, UserPlus, Mail, CheckCircle, Clock, AlertCircle, Crown, MoreHorizontal, Lock, ArrowRight, X, ChevronDown } from 'lucide-react';
 import { TeamMember, UserPlan } from '../types';
 
@@ -31,6 +31,7 @@ const TeamDashboard = ({ members = [], onInviteMember, onUpdateRole, onRemoveMem
     const [inviteEmail, setInviteEmail] = useState('');
     const [inviteRole, setInviteRole] = useState<'ADMIN' | 'EDITOR' | 'VIEWER'>('VIEWER');
     const [isInviteLoading, setIsInviteLoading] = useState(false);
+    const progressRef = useRef<HTMLDivElement>(null);
 
     // --- PREMIUM LOCK CHECK ---
     if (safePlan !== 'PREMIUM') {
@@ -79,6 +80,8 @@ const TeamDashboard = ({ members = [], onInviteMember, onUpdateRole, onRemoveMem
                         <button
                             onClick={onUpgrade}
                             className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/25 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2"
+                            title="Fazer Upgrade para Premium"
+                            aria-label="Fazer Upgrade para Premium"
                         >
                             Fazer Upgrade para Premium <ArrowRight size={18} />
                         </button>
@@ -90,6 +93,20 @@ const TeamDashboard = ({ members = [], onInviteMember, onUpdateRole, onRemoveMem
 
     const usagePercentage = safeMaxMembers > 0 ? (safeMembers.length / safeMaxMembers) * 100 : 0;
     const isLimitReached = safeMembers.length >= safeMaxMembers && safeMaxMembers !== 9999;
+
+    useEffect(() => {
+        if (progressRef.current) {
+            const val = Math.min(Math.max(usagePercentage, 0), 100);
+            const parent = progressRef.current.parentElement;
+            if (parent) {
+                progressRef.current.style.width = `${val}%`;
+                parent.setAttribute('role', 'progressbar');
+                parent.setAttribute('aria-valuenow', Math.round(val).toString());
+                parent.setAttribute('aria-valuemin', '0');
+                parent.setAttribute('aria-valuemax', '100');
+            }
+        }
+    }, [usagePercentage]);
 
     const handleInviteSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -127,6 +144,7 @@ const TeamDashboard = ({ members = [], onInviteMember, onUpdateRole, onRemoveMem
                             }`
                         }
                         title={isLimitReached ? "Limite de membros atingido" : "Convidar novo membro"}
+                        aria-label={isLimitReached ? "Limite de membros atingido" : "Convidar novo membro"}
                     >
                         <UserPlus size={20} />
                         {isLimitReached ? 'Limite Atingido' : 'Convidar Membro'}
@@ -153,14 +171,10 @@ const TeamDashboard = ({ members = [], onInviteMember, onUpdateRole, onRemoveMem
 
                     <div
                         className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden"
-                        role="progressbar"
-                        aria-valuenow={Math.round(usagePercentage)}
-                        aria-valuemin={0}
-                        aria-valuemax={100}
                         aria-label={`Uso da equipe: ${Math.round(usagePercentage)}%`}
                         title={`Uso da equipe: ${Math.round(usagePercentage)}%`}
                     >
-                        <div className={`h-full rounded-full transition-all duration-1000 ${usagePercentage > 90 ? 'bg-red-500' : 'bg-indigo-600'}`} style={{ ['width' as any]: `${usagePercentage}%` }}></div>
+                        <div ref={progressRef} className={`h-full rounded-full transition-all duration-1000 ${usagePercentage > 90 ? 'bg-red-500' : 'bg-indigo-600'}`}></div>
                     </div>
 
                     {usagePercentage >= 100 && safeMaxMembers !== 9999 && (
@@ -251,6 +265,8 @@ const TeamDashboard = ({ members = [], onInviteMember, onUpdateRole, onRemoveMem
                                                             }
                                                         }}
                                                         className="px-3 py-1.5 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg text-xs font-bold transition-all"
+                                                        title="Reenviar convite de acesso"
+                                                        aria-label="Reenviar convite de acesso"
                                                     >
                                                         Reenviar
                                                     </button>
@@ -312,6 +328,8 @@ const TeamDashboard = ({ members = [], onInviteMember, onUpdateRole, onRemoveMem
                                                 ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
                                                 : `${isDark ? 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}`
                                                 }`}
+                                            title={`Selecionar função ${role}`}
+                                            aria-label={`Selecionar função ${role}`}
                                         >
                                             {role}
                                         </button>
@@ -332,6 +350,8 @@ const TeamDashboard = ({ members = [], onInviteMember, onUpdateRole, onRemoveMem
                                     type="button"
                                     onClick={() => setShowInviteModal(false)}
                                     className={`flex-1 py-3 rounded-xl font-bold transition-colors ${isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'}`}
+                                    title="Cancelar convite"
+                                    aria-label="Cancelar convite"
                                 >
                                     Cancelar
                                 </button>
@@ -339,6 +359,8 @@ const TeamDashboard = ({ members = [], onInviteMember, onUpdateRole, onRemoveMem
                                     type="submit"
                                     disabled={isInviteLoading}
                                     className={`flex-[2] py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold shadow-lg shadow-indigo-500/20 transition-all active:scale-95 flex items-center justify-center gap-2`}
+                                    title="Enviar Convite"
+                                    aria-label="Enviar Convite"
                                 >
                                     {isInviteLoading ? (
                                         <>

@@ -329,6 +329,8 @@ const MasterAdminDashboard = ({
                                             ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'
                                             : 'bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-slate-500 hover:text-slate-200 shadow-md'}
                                     `}
+                                    title={`Configurar plano ${plan.label}`}
+                                    aria-label={`Configurar plano ${plan.label}`}
                                 >
                                     CONFIGURAR PLANO
                                 </button>
@@ -436,7 +438,7 @@ const MasterAdminDashboard = ({
                                 <button type="button" onClick={() => { if (window.confirm("Ação irreversível. Excluir este modelo de plano?")) { onDeletePlan(editingPlan.id); setEditingPlan(null); } }} className="p-8 bg-red-600/10 text-red-500 border border-red-600/20 rounded-3xl font-black shadow-xl hover:bg-red-600 hover:text-white transition-all active:scale-90" title="Excluir Plano" aria-label="Excluir Plano">
                                     <Trash2 size={28} aria-hidden="true" />
                                 </button>
-                                <button type="submit" className="flex-1 py-8 bg-indigo-600 hover:bg-indigo-500 text-white rounded-[2.5rem] font-black uppercase tracking-[0.4em] text-[11px] shadow-2xl shadow-indigo-500/30 transition-all active:scale-95">
+                                <button type="submit" className="flex-1 py-8 bg-indigo-600 hover:bg-indigo-500 text-white rounded-[2.5rem] font-black uppercase tracking-[0.4em] text-[11px] shadow-2xl shadow-indigo-500/30 transition-all active:scale-95" title="Publicar Alterações Globais" aria-label="Publicar Alterações Globais">
                                     Publicar Alterações Globais
                                 </button>
                             </div>
@@ -699,7 +701,7 @@ const MasterAdminDashboard = ({
                             <div className="flex flex-col gap-2">
                                 <div className="relative">
                                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={14} />
-                                    <input type="text" value={fbSearch} onChange={e => setFbSearch(e.target.value)} className="w-full pl-10 pr-4 py-2 bg-slate-900/50 border border-slate-800/60 rounded-lg text-xs font-bold text-slate-300 outline-none focus:border-indigo-500" placeholder="Buscar..." />
+                                    <input type="text" value={fbSearch} onChange={e => setFbSearch(e.target.value)} className="w-full pl-10 pr-4 py-2 bg-slate-900/50 border border-slate-800/60 rounded-lg text-xs font-bold text-slate-300 outline-none focus:border-indigo-500" placeholder="Buscar..." title="Buscar feedbacks" />
                                 </div>
                                 <div className="flex gap-2">
                                     <select value={fbStatusFilter} onChange={e => setFbStatusFilter(e.target.value as any)} title="Filtrar por status do feedback" className="w-1/2 p-2 bg-slate-900/50 border border-slate-800/60 rounded-lg text-[9px] font-bold text-slate-400 uppercase outline-none"><option value="ALL">Status</option><option value="PENDING">Pendente</option><option value="PLANNED">Planejado</option><option value="IN_PROGRESS">Em Exec.</option><option value="COMPLETED">Feito</option></select>
@@ -780,7 +782,7 @@ const MasterAdminDashboard = ({
                                             <div className={`p-3 rounded-xl max-w-[85%] ${comment.isAdmin ? 'bg-indigo-600/10 border border-indigo-500/20 text-indigo-100 rounded-tr-none' : 'bg-slate-800 border border-slate-700 text-slate-300 rounded-tl-none'}`}>
                                                 <div className="flex justify-between items-center mb-1 gap-3">
                                                     <span className="text-[9px] font-black uppercase tracking-wider opacity-70">{comment.authorName} {comment.isAdmin && '(Staff)'}</span>
-                                                    {comment.isAdmin && <button onClick={() => onDeleteComment(selectedFb.id, comment.id)} className="text-slate-500 hover:text-red-400"><X size={10} /></button>}
+                                                    {comment.isAdmin && <button onClick={() => onDeleteComment(selectedFb.id, comment.id)} className="text-slate-500 hover:text-red-400" title="Excluir Comentário" aria-label="Excluir comentário"><X size={10} aria-hidden="true" /></button>}
                                                 </div>
                                                 <p className="text-[11px] leading-relaxed">{comment.text}</p>
                                             </div>
@@ -796,7 +798,7 @@ const MasterAdminDashboard = ({
                                         onChange={e => setReplyText(e.target.value)}
                                         placeholder="Escreva uma resposta oficial..."
                                         className="w-full pl-5 pr-12 py-3 bg-slate-900 border border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-200 transition-all font-medium text-xs"
-                                        title="Texto da resposta"
+                                        title="Escreva uma resposta oficial"
                                     />
                                     <button type="submit" disabled={!replyText.trim()} className="absolute right-2 top-2 p-1.5 bg-indigo-600 disabled:opacity-50 text-white rounded-lg shadow-lg hover:scale-105 active:scale-95 transition-all" title="Enviar resposta" aria-label="Enviar resposta">
                                         <Send size={14} aria-hidden="true" />
