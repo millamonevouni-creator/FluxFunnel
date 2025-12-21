@@ -335,7 +335,25 @@ export const api = {
         }
     },
     plans: {
-        list: async () => { if (isOffline) return []; const { data } = await supabase.from('plans').select('*'); return data || []; },
+        list: async () => {
+            if (isOffline) return [];
+            const { data } = await supabase.from('plans').select('*').order('order', { ascending: true });
+            return (data || []).map((p: any) => ({
+                id: p.id,
+                label: p.label,
+                priceMonthly: p.price_monthly,
+                priceYearly: p.price_yearly,
+                projectLimit: p.project_limit,
+                nodeLimit: p.node_limit,
+                teamLimit: p.team_limit,
+                features: p.features || [],
+                isPopular: p.is_popular,
+                order: p.order,
+                stripe_product_id: p.stripe_product_id,
+                stripe_price_id_monthly: p.stripe_price_id_monthly,
+                stripe_price_id_yearly: p.stripe_price_id_yearly
+            }));
+        },
         update: async (id: string, p: any) => {
             if (isOffline) { await supabase.from('plans').update(p).eq('id', id); return; }
             // Invoke Edge Function to handle Sync
@@ -453,49 +471,50 @@ export const api = {
             if (error) throw error;
         }
     },
-    get: async () => {
-        if (isOffline) return { maintenanceMode: false, allowSignups: true, announcements: [], debugMode: false };
-        const { data } = await supabase.from('system_config').select('*').single();
-        if (!data) return { maintenanceMode: false, allowSignups: true, announcements: [], debugMode: false };
+    system: {
+        get: async () => {
+            if (isOffline) return { maintenanceMode: false, allowSignups: true, announcements: [], debugMode: false };
+            const { data } = await supabase.from('system_config').select('*').single();
+            if (!data) return { maintenanceMode: false, allowSignups: true, announcements: [], debugMode: false };
 
-        return {
-            maintenanceMode: data.maintenance_mode,
-            allowSignups: data.allow_signups,
-            announcements: data.announcements || [],
-            debugMode: data.debug_mode
-        };
+            return {
+                maintenanceMode: data.maintenance_mode,
+                allowSignups: data.allow_signups,
+                announcements: data.announcements || [],
+                debugMode: data.debug_mode
+            };
+        },
+        update: async (c: any) => { if (!isOffline) await supabase.from('system_config').upsert(c); },
+        healthCheck: async () => {
+            return { profiles: true, projects: true, templates: true, system_config: true };
+        }
     },
-    update: async (c: any) => { if (!isOffline) await supabase.from('system_config').upsert(c); },
-    healthCheck: async () => {
-        return { profiles: true, projects: true, templates: true, system_config: true };
-    }
-},
     admin: {
         getUsers: async () => {
-            if(isOffline) return [];
+            if (isOffline) return [];
 
-// 1. Fetch profiles
-const { data: profiles, error: profilesError } = await supabase.from('profiles').select('*');
-if (profilesError) throw profilesError;
+            // 1. Fetch profiles
+            const { data: profiles, error: profilesError } = await supabase.from('profiles').select('*');
+            if (profilesError) throw profilesError;
 
-// 2. Fetch all team members emails to identify who is invited
-const { data: teamMembers, error: teamError } = await supabase.from('team_members').select('email');
-if (teamError) console.error("Error fetching team members for admin view", teamError);
+            // 2. Fetch all team members emails to identify who is invited
+            const { data: teamMembers, error: teamError } = await supabase.from('team_members').select('email');
+            if (teamError) console.error("Error fetching team members for admin view", teamError);
 
-const invitedEmails = new Set((teamMembers || []).map((tm: any) => tm.email));
+            const invitedEmails = new Set((teamMembers || []).map((tm: any) => tm.email));
 
-// 3. Map to User objects
-return (profiles || []).map((p: any) => ({
-    ...mapProfileToUser(p),
-    isInvitedMember: invitedEmails.has(p.email)
-}));
+            // 3. Map to User objects
+            return (profiles || []).map((p: any) => ({
+                ...mapProfileToUser(p),
+                isInvitedMember: invitedEmails.has(p.email)
+            }));
         },
-updateUserStatus: async (id: string, status: string) => {
-    if (!isOffline) await supabase.from('profiles').update({ status }).eq('id', id);
-},
-    updateUserPlan: async (id: string, plan: string) => {
-        if (!isOffline) await supabase.from('profiles').update({ plan }).eq('id', id);
-    },
+        updateUserStatus: async (id: string, status: string) => {
+            if (!isOffline) await supabase.from('profiles').update({ status }).eq('id', id);
+        },
+        updateUserPlan: async (id: string, plan: string) => {
+            if (!isOffline) await supabase.from('profiles').update({ plan }).eq('id', id);
+        },
         deleteUser: async (id: string) => {
             if (!isOffline) await supabase.from('profiles').delete().eq('id', id);
         }

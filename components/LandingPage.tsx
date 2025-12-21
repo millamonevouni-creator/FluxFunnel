@@ -54,38 +54,25 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                     return;
                 }
 
-                // Call the API function we created
-                // Assuming api is available via props or import. 
-                // LandingPage usually receives onGetStartedClick, maybe we should use that for FREE/Auth Flow
-                // and handle stripe checkout for PRO/PREMIUM here.
+                // IMPLEMENTATION: Store choice for post-login
+                const checkoutData = {
+                    planId,
+                    cycle: billingCycle,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('flux_pending_checkout', JSON.stringify(checkoutData));
+                console.log("DEBUG: Stored pending checkout:", checkoutData);
 
-                // We need to verify if user is logged in. 
-                // If not, we should probably redirect to signup with a plan param?
-                // For now, let's assume this LandingPage is also used by logged in users OR 
-                // we'll just redirect to OnGetStarted which normally opens Auth Modal.
-                // But wait, the user wants "Cobrancas", so we want real payment.
-
-                // If user is NOT logged in, we can't create a checkout session linked to a user.
-                // WE MUST LOGIN FIRST. 
-                // So, let's just use onGetStartedClick() which opens the auth modal.
-                // But we should pass the selected plan to it? 
-
-                // Let's keep it simple: "Assinar Agora" -> Opens Auth Modal (onGetStartedClick).
-                // After auth, they can upgrade.
-
-                // HOWEVER, if the user requested "Payment Test", they might be logged in.
-                // Let's assume onGetStartedClick handles the "Join" flow.
-
-                // If we want to support direct checkout, we need to know if user is authenticated here.
-                // This component doesn't seem to have `user` prop.
-
+                // Open Auth Modal
                 onGetStartedClick();
                 return;
 
             } catch (error) {
                 console.error(error);
+                return;
             }
         }
+
 
         onGetStartedClick();
     };

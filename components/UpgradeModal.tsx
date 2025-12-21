@@ -10,10 +10,21 @@ interface UpgradeModalProps {
     limitType?: 'NODES' | 'PROJECTS';
     plans?: PlanConfig[]; // New: Pass plans to read updated limits
     userPlan?: UserPlan;
+    initialPlan?: 'PRO' | 'PREMIUM';
+    initialCycle?: 'monthly' | 'yearly';
 }
 
-const UpgradeModal = ({ onClose, onUpgrade, isDark, limitType = 'NODES', plans, userPlan }: UpgradeModalProps) => {
+const UpgradeModal = ({ onClose, onUpgrade, isDark, limitType = 'NODES', plans, userPlan, initialPlan, initialCycle }: UpgradeModalProps) => {
     const isProjectLimit = limitType === 'PROJECTS';
+    const [selectedPlan, setSelectedPlan] = React.useState<'PRO' | 'PREMIUM'>(initialPlan || 'PRO');
+    const [cycle, setCycle] = React.useState<'monthly' | 'yearly'>(initialCycle || 'monthly');
+
+    // Update state if props change when opening
+    React.useEffect(() => {
+        if (initialPlan) setSelectedPlan(initialPlan);
+        if (initialCycle) setCycle(initialCycle);
+    }, [initialPlan, initialCycle]);
+
 
     // Fallback default values if plans aren't loaded yet
     const freePlan = plans?.find(p => p.id === 'FREE') || { projectLimit: 1, nodeLimit: 20 };
@@ -46,11 +57,30 @@ const UpgradeModal = ({ onClose, onUpgrade, isDark, limitType = 'NODES', plans, 
             }
 
             // Call the API function we created
+            // Call the API function we created
             const { api } = await import('../services/api_fixed');
-            const { sessionId } = await api.subscriptions.createCheckoutSession(priceId);
+            const { sessionId, url } = await api.subscriptions.createCheckoutSession(priceId);
+
+            if (url) {
+                // Modern implementation: Redirect to the URL provided by Stripe/Backend
+                window.location.href = url;
+                return;
+            }
+
+            if (!sessionId) {
+                throw new Error("Sessão de checkout não retornou ID nem URL.");
+            }
 
             const { loadStripe } = await import('@stripe/stripe-js');
-            const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+            const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+
+            if (!stripeKey) {
+                console.error("Stripe Publishable Key is missing in environment variables.");
+                alert("Erro interna: Chave pública do Stripe não configurada (VITE_STRIPE_PUBLISHABLE_KEY). Contate o administrador.");
+                return;
+            }
+
+            const stripe = await loadStripe(stripeKey);
 
             if (!stripe) throw new Error("Stripe failed to load");
 
@@ -58,14 +88,13 @@ const UpgradeModal = ({ onClose, onUpgrade, isDark, limitType = 'NODES', plans, 
             if (error) throw error;
 
         } catch (error) {
-            console.error(error);
+            console.error("CHECKOUT ERROR:", error);
             alert("Erro ao iniciar checkout: " + (error instanceof Error ? error.message : "Erro desconhecido"));
         }
     };
 
     const handleUpgradeClick = () => {
-        // Default to PRO Monthly
-        handleCheckout(userPlan === 'PRO' ? 'PREMIUM' : 'PRO', 'monthly');
+        handleCheckout(selectedPlan, cycle);
     };
 
     return (
@@ -104,6 +133,16 @@ const UpgradeModal = ({ onClose, onUpgrade, isDark, limitType = 'NODES', plans, 
                             : `Você atingiu o limite de ${userPlan === 'FREE' ? freePlan.nodeLimit : proPlan.nodeLimit} elementos no fluxo.`
                         }
                     </p>
+
+                    {/* Plan Selection Toggles */}
+                    <div className="flex gap-2 p-1 bg-slate-100 rounded-lg mb-4 w-full dark:bg-slate-800">
+                        <button onClick={() => setSelectedPlan('PRO')} className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${selectedPlan === 'PRO' ? 'bg-white shadow text-indigo-600 dark:bg-slate-700 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700'}`}>PRO</button>
+                        <button onClick={() => setSelectedPlan('PREMIUM')} className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${selectedPlan === 'PREMIUM' ? 'bg-white shadow text-purple-600 dark:bg-slate-700 dark:text-purple-400' : 'text-slate-500 hover:text-slate-700'}`}>PREMIUM</button>
+                    </div>
+                    <div className="flex gap-2 p-1 bg-slate-100 rounded-lg mb-6 w-full dark:bg-slate-800">
+                        <button onClick={() => setCycle('monthly')} className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${cycle === 'monthly' ? 'bg-white shadow text-indigo-600 dark:bg-slate-700 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700'}`}>Mensal</button>
+                        <button onClick={() => setCycle('yearly')} className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${cycle === 'yearly' ? 'bg-white shadow text-green-600 dark:bg-slate-700 dark:text-green-400' : 'text-slate-500 hover:text-slate-700'}`}>Anual (-15%)</button>
+                    </div>
 
                     {/* Comparison Table */}
                     <div className={`w-full rounded-xl p-4 mb-6 text-left space-y-3 ${isDark ? 'bg-slate-800 border border-slate-700' : 'bg-slate-50 border border-slate-100'}`}>
