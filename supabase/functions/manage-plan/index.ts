@@ -109,17 +109,24 @@ serve(async (req) => {
 
         // 4. Update Supabase
         // We use the service role client to bypass RLS if needed, or ensuring we can write to 'plans'
+
+        // Map frontend CamelCase to DB SnakeCase
         const updates = {
-            ...plan,
+            id: plan.id,
+            label: plan.label,
+            description: plan.description,
+            price_monthly: plan.priceMonthly,
+            price_yearly: plan.priceYearly,
+            project_limit: plan.projectLimit,
+            node_limit: plan.nodeLimit,
+            team_limit: plan.teamLimit,
+            features: plan.features,
+            is_popular: plan.isPopular,
+            order: plan.order,
             stripe_product_id: stripeProductId,
             stripe_price_id_monthly: stripePriceIdMonthly,
             stripe_price_id_yearly: stripePriceIdYearly
         };
-
-        // Remove any FE-only props if they exist that can't be saved (like 'isPro' maybe?)
-        // The 'plans' table schema should strictly match.
-        // For safety, we only pick known columns if we wanted to be strict, but let's try upsert.
-        // IMPORTANT: We need to handle 'features' array correctly.
 
         const { data, error } = await supabase
             .from('plans')

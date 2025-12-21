@@ -155,11 +155,23 @@ const MasterAdminDashboard = ({
         }).sort((a, b) => b.votes - a.votes);
     }, [feedbacks, fbSearch, fbStatusFilter, fbTypeFilter]);
 
-    const handleSavePlan = (e: React.FormEvent) => {
+    const handleSavePlan = async (e: React.FormEvent) => {
         e.preventDefault();
         if (editingPlan) {
-            onUpdatePlan(editingPlan);
-            setEditingPlan(null);
+            try {
+                if (editingPlan.id.startsWith('NEW_')) {
+                    // For new plans, assuming backend or App.tsx handles ID generation or accepts this one
+                    // Ideally we should strip the ID if the backend generates it, but for now passing as is.
+                    // IMPORTANT: Check if onCreatePlan wraps api.plans.create
+                    await onCreatePlan(editingPlan);
+                } else {
+                    await onUpdatePlan(editingPlan);
+                }
+                setEditingPlan(null);
+            } catch (error) {
+                console.error("Failed to save plan:", error);
+                alert("Erro ao salvar o plano. Verifique o console para mais detalhes.");
+            }
         }
     };
 
