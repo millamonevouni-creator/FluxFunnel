@@ -14,7 +14,7 @@ import {
     User, PlanConfig, FeedbackItem, SystemConfig,
     FeedbackStatus, UserStatus, Template, TemplateStatus, FeedbackType
 } from '../types';
-import { api } from '../services/api';
+import { api } from '../services/api_fixed';
 
 interface MasterAdminDashboardProps {
     onBack: () => void;

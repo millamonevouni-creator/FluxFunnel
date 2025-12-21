@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Folder, Clock, Trash2, Edit, Layout, ArrowRight, X, Type, ChevronLeft, Sparkles, Lock, BookmarkPlus, ShoppingBag, Send, AlertCircle } from 'lucide-react';
 import { Project, Template, UserPlan } from '../types';
 import { PROJECT_TEMPLATES } from '../constants';
-import { api } from '../services/api';
+import { api } from '../services/api_fixed';
 
 interface ProjectsDashboardProps {
     projects: Project[];
@@ -28,6 +28,7 @@ const ProjectsDashboard = ({
     const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
     const [creationStep, setCreationStep] = useState<'SELECT' | 'NAME'>('SELECT');
     const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+    console.log("HMR TEST JETSKI - Dashboard Rendered");
     const [newProjectName, setNewProjectName] = useState('');
     const [renamingProject, setRenamingProject] = useState<{ id: string, name: string } | null>(null);
     const [templateTab, setTemplateTab] = useState<'SYSTEM' | 'CUSTOM'>('SYSTEM');

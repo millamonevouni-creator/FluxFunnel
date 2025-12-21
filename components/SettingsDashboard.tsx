@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { User as UserIcon, Lock, CreditCard, Bell, Moon, Sun, Globe, Save, CheckCircle, Shield, Camera, Briefcase, Building, Laptop, ToggleLeft, ToggleRight, AlertTriangle, ChevronDown, Mail, Rocket } from 'lucide-react';
 import { User, Language, UserPlan } from '../types';
-import { api } from '../services/api';
+import { api } from '../services/api_fixed';
 
 interface SettingsDashboardProps {
     user: User;

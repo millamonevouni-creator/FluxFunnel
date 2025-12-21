@@ -18,7 +18,7 @@ import { Project, AppMode, User, Language, AppPage, AppView, FeedbackItem, Feedb
 import { INITIAL_NODES, INITIAL_EDGES, TRANSLATIONS, PROJECT_TEMPLATES, NODE_CONFIG, NODE_CATEGORY } from './constants';
 import { Node, Edge } from 'reactflow';
 import { safeGet, safeSet, migrateFeedbacks } from './utils/storage';
-import { api } from './services/api';
+import { api } from './services/api_fixed';
 import { supabase } from './services/supabaseClient';
 
 const DEFAULT_PROJECT = (t: any): Project => ({ id: 'proj_default', name: t('newProject'), nodes: INITIAL_NODES as any, edges: INITIAL_EDGES, updatedAt: new Date() });

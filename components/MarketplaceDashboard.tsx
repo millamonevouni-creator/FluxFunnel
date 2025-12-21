@@ -6,7 +6,7 @@ import 'reactflow/dist/style.css';
 import CustomNode from './CustomNode';
 import CustomEdge from './CustomEdge';
 import { Template, UserPlan } from '../types';
-import { api } from '../services/api';
+import { api } from '../services/api_fixed';
 
 interface MarketplaceDashboardProps {
     userPlan: UserPlan;
