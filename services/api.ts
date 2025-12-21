@@ -41,93 +41,112 @@ export const api = {
                     token: 'mock_token'
                 };
             }
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password: password || '123456' });
-            if (error) throw error;
+        };
+    }
 
-            // Try to fetch profile, but handle failure gracefully
-            const { data: profile } = await supabase.from('profiles').select('*').eq('id', data.user.id).single();
+            // Timeout wrapper for signInWithPassword
+            const loginPromise = supabase.auth.signInWithPassword({ email, password: password || '123456' });
+    const timeoutLogin = new Promise((resolve) => setTimeout(() => resolve({ data: { user: null, session: null }, error: { message: 'Timeout login' } }), 6000));
 
-            if (!profile) {
-                console.warn("Profile missing/blocked for user, using auth fallback", data.user.id);
-                // Fallback using auth data so login doesn't crash
-                const fallbackUser: User = {
-                    id: data.user.id,
-                    name: data.user.user_metadata?.name || email.split('@')[0],
-                    email: email,
-                    plan: 'FREE', // Default fallback
-                    status: 'ACTIVE',
-                    lastLogin: new Date(),
-                    isSystemAdmin: email === 'millamon.evouni@gmail.com' // Emergency admin access
-                };
-                return { user: fallbackUser, token: data.session?.access_token || '' };
-            }
+    const { data, error } = await Promise.race([loginPromise, timeoutLogin]) as any;
+
+    if(error) throw error;
+
+    // Try to fetch profile, but handle failure gracefully
+    const fetchProfile = supabase.from('profiles').select('*').eq('id', data.user.id).single();
+    const timeoutProfile = new Promise((resolve) => setTimeout(() => resolve({ data: null, error: 'Timeout' }), 4000));
+
+    const { data: profile } = await Promise.race([fetchProfile, timeoutProfile]) as { data: any, error: any };
+
+    if(!profile) {
+        console.warn("Profile missing/blocked/timed out for user, using auth fallback", data.user.id);
+        // Fallback using auth data so login doesn't crash
+        const fallbackUser: User = {
+            id: data.user.id,
+            name: data.user.user_metadata?.name || email.split('@')[0],
+            email: email,
+            plan: 'FREE', // Default fallback
+            status: 'ACTIVE',
+            lastLogin: new Date(),
+            isSystemAdmin: email === 'millamon.evouni@gmail.com' // Emergency admin access
+        };
+        return { user: fallbackUser, token: data.session?.access_token || '' };
+    }
 
             return { user: mapProfileToUser(profile), token: data.session?.access_token || '' };
-        },
-        register: async (email: string, password?: string, name?: string): Promise<{ user: User, token: string }> => {
-            if (isOffline) {
-                return {
-                    user: { id: 'u' + Date.now(), name: name || 'Novo', email, plan: 'FREE', status: 'ACTIVE', lastLogin: new Date() },
-                    token: 'mock_token'
-                };
-            }
-            const { data, error } = await supabase.auth.signUp({ email, password: password || '123456', options: { data: { name } } });
-            if (error) throw error;
-            return { user: mapProfileToUser({ id: data.user!.id, name, email }), token: data.session?.access_token || '' };
-        },
-        logout: async () => { if (!isOffline) await supabase.auth.signOut(); },
-        getProfile: async (): Promise<User | null> => {
-            if (isOffline) return null;
-            try {
-                const { data } = await supabase.auth.getUser();
-                if (!data?.user) return null;
-
-                const { data: profile } = await supabase.from('profiles').select('*').eq('id', data.user.id).single();
-
-                if (profile) return mapProfileToUser(profile);
-
-                console.warn("Profile missing in DB, using Session fallback");
-                // Fallback using auth data
-                return {
-                    id: data.user.id,
-                    name: data.user.user_metadata?.name || data.user.email?.split('@')[0] || 'Usuário',
-                    email: data.user.email || '',
-                    plan: 'FREE',
-                    status: 'ACTIVE',
-                    lastLogin: new Date(),
-                    isSystemAdmin: data.user.email === 'millamon.evouni@gmail.com'
-                };
-            } catch (e) { return null; }
-        },
-        updateProfile: async (id: string, data: Partial<User>) => { if (!isOffline) await supabase.from('profiles').update(data).eq('id', id); },
-        updatePassword: async (password: string) => {
-            if (isOffline) return;
-            const { error } = await supabase.auth.updateUser({ password });
-            if (error) throw error;
-        },
-        resetPassword: async (email: string) => {
-            if (isOffline) return;
-            const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: window.location.origin
-            });
-            if (error) throw error;
+},
+    register: async (email: string, password?: string, name?: string): Promise<{ user: User, token: string }> => {
+        if (isOffline) {
+            return {
+                user: { id: 'u' + Date.now(), name: name || 'Novo', email, plan: 'FREE', status: 'ACTIVE', lastLogin: new Date() },
+                token: 'mock_token'
+            };
         }
+        const { data, error } = await supabase.auth.signUp({ email, password: password || '123456', options: { data: { name } } });
+        if (error) throw error;
+        return { user: mapProfileToUser({ id: data.user!.id, name, email }), token: data.session?.access_token || '' };
     },
-    users: {
-        list: async (): Promise<User[]> => {
-            if (isOffline) return [];
-            const { data } = await supabase.from('profiles').select('*');
-            return (data || []).map(mapProfileToUser);
-        },
+        logout: async () => { if (!isOffline) await supabase.auth.signOut(); },
+            getProfile: async (): Promise<User | null> => {
+                if (isOffline) return null;
+                try {
+                    // Timeout logic for getProfile
+                    const getUserPromise = supabase.auth.getUser();
+                    const timeoutUser = new Promise((resolve) => setTimeout(() => resolve({ data: { user: null }, error: 'Timeout' }), 4000));
+
+                    const { data } = await Promise.race([getUserPromise, timeoutUser]) as any;
+
+                    if (!data?.user) return null;
+
+                    const fetchProfilePromise = supabase.from('profiles').select('*').eq('id', data.user.id).single();
+                    const timeoutProfile = new Promise((resolve) => setTimeout(() => resolve({ data: null }), 4000));
+
+                    const { data: profile } = await Promise.race([fetchProfilePromise, timeoutProfile]) as any;
+
+                    if (profile) return mapProfileToUser(profile);
+
+                    console.warn("Profile missing in DB, using Session fallback");
+                    // Fallback using auth data
+                    return {
+                        id: data.user.id,
+                        name: data.user.user_metadata?.name || data.user.email?.split('@')[0] || 'Usuário',
+                        email: data.user.email || '',
+                        plan: 'FREE',
+                        status: 'ACTIVE',
+                        lastLogin: new Date(),
+                        isSystemAdmin: data.user.email === 'millamon.evouni@gmail.com'
+                    };
+                } catch (e) { return null; }
+            },
+                updateProfile: async (id: string, data: Partial<User>) => { if (!isOffline) await supabase.from('profiles').update(data).eq('id', id); },
+                    updatePassword: async (password: string) => {
+                        if (isOffline) return;
+                        const { error } = await supabase.auth.updateUser({ password });
+                        if (error) throw error;
+                    },
+                        resetPassword: async (email: string) => {
+                            if (isOffline) return;
+                            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                                redirectTo: window.location.origin
+                            });
+                            if (error) throw error;
+                        }
+    },
+users: {
+    list: async (): Promise<User[]> => {
+        if (isOffline) return [];
+        const { data } = await supabase.from('profiles').select('*');
+        return (data || []).map(mapProfileToUser);
+    },
         update: async (id: string, data: any) => { if (!isOffline) await supabase.from('profiles').update(data).eq('id', id); },
-        delete: async (id: string) => { if (!isOffline) await supabase.from('profiles').delete().eq('id', id); }
+            delete: async (id: string) => { if (!isOffline) await supabase.from('profiles').delete().eq('id', id); }
+},
+projects: {
+    list: async () => {
+        if (isOffline) return [];
+        const { data } = await supabase.from('projects').select('*');
+        return (data || []).map(mapDBProjectToApp);
     },
-    projects: {
-        list: async () => {
-            if (isOffline) return [];
-            const { data } = await supabase.from('projects').select('*');
-            return (data || []).map(mapDBProjectToApp);
-        },
         create: async (p: any) => {
             if (isOffline) return { ...p, id: 'proj_' + Date.now() };
             const dbPayload = {
@@ -141,20 +160,20 @@ export const api = {
             if (error) throw error;
             return mapDBProjectToApp(data);
         },
-        update: async (id: string, p: any) => { if (!isOffline) await supabase.from('projects').update(p).eq('id', id); },
-        delete: async (id: string) => { if (!isOffline) await supabase.from('projects').delete().eq('id', id); }
+            update: async (id: string, p: any) => { if (!isOffline) await supabase.from('projects').update(p).eq('id', id); },
+                delete: async (id: string) => { if (!isOffline) await supabase.from('projects').delete().eq('id', id); }
+},
+templates: {
+    list: async () => {
+        if (isOffline) return [];
+        const { data } = await supabase.from('templates').select('*').order('created_at', { ascending: false });
+        return (data || []).map((t: any) => ({
+            id: t.id, customLabel: t.custom_label, customDescription: t.custom_description,
+            icon: React.createElement(Folder), nodes: t.nodes, edges: t.edges,
+            status: t.status, isPublic: t.is_public, isCustom: t.is_custom, authorName: t.author_name, authorId: t.owner_id,
+            rating: t.rating, downloads: t.downloads, isFeatured: t.is_featured
+        }));
     },
-    templates: {
-        list: async () => {
-            if (isOffline) return [];
-            const { data } = await supabase.from('templates').select('*').order('created_at', { ascending: false });
-            return (data || []).map((t: any) => ({
-                id: t.id, customLabel: t.custom_label, customDescription: t.custom_description,
-                icon: React.createElement(Folder), nodes: t.nodes, edges: t.edges,
-                status: t.status, isPublic: t.is_public, isCustom: t.is_custom, authorName: t.author_name, authorId: t.owner_id,
-                rating: t.rating, downloads: t.downloads, isFeatured: t.is_featured
-            }));
-        },
         listPublic: async (userId?: string): Promise<Template[]> => {
             if (isOffline) return [];
             let query = supabase.from('templates').select('*').or(`status.eq.APPROVED,and(owner_id.eq.${userId || 'null'},status.eq.PENDING)`);
@@ -178,112 +197,112 @@ export const api = {
                 status: t.status, ownerId: t.owner_id, isPublic: t.is_public, isCustom: t.is_custom
             }));
         },
-        create: async (t: any) => {
-            if (isOffline) return;
-            const { data: { user } } = await supabase.auth.getUser();
-            await supabase.from('templates').insert({
-                custom_label: t.customLabel,
-                nodes: t.nodes,
-                edges: t.edges,
-                owner_id: user?.id,
-                author_name: user?.user_metadata?.name || 'User',
-                is_custom: true,
-                is_public: false
-            });
-        },
-        delete: async (id: string) => { if (!isOffline) await supabase.from('templates').delete().eq('id', id); },
-        update: async (id: string, updates: any) => { if (!isOffline) await supabase.from('templates').update(updates).eq('id', id); },
-        submitToMarketplace: async (template: Partial<Template>) => {
-            if (isOffline) return;
-            const { data: { user } } = await supabase.auth.getUser();
-            await supabase.from('templates').insert({
-                custom_label: template.customLabel,
-                custom_description: template.customDescription,
-                nodes: template.nodes,
-                edges: template.edges,
-                owner_id: user?.id,
-                author_name: template.authorName || user?.user_metadata?.name || 'Premium User',
-                is_public: true,
-                is_custom: true,
-                status: 'PENDING',
-                downloads: 0,
-                rating: 0,
-                rating_count: 0,
-                is_featured: false
-            });
-        },
-        moderate: async (id: string, status: TemplateStatus) => {
-            if (!isOffline) await supabase.from('templates').update({ status }).eq('id', id);
-        },
-        download: async (id: string) => {
-            if (isOffline) return;
-            try {
-                const { data } = await supabase.from('templates').select('downloads').eq('id', id).single();
-                await supabase.from('templates').update({ downloads: (data?.downloads || 0) + 1 }).eq('id', id);
-            } catch (e) { console.error("Counter update failed", e); }
-        },
-        rate: async (id: string, stars: number) => {
-            if (isOffline) return;
-            const { data } = await supabase.from('templates').select('rating, rating_count').eq('id', id).single();
-            const newCount = (data?.rating_count || 0) + 1;
-            const newRating = ((data?.rating || 0) * (data?.rating_count || 0) + stars) / newCount;
-            await supabase.from('templates').update({ rating: newRating, rating_count: newCount }).eq('id', id);
-        }
-    },
-    plans: {
-        list: async () => { if (isOffline) return []; const { data } = await supabase.from('plans').select('*'); return data || []; },
+            create: async (t: any) => {
+                if (isOffline) return;
+                const { data: { user } } = await supabase.auth.getUser();
+                await supabase.from('templates').insert({
+                    custom_label: t.customLabel,
+                    nodes: t.nodes,
+                    edges: t.edges,
+                    owner_id: user?.id,
+                    author_name: user?.user_metadata?.name || 'User',
+                    is_custom: true,
+                    is_public: false
+                });
+            },
+                delete: async (id: string) => { if (!isOffline) await supabase.from('templates').delete().eq('id', id); },
+                    update: async (id: string, updates: any) => { if (!isOffline) await supabase.from('templates').update(updates).eq('id', id); },
+                        submitToMarketplace: async (template: Partial<Template>) => {
+                            if (isOffline) return;
+                            const { data: { user } } = await supabase.auth.getUser();
+                            await supabase.from('templates').insert({
+                                custom_label: template.customLabel,
+                                custom_description: template.customDescription,
+                                nodes: template.nodes,
+                                edges: template.edges,
+                                owner_id: user?.id,
+                                author_name: template.authorName || user?.user_metadata?.name || 'Premium User',
+                                is_public: true,
+                                is_custom: true,
+                                status: 'PENDING',
+                                downloads: 0,
+                                rating: 0,
+                                rating_count: 0,
+                                is_featured: false
+                            });
+                        },
+                            moderate: async (id: string, status: TemplateStatus) => {
+                                if (!isOffline) await supabase.from('templates').update({ status }).eq('id', id);
+                            },
+                                download: async (id: string) => {
+                                    if (isOffline) return;
+                                    try {
+                                        const { data } = await supabase.from('templates').select('downloads').eq('id', id).single();
+                                        await supabase.from('templates').update({ downloads: (data?.downloads || 0) + 1 }).eq('id', id);
+                                    } catch (e) { console.error("Counter update failed", e); }
+                                },
+                                    rate: async (id: string, stars: number) => {
+                                        if (isOffline) return;
+                                        const { data } = await supabase.from('templates').select('rating, rating_count').eq('id', id).single();
+                                        const newCount = (data?.rating_count || 0) + 1;
+                                        const newRating = ((data?.rating || 0) * (data?.rating_count || 0) + stars) / newCount;
+                                        await supabase.from('templates').update({ rating: newRating, rating_count: newCount }).eq('id', id);
+                                    }
+},
+plans: {
+    list: async () => { if (isOffline) return []; const { data } = await supabase.from('plans').select('*'); return data || []; },
         update: async (id: string, p: any) => { if (!isOffline) await supabase.from('plans').update(p).eq('id', id); },
-        create: async (p: any) => { if (!isOffline) await supabase.from('plans').insert(p); },
-        delete: async (id: string) => { if (!isOffline) await supabase.from('plans').delete().eq('id', id); }
-    },
-    feedbacks: {
-        list: async () => { if (isOffline) return []; const { data } = await supabase.from('feedbacks').select('*').order('created_at', { ascending: false }); return data || []; },
+            create: async (p: any) => { if (!isOffline) await supabase.from('plans').insert(p); },
+                delete: async (id: string) => { if (!isOffline) await supabase.from('plans').delete().eq('id', id); }
+},
+feedbacks: {
+    list: async () => { if (isOffline) return []; const { data } = await supabase.from('feedbacks').select('*').order('created_at', { ascending: false }); return data || []; },
         create: async (f: any) => { if (!isOffline) await supabase.from('feedbacks').insert({ ...f, votes: 0, voted_user_ids: [], status: 'PENDING' }); },
-        update: async (id: string, f: any) => { if (!isOffline) await supabase.from('feedbacks').update(f).eq('id', id); },
-        delete: async (id: string) => { if (!isOffline) await supabase.from('feedbacks').delete().eq('id', id); },
-        vote: async (id: string) => {
-            if (isOffline) return;
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) throw new Error("Login required to vote");
+            update: async (id: string, f: any) => { if (!isOffline) await supabase.from('feedbacks').update(f).eq('id', id); },
+                delete: async (id: string) => { if (!isOffline) await supabase.from('feedbacks').delete().eq('id', id); },
+                    vote: async (id: string) => {
+                        if (isOffline) return;
+                        const { data: { user } } = await supabase.auth.getUser();
+                        if (!user) throw new Error("Login required to vote");
 
-            const { data } = await supabase.from('feedbacks').select('votes, voted_user_ids').eq('id', id).single();
-            const votedIds = Array.isArray(data?.voted_user_ids) ? data.voted_user_ids : [];
+                        const { data } = await supabase.from('feedbacks').select('votes, voted_user_ids').eq('id', id).single();
+                        const votedIds = Array.isArray(data?.voted_user_ids) ? data.voted_user_ids : [];
 
-            if (votedIds.includes(user.id)) {
-                // Remove vote (toggle)
-                const newIds = votedIds.filter((uid: string) => uid !== user.id);
-                await supabase.from('feedbacks').update({ votes: Math.max(0, (data?.votes || 1) - 1), voted_user_ids: newIds }).eq('id', id);
-            } else {
-                // Add vote
-                await supabase.from('feedbacks').update({ votes: (data?.votes || 0) + 1, voted_user_ids: [...votedIds, user.id] }).eq('id', id);
-            }
-        },
-        addComment: async (id: string, text: string) => {
-            if (isOffline) return;
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) throw new Error("Login required to comment");
+                        if (votedIds.includes(user.id)) {
+                            // Remove vote (toggle)
+                            const newIds = votedIds.filter((uid: string) => uid !== user.id);
+                            await supabase.from('feedbacks').update({ votes: Math.max(0, (data?.votes || 1) - 1), voted_user_ids: newIds }).eq('id', id);
+                        } else {
+                            // Add vote
+                            await supabase.from('feedbacks').update({ votes: (data?.votes || 0) + 1, voted_user_ids: [...votedIds, user.id] }).eq('id', id);
+                        }
+                    },
+                        addComment: async (id: string, text: string) => {
+                            if (isOffline) return;
+                            const { data: { user } } = await supabase.auth.getUser();
+                            if (!user) throw new Error("Login required to comment");
 
-            const { data } = await supabase.from('feedbacks').select('comments').eq('id', id).single();
-            const comments = Array.isArray(data?.comments) ? data.comments : [];
-            const newComment = {
-                id: 'c' + Date.now(),
-                text,
-                authorName: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
-                authorId: user.id,
-                createdAt: new Date().toISOString(),
-                isAdmin: user.email === 'millamon.evouni@gmail.com' // Simplistic check, ideally use role from profile
-            };
-            await supabase.from('feedbacks').update({ comments: [...comments, newComment] }).eq('id', id);
-        },
-        deleteComment: async (feedbackId: string, commentId: string) => {
-            if (isOffline) return;
-            const { data } = await supabase.from('feedbacks').select('comments').eq('id', feedbackId).single();
-            const comments = Array.isArray(data?.comments) ? data.comments : [];
-            await supabase.from('feedbacks').update({ comments: comments.filter((c: any) => c.id !== commentId) }).eq('id', feedbackId);
-        }
-    },
-    team: {
-        list: async () => { if (isOffline) return []; const { data } = await supabase.from('team_members').select('*'); return data || []; },
+                            const { data } = await supabase.from('feedbacks').select('comments').eq('id', id).single();
+                            const comments = Array.isArray(data?.comments) ? data.comments : [];
+                            const newComment = {
+                                id: 'c' + Date.now(),
+                                text,
+                                authorName: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+                                authorId: user.id,
+                                createdAt: new Date().toISOString(),
+                                isAdmin: user.email === 'millamon.evouni@gmail.com' // Simplistic check, ideally use role from profile
+                            };
+                            await supabase.from('feedbacks').update({ comments: [...comments, newComment] }).eq('id', id);
+                        },
+                            deleteComment: async (feedbackId: string, commentId: string) => {
+                                if (isOffline) return;
+                                const { data } = await supabase.from('feedbacks').select('comments').eq('id', feedbackId).single();
+                                const comments = Array.isArray(data?.comments) ? data.comments : [];
+                                await supabase.from('feedbacks').update({ comments: comments.filter((c: any) => c.id !== commentId) }).eq('id', feedbackId);
+                            }
+},
+team: {
+    list: async () => { if (isOffline) return []; const { data } = await supabase.from('team_members').select('*'); return data || []; },
         invite: async (email: string, role: string) => {
             if (!isOffline) {
                 // Get current user id
@@ -312,42 +331,42 @@ export const api = {
                 }
             }
         },
-        updateRole: async (id: string, role: string) => { if (!isOffline) await supabase.from('team_members').update({ role }).eq('id', id); },
-        remove: async (id: string) => { if (!isOffline) await supabase.from('team_members').delete().eq('id', id); },
-        resendInvite: async (email: string) => {
-            if (isOffline) return;
-            const { error } = await supabase.auth.signInWithOtp({
-                email,
-                options: {
-                    emailRedirectTo: window.location.origin
-                }
-            });
-            if (error) throw error;
-        }
+            updateRole: async (id: string, role: string) => { if (!isOffline) await supabase.from('team_members').update({ role }).eq('id', id); },
+                remove: async (id: string) => { if (!isOffline) await supabase.from('team_members').delete().eq('id', id); },
+                    resendInvite: async (email: string) => {
+                        if (isOffline) return;
+                        const { error } = await supabase.auth.signInWithOtp({
+                            email,
+                            options: {
+                                emailRedirectTo: window.location.origin
+                            }
+                        });
+                        if (error) throw error;
+                    }
+},
+system: {
+    get: async () => {
+        if (isOffline) return { maintenanceMode: false, allowSignups: true, announcements: [] };
+        const { data } = await supabase.from('system_config').select('*').single();
+        return data || { maintenanceMode: false, allowSignups: true, announcements: [] };
     },
-    system: {
-        get: async () => {
-            if (isOffline) return { maintenanceMode: false, allowSignups: true, announcements: [] };
-            const { data } = await supabase.from('system_config').select('*').single();
-            return data || { maintenanceMode: false, allowSignups: true, announcements: [] };
-        },
         update: async (c: any) => { if (!isOffline) await supabase.from('system_config').upsert(c); },
-        healthCheck: async () => {
-            return { profiles: true, projects: true, templates: true, system_config: true };
-        }
+            healthCheck: async () => {
+                return { profiles: true, projects: true, templates: true, system_config: true };
+            }
+},
+admin: {
+    getUsers: async () => {
+        if (isOffline) return [];
+        const { data, error } = await supabase.from('profiles').select('*');
+        if (error) throw error;
+        return data || [];
     },
-    admin: {
-        getUsers: async () => {
-            if (isOffline) return [];
-            const { data, error } = await supabase.from('profiles').select('*');
-            if (error) throw error;
-            return data || [];
-        },
         updateUserStatus: async (id: string, status: string) => {
             if (!isOffline) await supabase.from('profiles').update({ status }).eq('id', id);
         },
-        updateUserPlan: async (id: string, plan: string) => {
-            if (!isOffline) await supabase.from('profiles').update({ plan }).eq('id', id);
-        }
-    }
+            updateUserPlan: async (id: string, plan: string) => {
+                if (!isOffline) await supabase.from('profiles').update({ plan }).eq('id', id);
+            }
+}
 };

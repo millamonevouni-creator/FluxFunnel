@@ -162,22 +162,24 @@ const App = () => {
   useEffect(() => { if (isInitialized) safeSet('lang', lang); }, [lang, isInitialized]);
 
   const handleLogin = async (data: any) => {
+    console.log("DEBUG: handleLogin started", data);
     if (!systemConfig.allowSignups && data.isSignup) {
       showNotification("Cadastros suspensos pelo administrador.", 'error');
       throw new Error("Cadastros estão temporariamente suspensos.");
     }
 
     try {
+      console.log("DEBUG: Calling api.auth.login/register");
       const result = data.isSignup ?
         await api.auth.register(data.email, data.password, data.name) :
         await api.auth.login(data.email, data.password);
 
+      console.log("DEBUG: Auth API returned", result);
       const newUser = result.user;
 
       if (data.isSignup && !result.token) {
-        // Email confirmation is likely required (Supabase default for many configs)
         setAuthInitialView('SIGNUP_SUCCESS');
-        return; // Don't proceed to dashboard
+        return;
       }
 
       if (newUser.status === 'BANNED') {
@@ -186,21 +188,42 @@ const App = () => {
         throw new Error("Conta banida ou suspensa.");
       }
 
+      console.log("DEBUG: Setting user state", newUser);
       setUser(newUser);
 
       // Load initial data
-      const [apiProjects, members, templates] = await Promise.all([
+      console.log("DEBUG: Fetching initial data...");
+
+      const fetchPromise = Promise.all([
         api.projects.list(),
         api.team.list(),
         api.templates.list()
       ]);
 
-      setProjects(apiProjects);
-      setTeamMembers(members);
-      setCustomTemplates(templates);
+      const timeoutPromise = new Promise((resolve) => {
+        setTimeout(() => {
+          console.warn("DEBUG: Initial data fetch timed out! Proceeding mostly empty.");
+          resolve([[], [], []]);
+        }, 5000);
+      });
+
+      const [apiProjects, members, templates] = await Promise.race([fetchPromise, timeoutPromise]) as [any[], any[], any[]];
+
+      console.log("DEBUG: Initial data fetched (or timed out)", { projects: apiProjects?.length, members: members?.length, templates: templates?.length });
+
+      setProjects(apiProjects || []);
+      setTeamMembers(members || []);
+      setCustomTemplates(templates || []);
 
       if (newUser.isSystemAdmin) {
-        setAllUsers(await api.users.list());
+        console.log("DEBUG: Fetching all users for System Admin");
+        // Also wrap this in timeout or just let it fly async without await? 
+        // Better to await but fast fail. 
+        try {
+          setAllUsers(await api.users.list());
+        } catch (err) {
+          console.error("Failed to fetch all users", err);
+        }
       }
 
       showNotification(data.isSignup ? "Conta criada com sucesso!" : "Login realizado com sucesso!");
@@ -213,8 +236,6 @@ const App = () => {
       }
     } catch (e: any) {
       console.error("Auth process error:", e);
-      // We don't show the notification here because AuthPage will catch it and show it locally
-      // unless we want both. Let's keep it in AuthPage for better UX.
       throw e;
     }
   };
@@ -284,6 +305,16 @@ const App = () => {
     await api.team.remove(id);
     setTeamMembers(await api.team.list());
     showNotification("Membro removido.");
+  };
+
+  const handleResendInvite = async (email: string) => {
+    try {
+      await api.team.resendInvite(email);
+      showNotification("Convite reenviado com sucesso!");
+    } catch (e: any) {
+      console.error(e);
+      showNotification(e.message || "Erro ao reenviar convite. Verifique o limite de e-mails.", 'error');
+    }
   };
 
   const handleUpdateMemberRole = async (id: string, role: string) => {
@@ -466,7 +497,7 @@ const App = () => {
         <div className="flex-1 overflow-hidden relative flex">
           {appPage === 'PROJECTS' && <ProjectsDashboard projects={projects.filter(p => p.ownerId === user?.id)} onCreateProject={createProject} onOpenProject={(id) => { setCurrentProjectId(id); setAppPage('BUILDER'); }} onDeleteProject={handleDeleteProject} onRenameProject={handleRenameProject} onRefreshTemplates={refreshTemplates} showNotification={showNotification} isDark={isDark} t={t} userPlan={user?.plan} customTemplates={customTemplates} onSaveAsTemplate={async (p) => { await api.templates.create({ customLabel: p.name, nodes: p.nodes, edges: p.edges, isCustom: true }); refreshTemplates(); }} />}
           {appPage === 'MARKETPLACE' && <MarketplaceDashboard userPlan={user?.plan || 'FREE'} onDownload={async (t) => { await createProject(t.id, t.customLabel); showNotification("Template baixado!"); }} isDark={isDark} t={t} userId={user?.id} />}
-          {appPage === 'TEAM' && <TeamDashboard members={teamMembers} onInviteMember={handleInviteMember} onUpdateRole={handleUpdateMemberRole} onRemoveMember={handleRemoveMember} onResendInvite={api.team.resendInvite} onUpgrade={() => { }} plan={user?.plan || 'FREE'} maxMembers={plans.find(p => p.id === user?.plan)?.teamLimit ?? (user?.plan === 'PREMIUM' ? 10 : 0)} isDark={isDark} t={t} />}
+          {appPage === 'TEAM' && <TeamDashboard members={teamMembers} onInviteMember={handleInviteMember} onUpdateRole={handleUpdateMemberRole} onRemoveMember={handleRemoveMember} onResendInvite={handleResendInvite} onUpgrade={() => { }} plan={user?.plan || 'FREE'} maxMembers={plans.find(p => p.id === user?.plan)?.teamLimit ?? (user?.plan === 'PREMIUM' ? 10 : 0)} isDark={isDark} t={t} />}
           {appPage === 'MASTER_ADMIN' && <MasterAdminDashboard
             onBack={() => setAppPage('PROJECTS')}
             onReplyFeedback={async (id, text) => { await api.feedbacks.addComment(id, text); setFeedbacks(await api.feedbacks.list()); }}

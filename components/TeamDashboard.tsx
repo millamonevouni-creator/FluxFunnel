@@ -256,15 +256,8 @@ const TeamDashboard = ({ members = [], onInviteMember, onUpdateRole, onRemoveMem
 
                                                 {member.status === 'PENDING' && (
                                                     <button
-                                                        onClick={async () => {
-                                                            try {
-                                                                await onResendInvite(member.email);
-                                                                alert("Convite enviado novamente!");
-                                                            } catch (e) {
-                                                                alert("Erro ao reenviar convite.");
-                                                            }
-                                                        }}
-                                                        className="px-3 py-1.5 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg text-xs font-bold transition-all"
+                                                        onClick={() => onResendInvite(member.email)}
+                                                        className="px-3 py-1.5 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-wait"
                                                         title="Reenviar convite de acesso"
                                                         aria-label="Reenviar convite de acesso"
                                                     >
