@@ -397,9 +397,12 @@ const App = () => {
         onReplyFeedback={(id, text) => { }}
         onDeleteComment={(fid, cid) => { }}
         users={allUsers}
-        onUpdateUser={(u, p) => api.users.update(u.id, u)}
-        onDeleteUser={api.users.delete}
-        onCreateUser={(u, p) => api.users.update(u.id, u)}
+        onUpdateUser={async (u, p) => {
+          if (u.plan) await api.admin.updateUserPlan(u.id, u.plan);
+          if (u.status) await api.admin.updateUserStatus(u.id, u.status);
+        }}
+        onDeleteUser={api.admin.deleteUser}
+        onCreateUser={(u, p) => { }}
         onImpersonate={handleAdminImpersonate}
         plans={plans}
         onUpdatePlan={async (p) => { await api.plans.update(p.id, p); setPlans(prev => prev.map(old => old.id === p.id ? p : old)); showNotification("Plano atualizado!"); }}

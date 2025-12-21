@@ -138,6 +138,7 @@ export interface User {
   lastLogin: Date;
   avatarUrl?: string;
   isSystemAdmin?: boolean;
+  isInvitedMember?: boolean;
   company_name?: string;
   job_title?: string;
 }

@@ -50,6 +50,7 @@ const MasterAdminDashboard = ({
     const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
     const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
     const [editingPlan, setEditingPlan] = useState<PlanConfig | null>(null);
+    const [editingUser, setEditingUser] = useState<User | null>(null);
 
     // User Module State
     const [userSearch, setUserSearch] = useState('');
@@ -600,7 +601,19 @@ const MasterAdminDashboard = ({
                                                     {user.name.substring(0, 2)}
                                                 </div>
                                                 <div>
-                                                    <div className="text-white font-bold">{user.name}</div>
+                                                    <div className="text-white font-bold flex items-center gap-2">
+                                                        {user.name}
+                                                        {user.plan === 'PREMIUM' && !user.isInvitedMember && (
+                                                            <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500 text-[8px] font-black uppercase tracking-wider border border-amber-500/30" title="Dono do Sistema (Premium)" aria-label="Dono do Sistema">
+                                                                Dono
+                                                            </span>
+                                                        )}
+                                                        {user.isInvitedMember && (
+                                                            <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 text-[8px] font-black uppercase tracking-wider border border-blue-500/30" title="Membro Convidado" aria-label="Membro Convidado">
+                                                                Membro
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <div className="text-[10px] text-slate-500">{user.email}</div>
                                                 </div>
                                             </div>
@@ -618,12 +631,15 @@ const MasterAdminDashboard = ({
                                         </td>
                                         <td className="p-4 text-[10px] font-mono text-center">{new Date(user.lastLogin).toLocaleDateString()}</td>
                                         <td className="p-4 text-right">
-                                            <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="flex items-center justify-end gap-1 opacity-100 transition-opacity">
                                                 <button onClick={() => onImpersonate(user.id)} title="Acessar conta" aria-label="Acessar conta" className="p-1.5 bg-indigo-600/10 hover:bg-indigo-600 text-indigo-400 hover:text-white rounded-lg transition-colors">
                                                     <LogIn size={14} aria-hidden="true" />
                                                 </button>
-                                                <button onClick={() => onUpdateUser({ ...user, status: user.status === 'ACTIVE' ? 'BANNED' : 'ACTIVE' })} title={user.status === 'ACTIVE' ? 'Banir' : 'Reativar'} aria-label={user.status === 'ACTIVE' ? 'Banir usuário' : 'Reativar usuário'} className="p-1.5 bg-slate-800 hover:bg-red-600 text-slate-400 hover:text-white rounded-lg transition-colors">
-                                                    <ShieldAlert size={14} aria-hidden="true" />
+                                                <button onClick={() => setEditingUser(user)} title="Editar Usuário" aria-label="Editar Usuário" className="p-1.5 bg-slate-800 hover:bg-indigo-600 text-slate-400 hover:text-white rounded-lg transition-colors">
+                                                    <Edit size={14} aria-hidden="true" />
+                                                </button>
+                                                <button onClick={() => { if (window.confirm('Tem certeza que deseja excluir este usuário permanentemente?')) onDeleteUser(user.id); }} title="Excluir Usuário" aria-label="Excluir Usuário" className="p-1.5 bg-slate-800 hover:bg-red-600 text-slate-400 hover:text-white rounded-lg transition-colors">
+                                                    <Trash2 size={14} aria-hidden="true" />
                                                 </button>
                                             </div>
                                         </td>
@@ -961,6 +977,82 @@ const MasterAdminDashboard = ({
                                 )}
                             </div>
                         </div>
+                    </div>
+                </div>
+            )}
+            {/* EDIT USER MODAL */}
+            {editingUser && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-8 bg-black/95 backdrop-blur-md animate-fade-in-up">
+                    <div className="w-full max-w-xl bg-[#0f172a] rounded-[2.5rem] border border-slate-800 overflow-hidden shadow-2xl flex flex-col">
+                        <div className="p-8 border-b border-slate-800/60 flex justify-between items-center bg-[#0f172a]/50">
+                            <div>
+                                <h3 className="text-2xl font-black uppercase tracking-tight">Editar Usuário</h3>
+                                <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-1">ID: {editingUser.id}</p>
+                            </div>
+                            <button onClick={() => setEditingUser(null)} className="p-3 bg-slate-900 hover:bg-slate-800 rounded-2xl text-slate-500 transition-all border border-slate-800 hover:scale-110" title="Fechar" aria-label="Fechar">
+                                <X size={20} aria-hidden="true" />
+                            </button>
+                        </div>
+                        <form onSubmit={(e) => { e.preventDefault(); onUpdateUser(editingUser); setEditingUser(null); }} className="p-8 space-y-6">
+
+                            <div className="space-y-2">
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Nome</label>
+                                <input
+                                    type="text"
+                                    value={editingUser.name}
+                                    onChange={e => setEditingUser({ ...editingUser, name: e.target.value })}
+                                    placeholder="Nome do usuário"
+                                    title="Nome do usuário"
+                                    className="w-full p-4 bg-[#020617] border border-slate-800 rounded-xl outline-none focus:border-indigo-500 transition-all text-sm font-bold placeholder:text-slate-700 text-slate-200"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Email (Apenas Leitura)</label>
+                                <input
+                                    type="text"
+                                    value={editingUser.email}
+                                    disabled
+                                    title="Email do usuário (apenas leitura)"
+                                    className="w-full p-4 bg-[#020617]/50 border border-slate-800 rounded-xl outline-none text-sm font-bold text-slate-500 cursor-not-allowed"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Plano de Acesso</label>
+                                    <select
+                                        value={editingUser.plan}
+                                        onChange={e => setEditingUser({ ...editingUser, plan: e.target.value as any })}
+                                        title="Selecionar Plano de Acesso"
+                                        aria-label="Selecionar Plano de Acesso"
+                                        className="w-full p-4 bg-[#020617] border border-slate-800 rounded-xl outline-none focus:border-indigo-500 transition-all text-xs font-black uppercase text-slate-200 cursor-pointer"
+                                    >
+                                        <option value="FREE">Free</option>
+                                        <option value="PRO">Pro</option>
+                                        <option value="PREMIUM">Premium</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Status da Conta</label>
+                                    <select
+                                        value={editingUser.status}
+                                        onChange={e => setEditingUser({ ...editingUser, status: e.target.value as any })}
+                                        title="Selecionar Status da Conta"
+                                        aria-label="Selecionar Status da Conta"
+                                        className="w-full p-4 bg-[#020617] border border-slate-800 rounded-xl outline-none focus:border-indigo-500 transition-all text-xs font-black uppercase text-slate-200 cursor-pointer"
+                                    >
+                                        <option value="ACTIVE">Ativo</option>
+                                        <option value="BANNED">Banido / Suspenso</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="pt-4 flex gap-4">
+                                <button type="button" onClick={() => setEditingUser(null)} className="flex-1 py-4 bg-slate-800 text-slate-400 rounded-2xl font-bold hover:bg-slate-700 transition-colors">Cancelar</button>
+                                <button type="submit" className="flex-1 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20 active:scale-95 transition-all">Salvar Alterações</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

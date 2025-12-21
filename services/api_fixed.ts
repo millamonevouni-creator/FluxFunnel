@@ -371,15 +371,31 @@ export const api = {
     admin: {
         getUsers: async () => {
             if (isOffline) return [];
-            const { data, error } = await supabase.from('profiles').select('*');
-            if (error) throw error;
-            return data || [];
+
+            // 1. Fetch profiles
+            const { data: profiles, error: profilesError } = await supabase.from('profiles').select('*');
+            if (profilesError) throw profilesError;
+
+            // 2. Fetch all team members emails to identify who is invited
+            const { data: teamMembers, error: teamError } = await supabase.from('team_members').select('email');
+            if (teamError) console.error("Error fetching team members for admin view", teamError);
+
+            const invitedEmails = new Set((teamMembers || []).map((tm: any) => tm.email));
+
+            // 3. Map to User objects
+            return (profiles || []).map((p: any) => ({
+                ...mapProfileToUser(p),
+                isInvitedMember: invitedEmails.has(p.email)
+            }));
         },
         updateUserStatus: async (id: string, status: string) => {
             if (!isOffline) await supabase.from('profiles').update({ status }).eq('id', id);
         },
         updateUserPlan: async (id: string, plan: string) => {
             if (!isOffline) await supabase.from('profiles').update({ plan }).eq('id', id);
+        },
+        deleteUser: async (id: string) => {
+            if (!isOffline) await supabase.from('profiles').delete().eq('id', id);
         }
     }
 };
