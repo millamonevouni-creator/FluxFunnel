@@ -46,6 +46,11 @@ const MasterAdminDashboard = ({
 }: MasterAdminDashboardProps) => {
 
     const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'USERS' | 'PLANS' | 'FEEDBACK' | 'SYSTEM' | 'TEMPLATES'>('PLANS');
+
+    // Announcement Form State
+    const [annTitle, setAnnTitle] = useState('');
+    const [annMessage, setAnnMessage] = useState('');
+    const [annType, setAnnType] = useState<'INFO' | 'WARNING' | 'ALERT'>('INFO');
     const [templates, setTemplates] = useState<Template[]>([]);
     const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
     const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
@@ -891,34 +896,37 @@ const MasterAdminDashboard = ({
                                         type="text"
                                         placeholder="Título do Comunicado"
                                         className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-xs font-bold text-slate-200 outline-none focus:border-indigo-500"
-                                        id="announcementTitle"
+                                        value={annTitle}
+                                        onChange={(e) => setAnnTitle(e.target.value)}
                                         title="Título do Comunicado"
                                     />
                                     <textarea
                                         placeholder="Mensagem detalhada..."
                                         className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-xs font-medium text-slate-300 outline-none focus:border-indigo-500 min-h-[80px]"
-                                        id="announcementMessage"
+                                        value={annMessage}
+                                        onChange={(e) => setAnnMessage(e.target.value)}
                                         title="Mensagem do Comunicado"
                                     ></textarea>
                                     <div className="flex gap-3">
-                                        <select id="announcementType" title="Tipo do Comunicado" className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-[10px] font-bold text-slate-400 uppercase outline-none focus:border-indigo-500">
+                                        <select
+                                            value={annType}
+                                            onChange={(e) => setAnnType(e.target.value as any)}
+                                            title="Tipo do Comunicado"
+                                            className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-[10px] font-bold text-slate-400 uppercase outline-none focus:border-indigo-500"
+                                        >
                                             <option value="INFO">Informativo</option>
                                             <option value="WARNING">Aviso</option>
                                             <option value="ALERT">Alerta Crítico</option>
                                         </select>
                                         <button
                                             onClick={() => {
-                                                const title = (document.getElementById('announcementTitle') as HTMLInputElement).value;
-                                                const message = (document.getElementById('announcementMessage') as HTMLTextAreaElement).value;
-                                                const type = (document.getElementById('announcementType') as HTMLSelectElement).value as any;
-
-                                                if (!title || !message) return alert('Preencha título e mensagem');
+                                                if (!annTitle.trim() || !annMessage.trim()) return alert('Preencha título e mensagem');
 
                                                 const newAnnouncement: any = {
                                                     id: Date.now().toString(),
-                                                    title,
-                                                    message,
-                                                    type,
+                                                    title: annTitle,
+                                                    message: annMessage,
+                                                    type: annType,
                                                     isActive: true,
                                                     createdAt: new Date()
                                                 };
@@ -928,8 +936,9 @@ const MasterAdminDashboard = ({
                                                     announcements: [newAnnouncement, ...(systemConfig.announcements || [])]
                                                 });
 
-                                                (document.getElementById('announcementTitle') as HTMLInputElement).value = '';
-                                                (document.getElementById('announcementMessage') as HTMLTextAreaElement).value = '';
+                                                setAnnTitle('');
+                                                setAnnMessage('');
+                                                setAnnType('INFO');
                                             }}
                                             className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-all"
                                             title="Publicar Comunicado"

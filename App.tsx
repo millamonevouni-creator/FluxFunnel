@@ -14,6 +14,7 @@ import PublicIcons from './components/PublicIcons';
 import TeamDashboard from './components/TeamDashboard';
 import AIAssistant from './components/AIAssistant';
 import MarketplaceDashboard from './components/MarketplaceDashboard';
+import AnnouncementBanner from './components/AnnouncementBanner';
 import { Project, AppMode, User, Language, AppPage, AppView, FeedbackItem, FeedbackStatus, UserStatus, UserPlan, PlanConfig, TeamMember, Template, SystemConfig, NodeType, Announcement } from './types';
 import { INITIAL_NODES, INITIAL_EDGES, TRANSLATIONS, PROJECT_TEMPLATES, NODE_CONFIG, NODE_CATEGORY } from './constants';
 import { Node, Edge } from 'reactflow';
@@ -45,6 +46,7 @@ const App = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null);
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showProjectLimitModal, setShowProjectLimitModal] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
@@ -419,6 +421,25 @@ const App = () => {
     <div className={`flex h-screen overflow-hidden ${isDark ? 'dark' : ''}`}>
       {toast?.show && <div className={`fixed top-14 left-1/2 -translate-x-1/2 z-[300] px-6 py-3 rounded-xl shadow-2xl border ${toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>{toast.message}</div>}
 
+      {showUpgradeModal && (
+        <UpgradeModal
+          userPlan={user?.plan || 'FREE'}
+          onClose={() => setShowUpgradeModal(false)}
+          onUpgrade={async () => {
+            // Mock upgrade for testing - effectively update user plan immediately for verifying UI
+            if (user) {
+              await api.admin.updateUserPlan(user.id, 'PREMIUM');
+              const up = await api.auth.getProfile();
+              if (up) setUser(up);
+              setShowUpgradeModal(false);
+              showNotification('Upgrade para PREMIUM realizado com sucesso!', 'success');
+            }
+          }}
+          isDark={isDark}
+          plans={plans}
+        />
+      )}
+
       {showUnsavedModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4">
           <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-md w-full">
@@ -497,10 +518,13 @@ const App = () => {
           </div>
         </header>
 
+        {/* Global Announcements */}
+        {appPage !== 'BUILDER' && <AnnouncementBanner announcements={systemConfig.announcements} />}
+
         <div className="flex-1 overflow-hidden relative flex">
           {appPage === 'PROJECTS' && <ProjectsDashboard projects={projects.filter(p => p.ownerId === user?.id)} onCreateProject={createProject} onOpenProject={(id) => { setCurrentProjectId(id); setAppPage('BUILDER'); }} onDeleteProject={handleDeleteProject} onRenameProject={handleRenameProject} onRefreshTemplates={refreshTemplates} showNotification={showNotification} isDark={isDark} t={t} userPlan={user?.plan} customTemplates={customTemplates} onSaveAsTemplate={async (p) => { await api.templates.create({ customLabel: p.name, nodes: p.nodes, edges: p.edges, isCustom: true }); refreshTemplates(); }} />}
-          {appPage === 'MARKETPLACE' && <MarketplaceDashboard userPlan={user?.plan || 'FREE'} onDownload={async (t) => { await createProject(t.id, t.customLabel); showNotification("Template baixado!"); }} isDark={isDark} t={t} userId={user?.id} />}
-          {appPage === 'TEAM' && <TeamDashboard members={teamMembers} onInviteMember={handleInviteMember} onUpdateRole={handleUpdateMemberRole} onRemoveMember={handleRemoveMember} onResendInvite={handleResendInvite} onUpgrade={() => { }} plan={user?.plan || 'FREE'} maxMembers={plans.find(p => p.id === user?.plan)?.teamLimit ?? (user?.plan === 'PREMIUM' ? 10 : 0)} isDark={isDark} t={t} />}
+          {appPage === 'MARKETPLACE' && <MarketplaceDashboard userPlan={user?.plan || 'FREE'} onDownload={async (t) => { await createProject(t.id, t.customLabel); showNotification("Template baixado!"); }} isDark={isDark} t={t} userId={user?.id} onUpgrade={() => setShowUpgradeModal(true)} />}
+          {appPage === 'TEAM' && <TeamDashboard members={teamMembers} onInviteMember={handleInviteMember} onUpdateRole={handleUpdateMemberRole} onRemoveMember={handleRemoveMember} onResendInvite={handleResendInvite} onUpgrade={() => setShowUpgradeModal(true)} plan={user?.plan || 'FREE'} maxMembers={plans.find(p => p.id === user?.plan)?.teamLimit ?? (user?.plan === 'PREMIUM' ? 10 : 0)} isDark={isDark} t={t} />}
           {appPage === 'MASTER_ADMIN' && <MasterAdminDashboard
             onBack={() => setAppPage('PROJECTS')}
             onReplyFeedback={async (id, text) => { await api.feedbacks.addComment(id, text); setFeedbacks(await api.feedbacks.list()); }}

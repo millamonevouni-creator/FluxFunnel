@@ -11,6 +11,7 @@ const mapProfileToUser = (profile: any): User => ({
     plan: profile.plan || 'FREE',
     status: profile.status || 'ACTIVE',
     lastLogin: profile.last_login ? new Date(profile.last_login) : new Date(),
+    avatarUrl: profile.avatar_url,
     isSystemAdmin: profile.is_system_admin || false
 });
 
@@ -23,7 +24,41 @@ const mapDBProjectToApp = (dbProject: any): Project => ({
     ownerId: dbProject.owner_id
 });
 
+// Helper for calling Edge Functions
+const invokeEdgeFunction = async (functionName: string, body: any) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const headers = {
+        Authorization: `Bearer ${session?.access_token}`,
+        'Content-Type': 'application/json'
+    };
+
+    // Local development fallback or production URL
+    // Note: Supabase JS client has functions.invoke but manually fetching is sometimes more reliable for debugging specific URLs
+    const { data, error } = await supabase.functions.invoke(functionName, {
+        body: body,
+        headers: headers
+    });
+
+    if (error) throw error;
+    return data;
+}
+
 export const api = {
+    subscriptions: {
+        createCheckoutSession: async (priceId: string) => {
+            // You can also use supabase.functions.invoke here directly
+            const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+                body: {
+                    priceId,
+                    successUrl: window.location.origin + '?session_id={CHECKOUT_SESSION_ID}',
+                    cancelUrl: window.location.origin
+                }
+            });
+
+            if (error) throw error;
+            return data; // Expect { sessionId: string }
+        }
+    },
     auth: {
         login: async (email: string, password?: string): Promise<{ user: User, token: string }> => {
             if (isOffline) {
@@ -117,10 +152,56 @@ export const api = {
             } catch (e) { return null; }
         },
         updateProfile: async (id: string, data: Partial<User>) => { if (!isOffline) await supabase.from('profiles').update(data).eq('id', id); },
-        updatePassword: async (password: string) => {
+        updatePassword: async (password: string) => { // Deprecated: Use changePassword
             if (isOffline) return;
             const { error } = await supabase.auth.updateUser({ password });
             if (error) throw error;
+        },
+        changePassword: async (email: string, oldPassword: string, newPassword: string) => {
+            if (isOffline) return;
+
+            // 1. Verify old password by trying to sign in
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+                email,
+                password: oldPassword
+            });
+
+            if (signInError) {
+                throw new Error("A senha atual está incorreta.");
+            }
+
+            // 2. Update to new password
+            const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+
+            if (updateError) throw updateError;
+        },
+        uploadAvatar: async (userId: string, file: File): Promise<string> => {
+            if (isOffline) return URL.createObjectURL(file); // Mock for offline
+
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${userId}/${Date.now()}.${fileExt}`;
+            const filePath = `${fileName}`;
+
+            // 1. Upload
+            const { error: uploadError } = await supabase.storage
+                .from('avatars')
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            // 2. Get Public URL
+            const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+            const publicUrl = data.publicUrl;
+
+            // 3. Update Profile
+            const { error: updateError } = await supabase
+                .from('profiles')
+                .update({ avatar_url: publicUrl })
+                .eq('id', userId);
+
+            if (updateError) throw updateError;
+
+            return publicUrl;
         },
         resetPassword: async (email: string) => {
             if (isOffline) return;
@@ -255,8 +336,23 @@ export const api = {
     },
     plans: {
         list: async () => { if (isOffline) return []; const { data } = await supabase.from('plans').select('*'); return data || []; },
-        update: async (id: string, p: any) => { if (!isOffline) await supabase.from('plans').update(p).eq('id', id); },
-        create: async (p: any) => { if (!isOffline) await supabase.from('plans').insert(p); },
+        update: async (id: string, p: any) => {
+            if (isOffline) { await supabase.from('plans').update(p).eq('id', id); return; }
+            // Invoke Edge Function to handle Sync
+            const { data, error } = await supabase.functions.invoke('manage-plan', {
+                body: { plan: { ...p, id }, operation: 'UPDATE' }
+            });
+            if (error) throw error;
+            return data;
+        },
+        create: async (p: any) => {
+            if (isOffline) { await supabase.from('plans').insert(p); return; }
+            const { data, error } = await supabase.functions.invoke('manage-plan', {
+                body: { plan: p, operation: 'CREATE' }
+            });
+            if (error) throw error;
+            return data;
+        },
         delete: async (id: string) => { if (!isOffline) await supabase.from('plans').delete().eq('id', id); }
     },
     feedbacks: {

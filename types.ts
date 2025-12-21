@@ -152,8 +152,11 @@ export interface PlanConfig {
   nodeLimit: number;
   features: string[];
   isPopular?: boolean;
-  teamLimit?: number; // Added for dynamic team limits
-  order?: number; // Added for display ordering
+  teamLimit?: number;
+  order?: number;
+  stripe_product_id?: string;
+  stripe_price_id_monthly?: string;
+  stripe_price_id_yearly?: string;
 }
 
 export interface Announcement {

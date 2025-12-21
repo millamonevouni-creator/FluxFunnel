@@ -122,16 +122,48 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
                                 <h3 className={`text-xl font-bold mb-6 ${isDark ? 'text-white' : 'text-slate-900'}`}>{t('personalInfo')}</h3>
 
                                 <div className="flex items-center gap-6 mb-8">
-                                    <div className="relative group cursor-pointer">
-                                        <div className={`w-24 h-24 rounded-full flex items-center justify-center text-3xl font-bold text-white shadow-xl ring-4 ring-white dark:ring-slate-800
-                                    ${isDark ? 'bg-slate-700' : 'bg-slate-200'}
-                                    bg-gradient-to-br from-indigo-500 to-purple-600
-                                `}>
-                                            {name.substring(0, 2).toUpperCase()}
-                                        </div>
+                                    <div className="relative group cursor-pointer" onClick={() => document.getElementById('avatar-upload')?.click()}>
+                                        {user.avatarUrl ? (
+                                            <img
+                                                src={user.avatarUrl}
+                                                alt={user.name}
+                                                className={`w-24 h-24 rounded-full object-cover shadow-xl ring-4 ring-white dark:ring-slate-800 ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`}
+                                            />
+                                        ) : (
+                                            <div className={`w-24 h-24 rounded-full flex items-center justify-center text-3xl font-bold text-white shadow-xl ring-4 ring-white dark:ring-slate-800
+                                                ${isDark ? 'bg-slate-700' : 'bg-slate-200'}
+                                                bg-gradient-to-br from-indigo-500 to-purple-600
+                                            `}>
+                                                {user.name.substring(0, 2).toUpperCase()}
+                                            </div>
+                                        )}
                                         <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                                             <Camera size={24} className="text-white" />
                                         </div>
+                                        <input
+                                            id="avatar-upload"
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            aria-label="Upload de foto de perfil"
+                                            onChange={async (e) => {
+                                                const file = e.target.files?.[0];
+                                                if (!file) return;
+
+                                                try {
+                                                    setIsSaving(true);
+                                                    const url = await api.auth.uploadAvatar(user.id, file);
+                                                    // Update local user state immediately
+                                                    onUpdateUser({ avatarUrl: url });
+                                                    alert("Foto de perfil atualizada!");
+                                                } catch (error) {
+                                                    console.error(error);
+                                                    alert("Erro ao fazer upload da imagem.");
+                                                } finally {
+                                                    setIsSaving(false);
+                                                }
+                                            }}
+                                        />
                                     </div>
                                     <div>
                                         <p className={`font-bold text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>{t('yourPhoto')}</p>
@@ -437,6 +469,7 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
                                     <form className="space-y-4 max-w-md" onSubmit={async (e) => {
                                         e.preventDefault();
                                         const form = e.target as HTMLFormElement;
+                                        const currentPass = (form.elements.namedItem('currentPass') as HTMLInputElement).value;
                                         const newPass = (form.elements.namedItem('newPass') as HTMLInputElement).value;
                                         const confirmPass = (form.elements.namedItem('confirmPass') as HTMLInputElement).value;
 
@@ -451,16 +484,21 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
 
                                         try {
                                             setIsSaving(true);
-                                            await api.auth.updatePassword(newPass);
+                                            // Call changePassword with email to verify old password first
+                                            await api.auth.changePassword(user.email, currentPass, newPass);
                                             alert(t('passwordUpdated') || 'Senha atualizada com sucesso!');
                                             form.reset();
-                                        } catch (error) {
+                                        } catch (error: any) {
                                             console.error(error);
-                                            alert(t('passwordUpdateError') || 'Erro ao atualizar senha');
+                                            alert(error.message || t('passwordUpdateError') || 'Erro ao atualizar senha');
                                         } finally {
                                             setIsSaving(false);
                                         }
                                     }}>
+                                        <div>
+                                            <label className={labelClass}>{t('currentPwd') || 'Senha Atual'}</label>
+                                            <input name="currentPass" type="password" placeholder="••••••••" className={inputClass} required />
+                                        </div>
                                         <div>
                                             <label className={labelClass}>{t('newPwd')}</label>
                                             <input name="newPass" type="password" placeholder="••••••••" className={inputClass} required />

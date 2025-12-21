@@ -30,11 +30,63 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
         setOpenFaq(openFaq === idx ? null : idx);
     };
 
-    const handleActionClick = () => {
+    const handleActionClick = async (planId?: string) => {
         if (!systemConfig.allowSignups) {
             alert('Novos cadastros estão temporariamente pausados pelo administrador.');
             return;
         }
+
+        // If explicitly a specific plan action (from pricing card)
+        if (planId && (planId === 'PRO' || planId === 'PREMIUM')) {
+            try {
+                // Determine price ID based on billing cycle
+                const targetPlan = plans.find(p => p.id === planId);
+                let priceId = billingCycle === 'monthly' ? targetPlan?.stripe_price_id_monthly : targetPlan?.stripe_price_id_yearly;
+
+                // Fallback to env vars
+                if (!priceId) {
+                    const envKey = `VITE_STRIPE_PRICE_${planId}_${billingCycle.toUpperCase()}`;
+                    priceId = import.meta.env[envKey];
+                }
+
+                if (!priceId || priceId.includes('ID_AQUI')) {
+                    alert("Configuração de pagamento incompleta. Atualize o plano no Painel Master.");
+                    return;
+                }
+
+                // Call the API function we created
+                // Assuming api is available via props or import. 
+                // LandingPage usually receives onGetStartedClick, maybe we should use that for FREE/Auth Flow
+                // and handle stripe checkout for PRO/PREMIUM here.
+
+                // We need to verify if user is logged in. 
+                // If not, we should probably redirect to signup with a plan param?
+                // For now, let's assume this LandingPage is also used by logged in users OR 
+                // we'll just redirect to OnGetStarted which normally opens Auth Modal.
+                // But wait, the user wants "Cobrancas", so we want real payment.
+
+                // If user is NOT logged in, we can't create a checkout session linked to a user.
+                // WE MUST LOGIN FIRST. 
+                // So, let's just use onGetStartedClick() which opens the auth modal.
+                // But we should pass the selected plan to it? 
+
+                // Let's keep it simple: "Assinar Agora" -> Opens Auth Modal (onGetStartedClick).
+                // After auth, they can upgrade.
+
+                // HOWEVER, if the user requested "Payment Test", they might be logged in.
+                // Let's assume onGetStartedClick handles the "Join" flow.
+
+                // If we want to support direct checkout, we need to know if user is authenticated here.
+                // This component doesn't seem to have `user` prop.
+
+                onGetStartedClick();
+                return;
+
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
         onGetStartedClick();
     };
 
@@ -68,7 +120,7 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                     <div className="flex items-center gap-4">
                         <button onClick={onLoginClick} className="text-sm font-bold text-slate-600 hover:text-indigo-600 px-4 py-2 hover:bg-slate-100 rounded-lg transition-all">{t('signIn')}</button>
                         <button
-                            onClick={handleActionClick}
+                            onClick={() => handleActionClick()}
                             className={`text-sm font-bold px-6 py-3 rounded-xl transition-all shadow-xl shadow-indigo-500/20 active:scale-95 ${!systemConfig.allowSignups ? 'bg-slate-400 text-white cursor-not-allowed' : 'bg-slate-900 text-white hover:bg-slate-800 hover:-translate-y-1'}`}
                             disabled={!systemConfig.allowSignups}
                         >
@@ -102,7 +154,7 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                     </p>
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up delay-200 mb-16">
-                        <button onClick={handleActionClick} className="group relative w-full sm:w-auto px-8 py-4 bg-slate-900 text-white rounded-2xl font-bold text-lg shadow-2xl shadow-slate-900/30 hover:shadow-slate-900/50 hover:-translate-y-1 transition-all overflow-hidden">
+                        <button onClick={() => handleActionClick()} className="group relative w-full sm:w-auto px-8 py-4 bg-slate-900 text-white rounded-2xl font-bold text-lg shadow-2xl shadow-slate-900/30 hover:shadow-slate-900/50 hover:-translate-y-1 transition-all overflow-hidden">
                             <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-shimmer"></div>
                             <span className="flex items-center justify-center gap-3">Começar Gratuitamente <ArrowRight size={20} /></span>
                         </button>
@@ -261,7 +313,9 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                                     <div className="mb-8 text-center md:text-left">
                                         <h3 className="text-lg font-black uppercase tracking-widest text-slate-400 mb-4">{plan.label}</h3>
                                         <div className="flex items-baseline justify-center md:justify-start gap-1">
-                                            <span className="text-5xl lg:text-6xl font-black text-slate-900 tracking-tighter">R$ {price}</span>
+                                            <span className="text-5xl lg:text-6xl font-black text-slate-900 tracking-tighter whitespace-nowrap">
+                                                R$ {Number(price).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            </span>
                                             {price > 0 && <span className="text-slate-400 font-bold text-sm">{period}</span>}
                                         </div>
                                         <p className="text-slate-400 text-sm mt-4 font-medium min-h-[40px]">
@@ -273,7 +327,7 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
 
                                     <div className="flex-1 mb-10">
                                         <button
-                                            onClick={handleActionClick}
+                                            onClick={() => handleActionClick(plan.id)}
                                             disabled={!systemConfig.allowSignups}
                                             className={`w-full py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all shadow-lg active:scale-95 ${plan.isPopular ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-200' : 'bg-slate-900 hover:bg-slate-800 text-white shadow-slate-200'} ${!systemConfig.allowSignups ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         >
@@ -339,7 +393,7 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                     <h2 className="text-4xl md:text-5xl font-black mb-6 tracking-tight">Pronto para transformar seus resultados?</h2>
                     <p className="text-indigo-100 text-xl mb-10 font-medium">Junte-se a milhares de profissionais que já modernizaram a forma de planejar vendas online.</p>
                     <button
-                        onClick={handleActionClick}
+                        onClick={() => handleActionClick()}
                         disabled={!systemConfig.allowSignups}
                         className="px-12 py-5 bg-white text-indigo-600 rounded-full font-black text-lg shadow-2xl hover:bg-indigo-50 hover:scale-105 transition-all w-full sm:w-auto"
                     >
@@ -360,8 +414,12 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                             </div>
                             <p className="mb-6 leading-relaxed">A plataforma visual #1 para planejamento de estratégias digitais. Construída para performance, desenhada para clareza.</p>
                             <div className="flex gap-4">
-                                {[Facebook, Instagram, Youtube].map((Icon, i) => (
-                                    <a key={i} href="#" className="p-2 bg-slate-900 rounded-full hover:bg-indigo-600 hover:text-white transition-all"><Icon size={18} /></a>
+                                {[
+                                    { Icon: Facebook, name: 'Facebook' },
+                                    { Icon: Instagram, name: 'Instagram' },
+                                    { Icon: Youtube, name: 'Youtube' }
+                                ].map(({ Icon, name }, i) => (
+                                    <a key={i} href="#" aria-label={name} title={name} className="p-2 bg-slate-900 rounded-full hover:bg-indigo-600 hover:text-white transition-all"><Icon size={18} /></a>
                                 ))}
                             </div>
                         </div>

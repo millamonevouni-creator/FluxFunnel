@@ -8,15 +8,18 @@ import CustomEdge from './CustomEdge';
 import { Template, UserPlan } from '../types';
 import { api } from '../services/api_fixed';
 
+import PremiumLockScreen from './PremiumLockScreen';
+
 interface MarketplaceDashboardProps {
     userPlan: UserPlan;
     onDownload: (template: Template) => void;
     isDark: boolean;
     t: (key: any) => string;
     userId?: string;
+    onUpgrade: () => void;
 }
 
-const MarketplaceDashboard = ({ userPlan, onDownload, isDark, t, userId }: MarketplaceDashboardProps) => {
+const MarketplaceDashboard = ({ userPlan, onDownload, isDark, t, userId, onUpgrade }: MarketplaceDashboardProps) => {
     const [templates, setTemplates] = useState<Template[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -101,20 +104,13 @@ const MarketplaceDashboard = ({ userPlan, onDownload, isDark, t, userId }: Marke
 
     if (!isPremium) {
         return (
-            <div className={`flex-1 h-full flex flex-col items-center justify-center p-8 text-center ${isDark ? 'bg-slate-950' : 'bg-slate-50'}`}>
-                <div className="max-w-md animate-fade-in-up">
-                    <div className="w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-indigo-500/20 rotate-3">
-                        <Lock size={48} className="text-white" />
-                    </div>
-                    <h2 className={`text-4xl font-black mb-4 tracking-tight ${textTitle}`}>{t('premiumOnly')}</h2>
-                    <p className={`text-lg mb-10 leading-relaxed ${textSub}`}>
-                        O Marketplace é o centro estratégico da nossa elite. Assine o <strong>Premium</strong> para baixar e compartilhar funis que já geraram milhões.
-                    </p>
-                    <button className="px-10 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black shadow-xl shadow-indigo-500/30 transition-all flex items-center gap-3 mx-auto transform hover:scale-105 active:scale-95">
-                        <Crown size={24} /> Quero Acesso Premium
-                    </button>
-                </div>
-            </div>
+            <PremiumLockScreen
+                title={t('premiumOnly')}
+                description="O Marketplace é o centro estratégico da nossa elite. Assine o Premium para baixar e compartilhar funis que já geraram milhões."
+                features={["Acesso ilimitado a templates", "Compartilhe suas estratégias", "Vote e avalie modelos"]}
+                onUpgrade={onUpgrade}
+                isDark={isDark}
+            />
         );
     }
 

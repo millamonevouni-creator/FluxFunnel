@@ -20,6 +20,54 @@ const UpgradeModal = ({ onClose, onUpgrade, isDark, limitType = 'NODES', plans, 
     const proPlan = plans?.find(p => p.id === 'PRO') || { projectLimit: 5, nodeLimit: 100 };
     const premiumPlan = plans?.find(p => p.id === 'PREMIUM') || { projectLimit: 9999, nodeLimit: 9999 };
 
+    const handleCheckout = async (planId: 'PRO' | 'PREMIUM', cycle: 'monthly' | 'yearly' = 'monthly') => {
+        try {
+            // Updated to use specific Monthly/Yearly Price IDs
+            // Find target plan from props
+            const targetPlan = plans?.find(p => p.id === planId);
+
+            // Get dynamic price ID from DB, fallback to env vars
+            let priceId = cycle === 'monthly'
+                ? targetPlan?.stripe_price_id_monthly
+                : targetPlan?.stripe_price_id_yearly;
+
+            if (!priceId) {
+                // Fallback for backward compatibility
+                const envMap: any = {
+                    'PRO': { monthly: import.meta.env.VITE_STRIPE_PRICE_PRO_MONTHLY, yearly: import.meta.env.VITE_STRIPE_PRICE_PRO_YEARLY },
+                    'PREMIUM': { monthly: import.meta.env.VITE_STRIPE_PRICE_PREMIUM_MONTHLY, yearly: import.meta.env.VITE_STRIPE_PRICE_PREMIUM_YEARLY }
+                };
+                priceId = envMap[planId]?.[cycle];
+            }
+
+            if (!priceId || priceId.includes('price_fake') || priceId.includes('ID_AQUI')) {
+                alert("Preço não configurado. Por favor, atualize este plano no Painel Master para gerar os IDs do Stripe.");
+                return;
+            }
+
+            // Call the API function we created
+            const { api } = await import('../services/api_fixed');
+            const { sessionId } = await api.subscriptions.createCheckoutSession(priceId);
+
+            const { loadStripe } = await import('@stripe/stripe-js');
+            const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+
+            if (!stripe) throw new Error("Stripe failed to load");
+
+            const { error } = await (stripe as any).redirectToCheckout({ sessionId });
+            if (error) throw error;
+
+        } catch (error) {
+            console.error(error);
+            alert("Erro ao iniciar checkout: " + (error instanceof Error ? error.message : "Erro desconhecido"));
+        }
+    };
+
+    const handleUpgradeClick = () => {
+        // Default to PRO Monthly
+        handleCheckout(userPlan === 'PRO' ? 'PREMIUM' : 'PRO', 'monthly');
+    };
+
     return (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in-up">
             <div className={`relative w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
@@ -80,7 +128,7 @@ const UpgradeModal = ({ onClose, onUpgrade, isDark, limitType = 'NODES', plans, 
                     </div>
 
                     <button
-                        onClick={onUpgrade}
+                        onClick={handleUpgradeClick}
                         className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/25 transition-all transform hover:-translate-y-1 mb-3"
                         title="Fazer Upgrade de Plano"
                         aria-label="Fazer Upgrade de Plano"
