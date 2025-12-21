@@ -314,24 +314,33 @@ export const api = {
                 if (!user) throw new Error("User not valid");
 
                 // 1. Add to team table
-                const { error: dbError } = await supabase.from('team_members').insert({
+                const { data: memberData, error: dbError } = await supabase.from('team_members').insert({
                     email,
                     role,
                     owner_id: user.id
-                });
+                }).select().single();
+
                 if (dbError) throw dbError;
 
                 // 2. Send Magic Link
-                const { error: authError } = await supabase.auth.signInWithOtp({
-                    email,
-                    options: {
-                        emailRedirectTo: window.location.origin
-                    }
-                });
+                try {
+                    const { error: authError } = await supabase.auth.signInWithOtp({
+                        email,
+                        options: {
+                            emailRedirectTo: window.location.origin
+                        }
+                    });
 
-                if (authError) {
-                    console.error("Auth Error:", authError);
-                    throw authError;
+                    if (authError) {
+                        throw authError; // Trigger catch block
+                    }
+                } catch (inviteError: any) {
+                    // Rollback: Remove the user if invite failed
+                    console.error("Invite failed, rolling back DB entry...", inviteError);
+                    if (memberData?.id) {
+                        await supabase.from('team_members').delete().eq('id', memberData.id);
+                    }
+                    throw new Error("Falha ao enviar e-mail. Convite cancelado.");
                 }
             }
         },

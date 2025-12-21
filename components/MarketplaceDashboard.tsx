@@ -218,7 +218,7 @@ const MarketplaceDashboard = ({ userPlan, onDownload, isDark, t, userId }: Marke
                                     <Layout size={80} className="text-slate-300 dark:text-slate-600 group-hover:scale-125 group-hover:text-indigo-400/50 transition-all duration-1000 ease-out" />
 
                                     <div className="absolute bottom-4 right-4 flex gap-2">
-                                        <button onClick={() => setQuickLookTemplate(tpl)} className="p-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-slate-700 text-indigo-600 transition-all hover:scale-110">
+                                        <button onClick={() => setQuickLookTemplate(tpl)} className="p-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-slate-700 text-indigo-600 transition-all hover:scale-110" aria-label="Visualizar" title="Visualizar">
                                             <Eye size={16} />
                                         </button>
                                         <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm px-3 py-1.5 rounded-xl text-[10px] font-black shadow-sm flex items-center gap-2 border dark:border-slate-700">
@@ -272,6 +272,8 @@ const MarketplaceDashboard = ({ userPlan, onDownload, isDark, t, userId }: Marke
                                                         key={star}
                                                         onClick={() => handleRate(tpl.id, star)}
                                                         className="text-amber-400 hover:scale-125 transition-transform"
+                                                        aria-label={`Avaliar com ${star} estrelas`}
+                                                        title={`Avaliar com ${star} estrelas`}
                                                     >
                                                         <Star size={24} className="hover:fill-amber-400" />
                                                     </button>
@@ -309,7 +311,7 @@ const MarketplaceDashboard = ({ userPlan, onDownload, isDark, t, userId }: Marke
                                 <h3 className={`text-3xl font-black ${textTitle}`}>{t('quickLook')}: {quickLookTemplate.customLabel}</h3>
                                 <p className={textSub}>Visualizando estrutura do fluxo.</p>
                             </div>
-                            <button onClick={() => setQuickLookTemplate(null)} className="p-4 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-3xl transition-all">
+                            <button onClick={() => setQuickLookTemplate(null)} className="p-4 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-3xl transition-all" aria-label="Fechar" title="Fechar">
                                 <X size={28} />
                             </button>
                         </div>
@@ -361,18 +363,24 @@ const MarketplaceDashboard = ({ userPlan, onDownload, isDark, t, userId }: Marke
                         <h3 className={`text-2xl font-bold mb-6 ${textTitle}`}>Editar Estratégia</h3>
                         <div className="space-y-4">
                             <div>
-                                <label className={`block text-sm font-bold mb-2 ${textSub}`}>Nome</label>
+                                <label htmlFor="edit-label" className={`block text-sm font-bold mb-2 ${textSub}`}>Nome</label>
                                 <input
+                                    id="edit-label"
                                     value={editForm.label}
                                     onChange={e => setEditForm({ ...editForm, label: e.target.value })}
+                                    placeholder="Nome da estratégia"
+                                    title="Nome da estratégia"
                                     className="w-full p-3 rounded-xl border bg-transparent outline-none focus:border-indigo-500 transition-colors"
                                 />
                             </div>
                             <div>
-                                <label className={`block text-sm font-bold mb-2 ${textSub}`}>Descrição</label>
+                                <label htmlFor="edit-description" className={`block text-sm font-bold mb-2 ${textSub}`}>Descrição</label>
                                 <textarea
+                                    id="edit-description"
                                     value={editForm.description}
                                     onChange={e => setEditForm({ ...editForm, description: e.target.value })}
+                                    placeholder="Descrição detalhada"
+                                    title="Descrição da estratégia"
                                     className="w-full p-3 rounded-xl border bg-transparent outline-none focus:border-indigo-500 transition-colors h-32 resize-none"
                                 />
                             </div>
