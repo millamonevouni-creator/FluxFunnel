@@ -353,16 +353,16 @@ const FlowCanvas = ({
             return (
               <div className="absolute inset-0 pointer-events-none z-[10]">
                 {snapLines.x !== undefined && (
+                  // eslint-disable-next-line
                   <div
                     className="absolute top-0 bottom-0 border-l border-cyan-400/50"
-                    // eslint-disable-next-line
                     style={xStyle}
                   />
                 )}
                 {snapLines.y !== undefined && (
+                  // eslint-disable-next-line
                   <div
                     className="absolute left-0 right-0 border-t border-cyan-400/50"
-                    // eslint-disable-next-line
                     style={yStyle}
                   />
                 )}
