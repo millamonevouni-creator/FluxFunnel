@@ -98,7 +98,7 @@ const UpgradeModal = ({ onClose, onUpgrade, isDark, limitType = 'NODES', plans, 
     };
 
     return (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in-up">
+        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in-up">
             <div className={`relative w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
 
                 {/* Header Background */}
@@ -143,6 +143,51 @@ const UpgradeModal = ({ onClose, onUpgrade, isDark, limitType = 'NODES', plans, 
                         <button onClick={() => setCycle('monthly')} className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${cycle === 'monthly' ? 'bg-white shadow text-indigo-600 dark:bg-slate-700 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700'}`}>Mensal</button>
                         <button onClick={() => setCycle('yearly')} className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${cycle === 'yearly' ? 'bg-white shadow text-green-600 dark:bg-slate-700 dark:text-green-400' : 'text-slate-500 hover:text-slate-700'}`}>Anual (-15%)</button>
                     </div>
+
+                    {/* Dynamic Price & Benefits Summary */}
+                    {(() => {
+                        const currentPlanConfig = plans?.find(p => p.id === selectedPlan);
+                        const currentPrice = cycle === 'monthly' ? currentPlanConfig?.priceMonthly : currentPlanConfig?.priceYearly;
+                        const priceDisplay = currentPrice ? `R$ ${currentPrice.toFixed(2).replace('.', ',')}` : 'Sob consulta';
+
+                        return (
+                            <div className="w-full mb-6 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
+                                <div className="text-center mb-4">
+                                    <div className="text-3xl font-extrabold text-slate-800 dark:text-white">{priceDisplay}</div>
+                                    <div className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                                        por {cycle === 'monthly' ? 'mês' : 'ano'}
+                                    </div>
+                                </div>
+
+                                <div className="mb-4 flex flex-col gap-2">
+                                    <div className="flex items-center justify-between px-3 py-2 bg-white dark:bg-slate-700/50 rounded-lg border border-slate-100 dark:border-slate-600">
+                                        <span className="text-xs text-slate-500 dark:text-slate-400">Elementos no Fluxo</span>
+                                        <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                                            {(currentPlanConfig?.nodeLimit ?? 0) >= 9999 ? 'Ilimitado' : currentPlanConfig?.nodeLimit}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between px-3 py-2 bg-white dark:bg-slate-700/50 rounded-lg border border-slate-100 dark:border-slate-600">
+                                        <span className="text-xs text-slate-500 dark:text-slate-400">Limite de Projetos</span>
+                                        <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                                            {(currentPlanConfig?.projectLimit ?? 0) >= 9999 ? 'Ilimitado' : currentPlanConfig?.projectLimit}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2 text-left">
+                                    {currentPlanConfig?.features?.slice(0, 3).map((feature, idx) => (
+                                        <div key={idx} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">
+                                            <CheckCircle size={14} className="mt-0.5 text-green-500 shrink-0" />
+                                            <span className="leading-tight">{feature}</span>
+                                        </div>
+                                    ))}
+                                    {(!currentPlanConfig?.features || currentPlanConfig.features.length === 0) && (
+                                        <div className="text-xs text-center text-slate-400 italic">Detalhes em breve...</div>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })()}
 
                     {/* Comparison Table */}
                     <div className={`w-full rounded-xl p-4 mb-6 text-left space-y-3 ${isDark ? 'bg-slate-800 border border-slate-700' : 'bg-slate-50 border border-slate-100'}`}>

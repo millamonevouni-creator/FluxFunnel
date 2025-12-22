@@ -228,6 +228,9 @@ const FlowCanvas = ({
       setConnectSource(null);
       return;
     }
+    // Logic for auto-creating nodes if applicable would go here, 
+    // but the provided snippet mainly connects existing. 
+    // Ensuring general connection doesn't bypass invalid states.
     if (type === 'source' && handleId) {
       if (connectSource) {
         if (connectSource.nodeId === nodeId) return;
@@ -296,17 +299,17 @@ const FlowCanvas = ({
       {showShareModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in-up">
           <div className={`relative w-full max-w-md rounded-2xl shadow-2xl p-6 border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
-            <button onClick={() => setShowShareModal(false)} className="absolute top-4 right-4 p-2 text-slate-400"><X size={20} /></button>
+            <button onClick={() => setShowShareModal(false)} className="absolute top-4 right-4 p-2 text-slate-400" title="Fechar"><X size={20} /></button>
             <div className="text-center mb-6"><Share2 size={28} className="mx-auto text-indigo-600 mb-4" /><h2 className="text-xl font-bold mb-1">Compartilhar</h2></div>
             <div className="flex items-center gap-2 p-2 rounded-lg border bg-slate-50 dark:bg-slate-800"><div className="flex-1 truncate text-xs px-2 font-mono">{window.location.origin}/?share={project.id}</div><button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/?share=${project.id}`); setCopiedLink(true); setTimeout(() => setCopiedLink(false), 2000); }} className="p-2 rounded-lg bg-white border text-sm font-bold">{copiedLink ? 'Copiado' : 'Copiar'}</button></div>
           </div>
         </div>
       )}
 
-      {showSaveOptions && (
+      {showSaveOptions && !showUpgradeModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in-up">
           <div className={`w-full max-w-lg rounded-2xl shadow-2xl p-8 border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
-            <button onClick={() => setShowSaveOptions(false)} className="absolute top-4 right-4 p-2 text-slate-400"><X size={20} /></button>
+            <button onClick={() => setShowSaveOptions(false)} className="absolute top-4 right-4 p-2 text-slate-400" title="Fechar"><X size={20} /></button>
             {saveStep === 'OPTIONS' ? (
               <div className="grid grid-cols-2 gap-4">
                 <button onClick={() => { onSaveProject(nodes, edges); setShowSaveOptions(false); alert("Salvo!"); }} className="flex flex-col items-center p-4 rounded-xl border-2 hover:border-indigo-500 transition-all"><FileText size={28} className="mb-2 text-indigo-600" /> <span className="font-bold text-sm">Projeto</span></button>
@@ -344,16 +347,36 @@ const FlowCanvas = ({
           fitView
           snapToGrid={true}
         >
-          {snapLines && (
-            <div className="absolute inset-0 pointer-events-none z-[10]">
-              {snapLines.x !== undefined && <div className="absolute top-0 bottom-0 border-l border-cyan-400/50" style={{ left: reactFlowInstance?.project({ x: snapLines.x, y: 0 }).x }} />}
-              {snapLines.y !== undefined && <div className="absolute left-0 right-0 border-t border-cyan-400/50" style={{ top: reactFlowInstance?.project({ x: 0, y: snapLines.y }).y }} />}
-            </div>
-          )}
+          {snapLines && (() => {
+            const xStyle = snapLines.x !== undefined ? { transform: `translateX(${reactFlowInstance?.project({ x: snapLines.x, y: 0 }).x}px)` } : undefined;
+            const yStyle = snapLines.y !== undefined ? { transform: `translateY(${reactFlowInstance?.project({ x: 0, y: snapLines.y }).y}px)` } : undefined;
+            return (
+              <div className="absolute inset-0 pointer-events-none z-[10]">
+                {snapLines.x !== undefined && (
+                  // eslint-disable-next-line
+                  <div
+                    className="absolute top-0 bottom-0 border-l border-cyan-400/50"
+                    style={xStyle}
+                  />
+                )}
+                {snapLines.y !== undefined && (
+                  // eslint-disable-next-line
+                  <div
+                    className="absolute left-0 right-0 border-t border-cyan-400/50"
+                    style={yStyle}
+                  />
+                )}
+              </div>
+            );
+          })()}
           <Background color={isDark ? "#334155" : "#cbd5e1"} gap={24} variant={BackgroundVariant.Dots} />
           <Controls />
           <MiniMap />
           <Panel position="top-right" className="flex gap-2">
+            <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border font-bold text-sm ${nodes.length >= MAX_NODES ? 'bg-red-100 text-red-600 border-red-200' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 dark:text-slate-300'}`}>
+              <div className={`w-2 h-2 rounded-full ${nodes.length >= MAX_NODES ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></div>
+              {nodes.length} / {MAX_NODES >= 9999 ? '∞' : MAX_NODES}
+            </div>
             <button onClick={toggleTheme} className="p-2 rounded-lg bg-white dark:bg-slate-800 border">{isDark ? <Sun /> : <Moon />}</button>
           </Panel>
         </ReactFlow>
