@@ -57,6 +57,13 @@ const UpgradeModal = ({ onClose, onUpgrade, isDark, limitType = 'NODES', plans, 
             }
 
             // Call the API function we created
+            // Store choice for post-checkout processing (Fix for missing webhooks in dev)
+            localStorage.setItem('flux_pending_checkout', JSON.stringify({
+                planId,
+                cycle,
+                timestamp: Date.now()
+            }));
+
             // Call the API function we created
             const { api } = await import('../services/api_fixed');
             const { sessionId, url } = await api.subscriptions.createCheckoutSession(priceId);

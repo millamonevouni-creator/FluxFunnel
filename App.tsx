@@ -94,6 +94,26 @@ const App = () => {
           setAuthReturnView(null);
         }
 
+        // Check for Stripe Success Redirect
+        const sessionId = params.get('session_id');
+        if (sessionId && loggedUser) {
+          // Clean URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+          // Show success message
+          showNotification(t('upgradeSuccess'), 'success');
+          // Force refresh profile to get new plan
+          const updatedUser = await api.auth.getProfile();
+          if (updatedUser) setUser(updatedUser);
+          // Ensure we are in the app view
+          setCurrentView('APP');
+        } else if (sessionId && !loggedUser) {
+          // Case where user upgraded but session was lost/not logged in (rare but possible)
+          // Save session_id to local storage to handle after login?
+          // For now, just show auth
+          setCurrentView('AUTH');
+          setAuthReturnView('APP');
+        }
+
         const dbPlans = await api.plans.list();
         if (dbPlans && dbPlans.length > 0) setPlans(dbPlans);
 
