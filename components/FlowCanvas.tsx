@@ -1,5 +1,4 @@
-
-import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
+import React, { useCallback, useRef, useState, useLayoutEffect, useEffect, useMemo } from 'react';
 import ReactFlow, {
   ReactFlowProvider,
   addEdge,
@@ -31,7 +30,9 @@ import { NodeType, Project, UserPlan } from '../types';
 import { Save, Moon, Sun, Link as LinkIcon, BookmarkPlus, Undo, Redo, X, Layout, FileText, Lock, Type, Share2, Copy, Check, ShoppingBag } from 'lucide-react';
 
 let id = 1000;
-const getId = () => `${id++}`;
+const getId = () => `${id++} `;
+
+import { PlanConfig } from '../types';
 
 export interface FlowCanvasProps {
   project: Project;
@@ -50,13 +51,15 @@ export interface FlowCanvasProps {
   isSharedView?: boolean;
   onShareToMarketplace?: (name: string, description: string) => void;
   openSaveModalSignal?: number;
+  maxNodes?: number;
+  plans?: PlanConfig[];
 }
 
 const FlowCanvas = ({
   project, onSaveProject, onSaveTemplate, onUnsavedChanges, triggerSaveSignal,
   isDark, toggleTheme, isPresentationMode, showNotesInPresentation,
   t, userPlan, showAIAssistant, onToggleAIAssistant, isSharedView, onShareToMarketplace,
-  openSaveModalSignal
+  openSaveModalSignal, maxNodes = 20, plans
 }: FlowCanvasProps) => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition, getNodes, getEdges } = useReactFlow();
@@ -74,7 +77,7 @@ const FlowCanvas = ({
   const [copiedLink, setCopiedLink] = useState(false);
   const [snapLines, setSnapLines] = useState<{ x?: number, y?: number } | null>(null);
 
-  const MAX_NODES = userPlan === 'FREE' ? 20 : (userPlan === 'PRO' ? 100 : 9999);
+  const MAX_NODES = maxNodes;
 
   const [past, setPast] = useState<{ nodes: Node[], edges: Edge[] }[]>([]);
   const [future, setFuture] = useState<{ nodes: Node[], edges: Edge[] }[]>([]);
@@ -221,7 +224,7 @@ const FlowCanvas = ({
       const targetNode = getNodes().find(n => n.id === nodeId);
       if (sourceNode && targetNode) {
         takeSnapshot();
-        const newEdge = { id: `e${connectSource.nodeId}-${nodeId}-${Date.now()}`, source: connectSource.nodeId, target: nodeId, type: 'custom', animated: true };
+        const newEdge = { id: `e${connectSource.nodeId} -${nodeId} -${Date.now()} `, source: connectSource.nodeId, target: nodeId, type: 'custom', animated: true };
         setEdges((eds) => addEdge(newEdge, eds));
         onUnsavedChanges();
       }
@@ -235,7 +238,7 @@ const FlowCanvas = ({
       if (connectSource) {
         if (connectSource.nodeId === nodeId) return;
         takeSnapshot();
-        const newEdge = { id: `e${connectSource.nodeId}-${nodeId}-${Date.now()}`, source: connectSource.nodeId, sourceHandle: connectSource.handleId === 'auto' ? 'right' : connectSource.handleId, target: nodeId, targetHandle: handleId, type: 'custom', animated: true };
+        const newEdge = { id: `e${connectSource.nodeId} -${nodeId} -${Date.now()} `, source: connectSource.nodeId, sourceHandle: connectSource.handleId === 'auto' ? 'right' : connectSource.handleId, target: nodeId, targetHandle: handleId, type: 'custom', animated: true };
         setEdges((eds) => addEdge(newEdge, eds));
         onUnsavedChanges();
         setConnectSource(null);
@@ -294,38 +297,40 @@ const FlowCanvas = ({
     <div className="flex h-full w-full relative">
       {!isPresentationMode && <Sidebar isDark={isDark} t={t} userPlan={userPlan} />}
 
-      {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} onUpgrade={() => { alert("Redirecionando..."); setShowUpgradeModal(false); }} isDark={isDark} limitType="NODES" />}
+      {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} onUpgrade={() => { alert("Redirecionando..."); setShowUpgradeModal(false); }} isDark={isDark} limitType="NODES" plans={plans} />}
 
       {showShareModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in-up">
-          <div className={`relative w-full max-w-md rounded-2xl shadow-2xl p-6 border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
+          <div className={`relative w - full max - w - md rounded - 2xl shadow - 2xl p - 6 border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'} `}>
             <button onClick={() => setShowShareModal(false)} className="absolute top-4 right-4 p-2 text-slate-400" title="Fechar"><X size={20} /></button>
             <div className="text-center mb-6"><Share2 size={28} className="mx-auto text-indigo-600 mb-4" /><h2 className="text-xl font-bold mb-1">Compartilhar</h2></div>
-            <div className="flex items-center gap-2 p-2 rounded-lg border bg-slate-50 dark:bg-slate-800"><div className="flex-1 truncate text-xs px-2 font-mono">{window.location.origin}/?share={project.id}</div><button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/?share=${project.id}`); setCopiedLink(true); setTimeout(() => setCopiedLink(false), 2000); }} className="p-2 rounded-lg bg-white border text-sm font-bold">{copiedLink ? 'Copiado' : 'Copiar'}</button></div>
-          </div>
-        </div>
+            <div className="flex items-center gap-2 p-2 rounded-lg border bg-slate-50 dark:bg-slate-800"><div className="flex-1 truncate text-xs px-2 font-mono">{window.location.origin}/?share={project.id}</div><button onClick={() => { navigator.clipboard.writeText(`${window.location.origin} /?share=${project.id}`); setCopiedLink(true); setTimeout(() => setCopiedLink(false), 2000); }} className="p-2 rounded-lg bg-white border text-sm font-bold">{copiedLink ? 'Copiado' : 'Copiar'}</button ></div >
+          </div >
+        </div >
       )}
 
-      {showSaveOptions && !showUpgradeModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in-up">
-          <div className={`w-full max-w-lg rounded-2xl shadow-2xl p-8 border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
-            <button onClick={() => setShowSaveOptions(false)} className="absolute top-4 right-4 p-2 text-slate-400" title="Fechar"><X size={20} /></button>
-            {saveStep === 'OPTIONS' ? (
-              <div className="grid grid-cols-2 gap-4">
-                <button onClick={() => { onSaveProject(nodes, edges); setShowSaveOptions(false); alert("Salvo!"); }} className="flex flex-col items-center p-4 rounded-xl border-2 hover:border-indigo-500 transition-all"><FileText size={28} className="mb-2 text-indigo-600" /> <span className="font-bold text-sm">Projeto</span></button>
-                <button onClick={() => { if (userPlan === 'FREE') setShowUpgradeModal(true); else { setTemplateNameInput(''); setSaveStep('TEMPLATE_NAME'); } }} className="flex flex-col items-center p-4 rounded-xl border-2 hover:border-purple-500 transition-all"><Layout size={28} className="mb-2 text-purple-600" /> <span className="font-bold text-sm">Modelo</span></button>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-4">
-                <h3 className="text-lg font-bold">Salvar como Modelo</h3>
-                <input type="text" value={templateNameInput} onChange={e => setTemplateNameInput(e.target.value)} placeholder="Nome do modelo" className="p-3 rounded-xl border-2 outline-none" />
-                <button onClick={() => { onSaveTemplate?.(nodes, edges, templateNameInput); setShowSaveOptions(false); }} className="py-3 bg-purple-600 text-white rounded-xl font-bold">Salvar Modelo</button>
-                <button onClick={() => setSaveStep('OPTIONS')} className="text-sm text-slate-500 hover:underline">Voltar</button>
-              </div>
-            )}
+      {
+        showSaveOptions && !showUpgradeModal && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in-up">
+            <div className={`w-full max-w-lg rounded-2xl shadow-2xl p-8 border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
+              <button onClick={() => setShowSaveOptions(false)} className="absolute top-4 right-4 p-2 text-slate-400" title="Fechar"><X size={20} /></button>
+              {saveStep === 'OPTIONS' ? (
+                <div className="grid grid-cols-2 gap-4">
+                  <button onClick={() => { onSaveProject(nodes, edges); setShowSaveOptions(false); alert("Salvo!"); }} className="flex flex-col items-center p-4 rounded-xl border-2 hover:border-indigo-500 transition-all"><FileText size={28} className="mb-2 text-indigo-600" /> <span className="font-bold text-sm">Projeto</span></button>
+                  <button onClick={() => { if (userPlan === 'FREE') setShowUpgradeModal(true); else { setTemplateNameInput(''); setSaveStep('TEMPLATE_NAME'); } }} className="flex flex-col items-center p-4 rounded-xl border-2 hover:border-purple-500 transition-all"><Layout size={28} className="mb-2 text-purple-600" /> <span className="font-bold text-sm">Modelo</span></button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  <h3 className="text-lg font-bold">Salvar como Modelo</h3>
+                  <input type="text" value={templateNameInput} onChange={e => setTemplateNameInput(e.target.value)} placeholder="Nome do modelo" className="p-3 rounded-xl border-2 outline-none" />
+                  <button onClick={() => { onSaveTemplate?.(nodes, edges, templateNameInput); setShowSaveOptions(false); }} className="py-3 bg-purple-600 text-white rounded-xl font-bold">Salvar Modelo</button>
+                  <button onClick={() => setSaveStep('OPTIONS')} className="text-sm text-slate-500 hover:underline">Voltar</button>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       <div className="flex-1 h-full relative transition-colors duration-300" ref={reactFlowWrapper} onMouseMove={handleMouseMove}>
         <ReactFlow
@@ -348,22 +353,32 @@ const FlowCanvas = ({
           snapToGrid={true}
         >
           {snapLines && (() => {
-            const xStyle = snapLines.x !== undefined ? { transform: `translateX(${reactFlowInstance?.project({ x: snapLines.x, y: 0 }).x}px)` } : undefined;
-            const yStyle = snapLines.y !== undefined ? { transform: `translateY(${reactFlowInstance?.project({ x: 0, y: snapLines.y }).y}px)` } : undefined;
+            const xLineRef = useRef<HTMLDivElement>(null);
+            const yLineRef = useRef<HTMLDivElement>(null);
+
+            useLayoutEffect(() => {
+              if (xLineRef.current && snapLines.x !== undefined && reactFlowInstance) {
+                const x = reactFlowInstance.project({ x: snapLines.x, y: 0 }).x;
+                xLineRef.current.style.transform = `translateX(${x}px)`;
+              }
+              if (yLineRef.current && snapLines.y !== undefined && reactFlowInstance) {
+                const y = reactFlowInstance.project({ x: 0, y: snapLines.y }).y;
+                yLineRef.current.style.transform = `translateY(${y}px)`;
+              }
+            }, [snapLines, reactFlowInstance]);
+
             return (
               <div className="absolute inset-0 pointer-events-none z-[10]">
                 {snapLines.x !== undefined && (
-                  // eslint-disable-next-line
                   <div
+                    ref={xLineRef}
                     className="absolute top-0 bottom-0 border-l border-cyan-400/50"
-                    style={xStyle}
                   />
                 )}
                 {snapLines.y !== undefined && (
-                  // eslint-disable-next-line
                   <div
+                    ref={yLineRef}
                     className="absolute left-0 right-0 border-t border-cyan-400/50"
-                    style={yStyle}
                   />
                 )}
               </div>
@@ -381,7 +396,7 @@ const FlowCanvas = ({
           </Panel>
         </ReactFlow>
       </div>
-    </div>
+    </div >
   );
 };
 

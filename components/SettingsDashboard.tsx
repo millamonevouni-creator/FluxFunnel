@@ -12,9 +12,10 @@ interface SettingsDashboardProps {
     setLang: (l: Language) => void;
     t: (key: any) => string;
     projectsCount?: number;
+    onUpgrade: () => void;
 }
 
-const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setLang, t, projectsCount = 0 }: SettingsDashboardProps) => {
+const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setLang, t, projectsCount = 0, onUpgrade }: SettingsDashboardProps) => {
     const [activeTab, setActiveTab] = useState<'PROFILE' | 'PLAN' | 'PREFERENCES' | 'SECURITY' | 'NOTIFICATIONS'>('PROFILE');
     const [name, setName] = useState(user.name);
     const [email, setEmail] = useState(user.email);
@@ -401,7 +402,7 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
                                             <div className="flex-1">
                                                 <p className="text-sm font-bold text-indigo-900 dark:text-indigo-100">{t('upgradeToIncrease')}</p>
                                             </div>
-                                            <button className="text-xs font-bold bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-700 transition-colors" title="Fazer upgrade de plano" aria-label="Fazer upgrade de plano">
+                                            <button onClick={onUpgrade} className="text-xs font-bold bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-700 transition-colors" title="Fazer upgrade de plano" aria-label="Fazer upgrade de plano">
                                                 Upgrade
                                             </button>
                                         </div>

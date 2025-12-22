@@ -107,9 +107,8 @@ const App = () => {
           // Ensure we are in the app view
           setCurrentView('APP');
         } else if (sessionId && !loggedUser) {
-          // Case where user upgraded but session was lost/not logged in (rare but possible)
-          // Save session_id to local storage to handle after login?
-          // For now, just show auth
+          // Case where user upgraded but session was lost/not logged in
+          showNotification("Por favor, faça login para concluir a atualização do seu plano.", 'success');
           setCurrentView('AUTH');
           setAuthReturnView('APP');
         }
@@ -161,6 +160,33 @@ const App = () => {
           const profile = await api.auth.getProfile();
           if (profile) {
             setUser(profile);
+
+            // POST-LOGIN CHECKOUT PROCESSING
+            // If we have a pending checkout that wasn't processed URL-side (due to session loss)
+            const pendingCheckout = localStorage.getItem('flux_pending_checkout');
+            if (pendingCheckout) {
+              try {
+                const { planId } = JSON.parse(pendingCheckout);
+                // Double check if we need to apply it (e.g. if profile is still FREE)
+                if (planId && profile.plan !== planId) {
+                  console.log("Processing pending checkout after login:", planId);
+
+                  // Optimistic Update
+                  const updatedUser = { ...profile, plan: planId, status: 'ACTIVE' };
+                  setUser(updatedUser as User); // Immediate UI feedback
+
+                  // DB Update
+                  await supabase.from('profiles').update({
+                    plan: planId,
+                    status: 'ACTIVE'
+                  }).eq('id', profile.id);
+
+                  showNotification(t('upgradeSuccess'), 'success');
+                  localStorage.removeItem('flux_pending_checkout');
+                }
+              } catch (e) { console.error(e); }
+            }
+
             setTeamMembers(await api.team.list());
 
             const apiProjects = await api.projects.list();
@@ -621,8 +647,8 @@ const App = () => {
             onUpdateSystemConfig={async (c) => { await api.system.update(c); setSystemConfig(await api.system.get()); }}
             t={t}
           />}
-          {appPage === 'BUILDER' && (currentProjectId ? <FlowCanvasWrapped project={projects.find(p => p.id === currentProjectId)!} onSaveProject={triggerSaveProject} onUnsavedChanges={() => setHasUnsavedChanges(true)} triggerSaveSignal={saveSignal} openSaveModalSignal={openSaveModalSignal} isDark={isDark} toggleTheme={() => setIsDark(!isDark)} isPresentationMode={appMode === AppMode.PRESENTATION} showNotesInPresentation={showNotes} t={t} userPlan={user?.plan || 'FREE'} showAIAssistant={showAIAssistant} onToggleAIAssistant={() => setShowAIAssistant(!showAIAssistant)} onSaveTemplate={async (nodes, edges, name) => { if (!user) return; try { await api.templates.create({ customLabel: name, nodes, edges, isCustom: true, owner_id: user.id }); showNotification("Modelo salvo com sucesso!"); setCustomTemplates(await api.templates.list()); } catch (e) { showNotification("Erro ao salvar modelo", 'error'); } }} onShareToMarketplace={async (name, desc) => { if (!user) return; const p = projects.find(p => p.id === currentProjectId); if (p) { await api.templates.submitToMarketplace({ customLabel: name, customDescription: desc, nodes: p.nodes, edges: p.edges, authorName: user.name }); showNotification("Enviado para análise com sucesso!"); } }} /> : <div className="flex flex-col items-center justify-center h-full text-slate-400"><Folder size={64} className="mb-4 opacity-50" /><p>{t('noProjectSelected')}</p></div>)}
-          {appPage === 'SETTINGS' && user && <SettingsDashboard user={user} onUpdateUser={async (updated) => { await api.auth.updateProfile(user.id, updated); setUser({ ...user, ...updated }); showNotification("Perfil atualizado!"); }} isDark={isDark} toggleTheme={() => setIsDark(!isDark)} lang={lang} setLang={setLang} t={t} projectsCount={projects.filter(p => p.ownerId === user.id).length} />}
+          {appPage === 'BUILDER' && (currentProjectId ? <FlowCanvasWrapped project={projects.find(p => p.id === currentProjectId)!} onSaveProject={triggerSaveProject} onUnsavedChanges={() => setHasUnsavedChanges(true)} triggerSaveSignal={saveSignal} openSaveModalSignal={openSaveModalSignal} isDark={isDark} toggleTheme={() => setIsDark(!isDark)} isPresentationMode={appMode === AppMode.PRESENTATION} showNotesInPresentation={showNotes} t={t} userPlan={user?.plan || 'FREE'} maxNodes={plans.find(p => p.id === (user?.plan || 'FREE'))?.nodeLimit || 20} plans={plans} showAIAssistant={showAIAssistant} onToggleAIAssistant={() => setShowAIAssistant(!showAIAssistant)} onSaveTemplate={async (nodes, edges, name) => { if (!user) return; try { await api.templates.create({ customLabel: name, nodes, edges, isCustom: true, owner_id: user.id }); showNotification("Modelo salvo com sucesso!"); setCustomTemplates(await api.templates.list()); } catch (e) { showNotification("Erro ao salvar modelo", 'error'); } }} onShareToMarketplace={async (name, desc) => { if (!user) return; const p = projects.find(p => p.id === currentProjectId); if (p) { await api.templates.submitToMarketplace({ customLabel: name, customDescription: desc, nodes: p.nodes, edges: p.edges, authorName: user.name }); showNotification("Enviado para análise com sucesso!"); } }} /> : <div className="flex flex-col items-center justify-center h-full text-slate-400"><Folder size={64} className="mb-4 opacity-50" /><p>{t('noProjectSelected')}</p></div>)}
+          {appPage === 'SETTINGS' && user && <SettingsDashboard user={user} onUpdateUser={async (updated) => { await api.auth.updateProfile(user.id, updated); setUser({ ...user, ...updated }); showNotification("Perfil atualizado!"); }} isDark={isDark} toggleTheme={() => setIsDark(!isDark)} lang={lang} setLang={setLang} t={t} projectsCount={projects.filter(p => p.ownerId === user.id).length} onUpgrade={() => setShowUpgradeModal(true)} />}
         </div>
       </main>
     </div>
