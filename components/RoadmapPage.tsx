@@ -6,7 +6,7 @@ import { FeedbackItem, FeedbackType, FeedbackStatus, User } from '../types';
 interface RoadmapPageProps {
     onBack: () => void;
     feedbacks: FeedbackItem[];
-    onSubmitFeedback: (item: Omit<FeedbackItem, 'id' | 'votes' | 'status' | 'createdAt' | 'comments' | 'votedUserIds'>) => void;
+    onSubmitFeedback: (item: Omit<FeedbackItem, 'id' | 'votes' | 'status' | 'createdAt' | 'comments' | 'votedUserIds'>) => Promise<void>;
     onVote: (id: string) => void;
     onAddComment: (feedbackId: string, text: string) => void;
     isAuthenticated: boolean;
@@ -43,23 +43,28 @@ const RoadmapPage = ({ onBack, feedbacks, onSubmitFeedback, onVote, onAddComment
         action();
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newTitle.trim() || !newDesc.trim()) return;
 
-        onSubmitFeedback({
-            title: newTitle,
-            description: newDesc,
-            type: newType,
-            authorName: authorName || 'Anônimo'
-        });
+        try {
+            await onSubmitFeedback({
+                title: newTitle,
+                description: newDesc,
+                type: newType,
+                authorName: authorName || 'Anônimo'
+            });
 
-        // Reset
-        setNewTitle('');
-        setNewDesc('');
-        setNewType('FEATURE');
-        setAuthorName('');
-        setIsSubmitModalOpen(false);
+            // Reset
+            setNewTitle('');
+            setNewDesc('');
+            setNewType('FEATURE');
+            setAuthorName('');
+            setIsSubmitModalOpen(false);
+        } catch (error: any) {
+            console.error("Error submitting feedback:", error);
+            alert(`Erro ao enviar sugestão: ${error.message || JSON.stringify(error)}`);
+        }
     };
 
     const handlePostComment = (e: React.FormEvent) => {

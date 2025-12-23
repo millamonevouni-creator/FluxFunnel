@@ -12,7 +12,9 @@ const mapProfileToUser = (profile: any): User => ({
     status: profile.status || 'ACTIVE',
     lastLogin: profile.last_login ? new Date(profile.last_login) : new Date(),
     avatarUrl: profile.avatar_url,
-    isSystemAdmin: profile.is_system_admin || false
+    isSystemAdmin: profile.is_system_admin || false,
+    company_name: profile.company_name,
+    job_title: profile.job_title
 });
 
 const mapDBProjectToApp = (dbProject: any): Project => ({
@@ -120,6 +122,19 @@ export const api = {
             return { user: mapProfileToUser({ id: data.user!.id, name, email }), token: data.session?.access_token || '' };
         },
         logout: async () => { if (!isOffline) await supabase.auth.signOut(); },
+        loginWithGoogle: async () => {
+            if (isOffline) {
+                alert("Login com Google indisponível em modo offline/mock.");
+                return;
+            }
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.origin
+                }
+            });
+            if (error) throw error;
+        },
         getProfile: async (): Promise<User | null> => {
             if (isOffline) return null;
             try {
@@ -374,8 +389,37 @@ export const api = {
         delete: async (id: string) => { if (!isOffline) await supabase.from('plans').delete().eq('id', id); }
     },
     feedbacks: {
-        list: async () => { if (isOffline) return []; const { data } = await supabase.from('feedbacks').select('*').order('created_at', { ascending: false }); return data || []; },
-        create: async (f: any) => { if (!isOffline) await supabase.from('feedbacks').insert({ ...f, votes: 0, voted_user_ids: [], status: 'PENDING' }); },
+        list: async () => {
+            if (isOffline) return [];
+            const { data } = await supabase.from('feedbacks').select('*').order('created_at', { ascending: false });
+            return (data || []).map((f: any) => ({
+                id: f.id,
+                title: f.title,
+                description: f.description,
+                type: f.type,
+                status: f.status,
+                votes: f.votes,
+                votedUserIds: f.voted_user_ids,
+                authorName: f.author_name, // Map Snake Case DB to Camel Case App
+                createdAt: f.created_at,
+                comments: f.comments || []
+            }));
+        },
+        create: async (f: any) => {
+            if (isOffline) return;
+            // Map App Camel Case to DB Snake Case
+            const dbPayload = {
+                title: f.title,
+                description: f.description,
+                type: f.type,
+                author_name: f.authorName, // Correct mapping
+                status: 'PENDING',
+                votes: 0,
+                voted_user_ids: []
+            };
+            const { error } = await supabase.from('feedbacks').insert(dbPayload);
+            if (error) throw error;
+        },
         update: async (id: string, f: any) => { if (!isOffline) await supabase.from('feedbacks').update(f).eq('id', id); },
         delete: async (id: string) => { if (!isOffline) await supabase.from('feedbacks').delete().eq('id', id); },
         vote: async (id: string) => {

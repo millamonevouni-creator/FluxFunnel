@@ -4,7 +4,7 @@ import {
     Users, TrendingUp, DollarSign, Activity, Shield, Crown, ArrowLeft, Search,
     Check, X, Plus, Trash2, Edit, LogIn, Server, RefreshCw, ShoppingBag, Eye, Star, User as UserIcon, Sparkles, Layout, ShieldAlert, Zap, Heart,
     Settings, CreditCard, ChevronRight, ChevronUp, BarChart, Filter, MoreHorizontal, Mail, Calendar, ExternalLink, MessageSquare, AlertCircle,
-    Clock, Globe, CheckCircle, Download, Bug, Lightbulb, ThumbsUp, Send, CornerDownRight, Pencil, Folder, LayoutDashboard, PieChart as PieChartIcon, AppWindow
+    Clock, Globe, CheckCircle, Download, Bug, Lightbulb, ThumbsUp, Send, CornerDownRight, Pencil, Folder, LayoutDashboard, PieChart as PieChartIcon, AppWindow, MessageCircle
 } from 'lucide-react';
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -31,6 +31,7 @@ interface MasterAdminDashboardProps {
     users: User[];
     onUpdateUser: (user: User, password?: string) => void;
     onDeleteUser: (id: string) => void;
+    onBanUser: (id: string) => void;
     onCreateUser: (user: User, password?: string) => void;
     onImpersonate: (id: string) => void;
     plans: PlanConfig[];
@@ -44,7 +45,7 @@ interface MasterAdminDashboardProps {
 
 const MasterAdminDashboard = ({
     onBack, feedbacks, onUpdateStatus, onDeleteFeedback, onUpdateFeedback,
-    onReplyFeedback, onDeleteComment, users, onUpdateUser, onDeleteUser,
+    onReplyFeedback, onDeleteComment, users, onUpdateUser, onDeleteUser, onBanUser,
     onCreateUser, onImpersonate, plans, onUpdatePlan, onDeletePlan,
     onCreatePlan, systemConfig, onUpdateSystemConfig, t
 }: MasterAdminDashboardProps) => {
@@ -84,6 +85,55 @@ const MasterAdminDashboard = ({
     const [fbTypeFilter, setFbTypeFilter] = useState<FeedbackType | 'ALL'>('ALL');
     const [selectedFb, setSelectedFb] = useState<FeedbackItem | null>(null);
     const [replyText, setReplyText] = useState('');
+    const [newTitle, setNewTitle] = useState('');
+    const [newDesc, setNewDesc] = useState('');
+    const [newType, setNewType] = useState<FeedbackType>('FEATURE');
+
+    const onSubmitFeedback = async (data: { title: string, description: string, type: FeedbackType, authorName: string }) => {
+        try {
+            await api.feedbacks.create(data);
+            // Manually trigger a refresh or optimistically update if we had access to setFeedbacks. 
+            // Since feedbacks come from props, we rely on the parent or subscriptions to update.
+            // Ideally we should have a callback or standard refresh mechanism.
+            // For now, we assume the subscription in App.tsx will catch it.
+        } catch (error) {
+            console.error('Failed to create feedback', error);
+            alert('Erro ao criar feedback.');
+        }
+    };
+
+
+
+    // Local state for optimistic updates
+    const [localFeedbacks, setLocalFeedbacks] = useState<FeedbackItem[]>(feedbacks);
+
+    // Sync local state when props change (server update)
+    useEffect(() => {
+        setLocalFeedbacks(feedbacks);
+    }, [feedbacks]);
+
+    const handleUpdateStatusOptimistic = (id: string, status: FeedbackStatus) => {
+        // Optimistic update
+        setLocalFeedbacks(prev => prev.map(f => f.id === id ? { ...f, status } : f));
+
+        // Call parent/server
+        onUpdateStatus(id, status);
+
+        // Also update selectedFb if it's the one being modified
+        if (selectedFb && selectedFb.id === id) {
+            setSelectedFb(prev => prev ? { ...prev, status } : null);
+        }
+    };
+
+    const filteredFeedbacks = useMemo(() => {
+        return localFeedbacks.filter(f => {
+            const matchesSearch = f.title.toLowerCase().includes(fbSearch.toLowerCase()) ||
+                f.description.toLowerCase().includes(fbSearch.toLowerCase());
+            const matchesStatus = fbStatusFilter === 'ALL' || f.status === fbStatusFilter;
+            const matchesType = fbTypeFilter === 'ALL' || f.type === fbTypeFilter;
+            return matchesSearch && matchesStatus && matchesType;
+        }).sort((a, b) => b.votes - a.votes);
+    }, [localFeedbacks, fbSearch, fbStatusFilter, fbTypeFilter]);
 
     const revenueData = [
         { name: 'Jan', mrr: 450, users: 12 },
@@ -158,15 +208,7 @@ const MasterAdminDashboard = ({
         });
     }, [templates, tplSearch, tplFilter]);
 
-    const filteredFeedbacks = useMemo(() => {
-        return feedbacks.filter(f => {
-            const matchesSearch = f.title.toLowerCase().includes(fbSearch.toLowerCase()) ||
-                f.description.toLowerCase().includes(fbSearch.toLowerCase());
-            const matchesStatus = fbStatusFilter === 'ALL' || f.status === fbStatusFilter;
-            const matchesType = fbTypeFilter === 'ALL' || f.type === fbTypeFilter;
-            return matchesSearch && matchesStatus && matchesType;
-        }).sort((a, b) => b.votes - a.votes);
-    }, [feedbacks, fbSearch, fbStatusFilter, fbTypeFilter]);
+
 
     const handleSavePlan = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -668,7 +710,10 @@ const MasterAdminDashboard = ({
                                                 <button onClick={() => setEditingUser(user)} title="Editar Usuário" aria-label="Editar Usuário" className="p-1.5 bg-slate-800 hover:bg-indigo-600 text-slate-400 hover:text-white rounded-lg transition-colors">
                                                     <Edit size={14} aria-hidden="true" />
                                                 </button>
-                                                <button onClick={() => { if (window.confirm('Tem certeza que deseja excluir este usuário permanentemente?')) onDeleteUser(user.id); }} title="Excluir Usuário" aria-label="Excluir Usuário" className="p-1.5 bg-slate-800 hover:bg-red-600 text-slate-400 hover:text-white rounded-lg transition-colors">
+                                                <button onClick={() => { if (window.confirm('Tem certeza que deseja BANIR este usuário? Ele perderá o acesso ao sistema.')) onBanUser && onBanUser(user.id); }} title="Banir Usuário" aria-label="Banir Usuário" className="p-1.5 bg-slate-800 hover:bg-amber-600 text-slate-400 hover:text-white rounded-lg transition-colors">
+                                                    <ShieldAlert size={14} aria-hidden="true" />
+                                                </button>
+                                                <button onClick={() => { if (window.confirm('ATENÇÃO: Tem certeza que deseja EXCLUIR PERMANENTEMENTE este usuário? Todos os dados serão perdidos. Esta ação não pode ser desfeita.')) onDeleteUser(user.id); }} title="Excluir Permanentemente" aria-label="Excluir Permanentemente" className="p-1.5 bg-slate-800 hover:bg-red-600 text-slate-400 hover:text-white rounded-lg transition-colors">
                                                     <Trash2 size={14} aria-hidden="true" />
                                                 </button>
                                             </div>
@@ -750,124 +795,259 @@ const MasterAdminDashboard = ({
             {/* TAB: FEEDBACK (ROADMAP) */}
             {
                 activeTab === 'FEEDBACK' && (
-                    <div className="animate-fade-in-up grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
-                        <div className="lg:col-span-1 bg-[#0f172a]/60 border border-slate-800 rounded-3xl overflow-hidden flex flex-col">
-                            <div className="p-4 border-b border-slate-800/60 sticky top-0 bg-[#0f172a] z-10">
-                                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-3">Inbox de Feedback</h3>
-                                <div className="flex flex-col gap-2">
-                                    <div className="relative">
-                                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={14} />
-                                        <input type="text" value={fbSearch} onChange={e => setFbSearch(e.target.value)} className="w-full pl-10 pr-4 py-2 bg-slate-900/50 border border-slate-800/60 rounded-lg text-xs font-bold text-slate-300 outline-none focus:border-indigo-500" placeholder="Buscar..." title="Buscar feedbacks" />
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <select value={fbStatusFilter} onChange={e => setFbStatusFilter(e.target.value as any)} title="Filtrar por status do feedback" className="w-1/2 p-2 bg-slate-900/50 border border-slate-800/60 rounded-lg text-[9px] font-bold text-slate-400 uppercase outline-none"><option value="ALL">Status</option><option value="PENDING">Pendente</option><option value="PLANNED">Planejado</option><option value="IN_PROGRESS">Em Exec.</option><option value="COMPLETED">Feito</option></select>
-                                        <select value={fbTypeFilter} onChange={e => setFbTypeFilter(e.target.value as any)} title="Filtrar por tipo do feedback" className="w-1/2 p-2 bg-slate-900/50 border border-slate-800/60 rounded-lg text-[9px] font-bold text-slate-400 uppercase outline-none"><option value="ALL">Tipo</option><option value="BUG">Bug</option><option value="FEATURE">Feature</option><option value="IMPROVEMENT">Melhoria</option></select>
-                                    </div>
+                    <div className="animate-fade-in-up h-[calc(100vh-200px)] relative flex flex-col">
+                        {/* Toolbar */}
+                        <div className="flex justify-between items-center mb-4 px-2 shrink-0">
+                            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Roadmap Pipeline</h3>
+                            <div className="flex gap-2">
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
+                                    <input
+                                        type="text"
+                                        value={fbSearch}
+                                        onChange={e => setFbSearch(e.target.value)}
+                                        className="pl-9 pr-4 py-1.5 bg-slate-900/50 border border-slate-800 rounded-lg text-xs text-slate-300 outline-none focus:border-indigo-500 w-48 transition-all"
+                                        placeholder="Buscar..."
+                                    />
                                 </div>
-                            </div>
-                            <div className="flex-1 overflow-y-auto p-3 space-y-2 scrollbar-thin">
-                                {filteredFeedbacks.map(fb => (
-                                    <div key={fb.id} onClick={() => setSelectedFb(fb)} className={`p-3 rounded-xl border cursor-pointer transition-all ${selectedFb?.id === fb.id ? 'bg-indigo-600/10 border-indigo-500/50' : 'bg-slate-900/40 border-slate-800 hover:border-slate-700'}`}>
-                                        <div className="flex justify-between items-start mb-1">
-                                            <div className={`flex items-center gap-1.5 px-1.5 py-0.5 rounded-md text-[8px] font-bold uppercase tracking-wider ${getTypeConfig(fb.type).color} bg-white/5`}>
-                                                {getTypeConfig(fb.type).icon} {fb.type}
-                                            </div>
-                                            <span className={`text-[8px] font-bold uppercase tracking-wider ${getStatusConfig(fb.status).color}`}>{getStatusConfig(fb.status).label}</span>
-                                        </div>
-                                        <h4 className="text-xs font-bold text-slate-200 mb-0.5 line-clamp-1">{fb.title}</h4>
-                                        <p className="text-[10px] text-slate-500 line-clamp-2 mb-2">{fb.description}</p>
-                                        <div className="flex justify-between items-center text-[9px] font-bold text-slate-600 uppercase">
-                                            <span>{fb.authorName}</span>
-                                            <span className="flex items-center gap-1"><ThumbsUp size={8} /> {fb.votes}</span>
-                                        </div>
-                                    </div>
-                                ))}
+                                <select value={fbTypeFilter} onChange={e => setFbTypeFilter(e.target.value as any)} className="bg-slate-900/50 border border-slate-800 rounded-lg text-xs font-bold text-slate-400 px-3 py-1.5 uppercase outline-none focus:border-indigo-500" title="Filtrar por tipo" aria-label="Filtrar por tipo">
+                                    <option value="ALL">Todos os Tipos</option>
+                                    <option value="FEATURE">Feature</option>
+                                    <option value="BUG">Bug</option>
+                                    <option value="IMPROVEMENT">Melhoria</option>
+                                </select>
                             </div>
                         </div>
 
-                        <div className="lg:col-span-2 bg-[#0f172a]/80 border border-slate-800 rounded-3xl p-6 relative overflow-hidden flex flex-col">
-                            {selectedFb ? (
-                                <>
-                                    <div className="flex justify-between items-start mb-6">
-                                        <div>
-                                            <div className="flex items-center gap-3 mb-2">
-                                                <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest ${getTypeConfig(selectedFb.type).color} bg-slate-900`}>{selectedFb.type}</span>
-                                                <span className="text-slate-600 text-[10px] font-mono">{new Date(selectedFb.createdAt).toLocaleDateString()}</span>
+                        {/* Kanban Board */}
+                        <div className="flex-1 flex gap-4 overflow-x-auto pb-4 px-2 scrollbar-thin scrollbar-thumb-indigo-500/20 scrollbar-track-transparent">
+                            {([
+                                { id: 'ENTRY', label: 'Nova Sugestão', color: 'border-slate-700/50 bg-slate-800/10' },
+                                { id: 'PENDING', label: 'Pendente', color: 'border-yellow-500/20 bg-yellow-500/5 shadow-[0_0_15px_-5px_rgba(234,179,8,0.1)]' },
+                                { id: 'PLANNED', label: 'Planejado', color: 'border-blue-500/20 bg-blue-500/5 shadow-[0_0_15px_-5px_rgba(59,130,246,0.1)]' },
+                                { id: 'IN_PROGRESS', label: 'Em Andamento', color: 'border-purple-500/20 bg-purple-500/5 shadow-[0_0_15px_-5px_rgba(168,85,247,0.1)]' },
+                                { id: 'COMPLETED', label: 'Concluído', color: 'border-green-500/20 bg-green-500/5 shadow-[0_0_15px_-5px_rgba(34,197,94,0.1)]' },
+                                { id: 'REJECTED', label: 'Arquivado', color: 'border-red-500/20 bg-red-500/5 shadow-[0_0_15px_-5px_rgba(239,68,68,0.1)]' }
+                            ] as const).map(column => {
+                                const columnItems = filteredFeedbacks.filter(f => f.status === column.id);
+                                return (
+                                    <div
+                                        key={column.id}
+                                        className={`flex-shrink-0 w-80 flex flex-col bg-[#0f172a]/60 border ${column.color} rounded-2xl overflow-hidden backdrop-blur-sm transition-colors`}
+                                        onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-white/5'); }}
+                                        onDragLeave={(e) => { e.currentTarget.classList.remove('bg-white/5'); }}
+                                        onDrop={(e) => {
+                                            e.preventDefault();
+                                            e.currentTarget.classList.remove('bg-white/5');
+                                            const cardId = e.dataTransfer.getData('cardId');
+                                            if (cardId && column.id !== 'ENTRY') handleUpdateStatusOptimistic(cardId, column.id);
+                                        }}
+                                    >
+                                        <div className="p-3 border-b border-white/5 flex justify-between items-center bg-[#0f172a]/40">
+                                            <div className="flex items-center gap-2">
+                                                <div className={`w-2 h-2 rounded-full ${column.id === 'PENDING' ? 'bg-yellow-500' : column.id === 'PLANNED' ? 'bg-blue-500' : column.id === 'IN_PROGRESS' ? 'bg-purple-500' : column.id === 'COMPLETED' ? 'bg-green-500' : column.id === 'REJECTED' ? 'bg-red-500' : 'bg-slate-500'}`} />
+                                                <span className="text-[10px] font-black uppercase tracking-wider text-slate-300">{column.label}</span>
                                             </div>
-                                            <h2 className="text-2xl font-black text-white mb-2 leading-tight">{selectedFb.title}</h2>
-                                            <div className="flex items-center gap-3">
-                                                <div className="flex items-center gap-2 px-2 py-1 bg-indigo-600/20 text-indigo-400 rounded-lg text-[10px] font-bold border border-indigo-500/30">
-                                                    <ThumbsUp size={12} /> {selectedFb.votes} Votos
-                                                </div>
-                                                <div className="flex items-center gap-2 px-2 py-1 bg-slate-800 text-slate-400 rounded-lg text-[10px] font-bold border border-slate-700">
-                                                    <UserIcon size={12} /> {selectedFb.authorName}
-                                                </div>
-                                            </div>
+                                            {column.id !== 'ENTRY' && (
+                                                <span className="px-2 py-0.5 rounded-full bg-white/5 text-[9px] font-mono font-bold text-slate-500 border border-white/5">
+                                                    {columnItems.length}
+                                                </span>
+                                            )}
                                         </div>
-                                        <div className="flex gap-2">
-                                            <select
-                                                value={selectedFb.status}
-                                                onChange={(e) => { onUpdateStatus(selectedFb.id, e.target.value as any); setSelectedFb({ ...selectedFb, status: e.target.value as any }); }}
-                                                className="bg-slate-900 border border-slate-700 text-slate-300 text-[10px] font-bold uppercase rounded-lg px-3 py-2 outline-none focus:border-indigo-500"
-                                                title="Alterar status do feedback"
-                                                aria-label="Alterar status do feedback"
-                                            >
-                                                <option value="PENDING">Pendente</option>
-                                                <option value="PLANNED">Planejado</option>
-                                                <option value="IN_PROGRESS">Em Andamento</option>
-                                                <option value="COMPLETED">Concluído</option>
-                                                <option value="REJECTED">Arquivar</option>
-                                            </select>
-                                            <button onClick={() => { if (window.confirm('Apagar feedback?')) { onDeleteFeedback(selectedFb.id); setSelectedFb(null); } }} className="p-2 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white rounded-lg transition-colors border border-red-600/20" title="Excluir Feedback" aria-label="Excluir Feedback">
-                                                <Trash2 size={14} aria-hidden="true" />
-                                            </button>
-                                        </div>
-                                    </div>
 
-                                    <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-800 mb-6 max-h-32 overflow-y-auto">
-                                        <p className="text-slate-300 text-xs leading-relaxed">{selectedFb.description}</p>
-                                    </div>
-
-                                    <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2 scrollbar-thin">
-                                        <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500 sticky top-0 bg-[#0f172a] py-2 z-10">Histórico de Respostas</h4>
-                                        {(selectedFb.comments || []).map(comment => (
-                                            <div key={comment.id} className={`flex gap-3 ${comment.isAdmin ? 'flex-row-reverse' : ''}`}>
-                                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${comment.isAdmin ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300'}`}>
-                                                    {comment.authorName.substring(0, 1)}
+                                        <div className="flex-1 overflow-y-auto p-2 space-y-2 scrollbar-thin scrollbar-thumb-white/10 hover:scrollbar-thumb-white/20">
+                                            {column.id === 'ENTRY' ? (
+                                                /* INLINE FORM FOR ENTRY COLUMN */
+                                                <div className="bg-[#1e293b]/30 border border-dashed border-slate-700/60 p-4 rounded-xl flex flex-col gap-3">
+                                                    <h4 className="text-xs font-bold text-slate-400 mb-1">Nova Sugestão</h4>
+                                                    <input
+                                                        type="text"
+                                                        value={newTitle}
+                                                        onChange={e => setNewTitle(e.target.value)}
+                                                        placeholder="Título"
+                                                        className="w-full px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-xs text-slate-200 outline-none focus:border-indigo-500 transition-colors"
+                                                    />
+                                                    <textarea
+                                                        value={newDesc}
+                                                        onChange={e => setNewDesc(e.target.value)}
+                                                        placeholder="Descrição..."
+                                                        className="w-full px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-xs text-slate-200 outline-none focus:border-indigo-500 h-24 resize-none transition-colors scrollbar-thin"
+                                                    />
+                                                    <select
+                                                        value={newType}
+                                                        onChange={e => setNewType(e.target.value as any)}
+                                                        className="w-full px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-xs text-slate-200 outline-none focus:border-indigo-500"
+                                                        aria-label="Tipo de feedback"
+                                                    >
+                                                        <option value="FEATURE">Feature</option>
+                                                        <option value="BUG">Bug</option>
+                                                        <option value="IMPROVEMENT">Melhoria</option>
+                                                    </select>
+                                                    <button
+                                                        onClick={() => {
+                                                            if (!newTitle.trim() || !newDesc.trim()) return;
+                                                            onSubmitFeedback({
+                                                                title: newTitle,
+                                                                description: newDesc,
+                                                                type: newType,
+                                                                authorName: 'Admin'
+                                                            }).then(() => {
+                                                                setNewTitle('');
+                                                                setNewDesc('');
+                                                                setNewType('FEATURE');
+                                                                // Implicitly it goes to PENDING, updating the list automatically
+                                                            });
+                                                        }}
+                                                        disabled={!newTitle.trim() || !newDesc.trim()}
+                                                        className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:hover:bg-indigo-600 text-white rounded-lg text-xs font-bold uppercase tracking-wider transition-all shadow-lg flex items-center justify-center gap-2"
+                                                    >
+                                                        <Plus size={14} /> Adicionar
+                                                    </button>
                                                 </div>
-                                                <div className={`p-3 rounded-xl max-w-[85%] ${comment.isAdmin ? 'bg-indigo-600/10 border border-indigo-500/20 text-indigo-100 rounded-tr-none' : 'bg-slate-800 border border-slate-700 text-slate-300 rounded-tl-none'}`}>
-                                                    <div className="flex justify-between items-center mb-1 gap-3">
-                                                        <span className="text-[9px] font-black uppercase tracking-wider opacity-70">{comment.authorName} {comment.isAdmin && '(Staff)'}</span>
-                                                        {comment.isAdmin && <button onClick={() => onDeleteComment(selectedFb.id, comment.id)} className="text-slate-500 hover:text-red-400" title="Excluir Comentário" aria-label="Excluir comentário"><X size={10} aria-hidden="true" /></button>}
+                                            ) : (
+                                                /* EXISTING CARDS RENDERING */
+                                                columnItems.map(card => (
+                                                    <div
+                                                        key={card.id}
+                                                        draggable
+                                                        onDragStart={(e) => {
+                                                            e.dataTransfer.setData('cardId', card.id);
+                                                            e.dataTransfer.effectAllowed = 'move';
+                                                        }}
+                                                        onClick={() => setSelectedFb(card)}
+                                                        className="bg-[#1e293b]/50 border border-slate-700/60 p-3 rounded-xl cursor-grab active:cursor-grabbing hover:border-indigo-500/50 hover:bg-[#1e293b] hover:shadow-lg hover:-translate-y-0.5 transition-all group relative select-none"
+                                                    >
+                                                        <div className="flex justify-between items-start mb-2">
+                                                            <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider ${getTypeConfig(card.type).color} bg-black/40 border border-white/5`}>
+                                                                {card.type}
+                                                            </span>
+                                                            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                <div className="bg-white/10 p-1 rounded hover:bg-white/20 text-slate-300">
+                                                                    <MessageSquare size={10} />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <h4 className="text-xs font-bold text-slate-200 mb-1 leading-snug">{card.title}</h4>
+                                                        <p className="text-[10px] text-slate-500 line-clamp-2 mb-2 font-medium">{card.description}</p>
+
+                                                        <div className="flex justify-between items-center pt-2 border-t border-white/5">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <div className="w-4 h-4 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-[8px] font-bold border border-indigo-500/30">
+                                                                    {card.authorName.charAt(0)}
+                                                                </div>
+                                                                <span className="text-[9px] font-bold text-slate-500 truncate max-w-[80px]">{card.authorName.split(' ')[0]}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-2 text-[9px] font-bold text-slate-500">
+                                                                <span className="flex items-center gap-1 bg-white/5 px-1.5 py-0.5 rounded-md"><ThumbsUp size={8} /> {card.votes}</span>
+                                                                {card.comments && card.comments.length > 0 && (
+                                                                    <span className="flex items-center gap-1 bg-white/5 px-1.5 py-0.5 rounded-md"><MessageCircle size={8} /> {card.comments.length}</span>
+                                                                )}
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <p className="text-[11px] leading-relaxed">{comment.text}</p>
-                                                </div>
-                                            </div>
-                                        ))}
-                                        {(!selectedFb.comments || selectedFb.comments.length === 0) && <div className="text-center py-8 text-slate-600 text-[10px] italic">Nenhuma resposta ainda.</div>}
+                                                ))
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Detail Modal */}
+                        {selectedFb && (
+                            <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in" onClick={() => setSelectedFb(null)}>
+                                <div className="bg-[#0f172a] border border-slate-700 w-full max-w-3xl max-h-[85vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-scale-in" onClick={e => e.stopPropagation()}>
+                                    <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-[#0f172a] shrink-0">
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Detalhes do Feedback</span>
+                                        </div>
+                                        <button onClick={() => setSelectedFb(null)} className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors" title="Fechar detalhes" aria-label="Fechar detalhes">
+                                            <X size={16} />
+                                        </button>
                                     </div>
 
-                                    <form onSubmit={handleSendReply} className="mt-auto relative">
-                                        <input
-                                            type="text"
-                                            value={replyText}
-                                            onChange={e => setReplyText(e.target.value)}
-                                            placeholder="Escreva uma resposta oficial..."
-                                            className="w-full pl-5 pr-12 py-3 bg-slate-900 border border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-200 transition-all font-medium text-xs"
-                                            title="Escreva uma resposta oficial"
-                                        />
-                                        <button type="submit" disabled={!replyText.trim()} className="absolute right-2 top-2 p-1.5 bg-indigo-600 disabled:opacity-50 text-white rounded-lg shadow-lg hover:scale-105 active:scale-95 transition-all" title="Enviar resposta" aria-label="Enviar resposta">
-                                            <Send size={14} aria-hidden="true" />
-                                        </button>
-                                    </form>
-                                </>
-                            ) : (
-                                <div className="flex flex-col items-center justify-center h-full text-slate-600">
-                                    <MessageSquare size={48} className="mb-4 opacity-20" />
-                                    <p className="text-sm font-bold">Selecione um item para moderar</p>
+                                    <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-slate-700">
+                                        <div className="flex justify-between items-start mb-6">
+                                            <div>
+                                                <div className="flex items-center gap-3 mb-2">
+                                                    <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest ${getTypeConfig(selectedFb.type).color} bg-slate-900 border border-white/10`}>{selectedFb.type}</span>
+                                                    <span className="text-slate-600 text-[10px] font-mono flex items-center gap-1.5"><Clock size={10} /> {new Date(selectedFb.createdAt).toLocaleDateString()}</span>
+                                                </div>
+                                                <h2 className="text-2xl font-black text-white mb-2 leading-tight">{selectedFb.title}</h2>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex items-center gap-2 px-2 py-1 bg-indigo-600/20 text-indigo-400 rounded-lg text-[10px] font-bold border border-indigo-500/30">
+                                                        <ThumbsUp size={12} /> {selectedFb.votes} Votos
+                                                    </div>
+                                                    <div className="flex items-center gap-2 px-2 py-1 bg-slate-800 text-slate-400 rounded-lg text-[10px] font-bold border border-slate-700">
+                                                        <UserIcon size={12} /> {selectedFb.authorName}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <select
+                                                    value={selectedFb.status}
+                                                    onChange={(e) => { handleUpdateStatusOptimistic(selectedFb.id, e.target.value as any); }}
+                                                    className="bg-slate-900 border border-slate-700 text-slate-300 text-[10px] font-bold uppercase rounded-lg px-3 py-2 outline-none focus:border-indigo-500 hover:border-slate-600 transition-colors"
+                                                    title="Alterar status do feedback"
+                                                    aria-label="Alterar status do feedback"
+                                                >
+                                                    <option value="PENDING">Pendente</option>
+                                                    <option value="PLANNED">Planejado</option>
+                                                    <option value="IN_PROGRESS">Em Andamento</option>
+                                                    <option value="COMPLETED">Concluído</option>
+                                                    <option value="REJECTED">Arquivar</option>
+                                                </select>
+                                                <button onClick={() => { if (window.confirm('Apagar feedback?')) { onDeleteFeedback(selectedFb.id); setSelectedFb(null); } }} className="p-2 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white rounded-lg transition-colors border border-red-600/20" title="Apagar feedback" aria-label="Apagar feedback">
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-800 mb-8">
+                                            <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{selectedFb.description}</p>
+                                        </div>
+
+                                        <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4 flex items-center gap-2">
+                                            Histórico de Respostas <div className="h-px flex-1 bg-slate-800"></div>
+                                        </h4>
+                                        <div className="space-y-4 mb-4">
+                                            {(selectedFb.comments || []).map(comment => (
+                                                <div key={comment.id} className={`flex gap-3 ${comment.isAdmin ? 'flex-row-reverse' : ''}`}>
+                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 border-2 ${comment.isAdmin ? 'bg-indigo-600 text-white border-indigo-400' : 'bg-slate-700 text-slate-300 border-slate-600'}`}>
+                                                        {comment.authorName.substring(0, 1)}
+                                                    </div>
+                                                    <div className={`p-4 rounded-2xl max-w-[85%] shadow-sm ${comment.isAdmin ? 'bg-indigo-600/10 border border-indigo-500/20 text-indigo-100 rounded-tr-none' : 'bg-slate-800 border border-slate-700 text-slate-300 rounded-tl-none'}`}>
+                                                        <div className="flex justify-between items-center mb-1 gap-3">
+                                                            <span className="text-[9px] font-black uppercase tracking-wider opacity-70">{comment.authorName} {comment.isAdmin && '(Staff)'}</span>
+                                                            {comment.isAdmin && <button onClick={() => onDeleteComment(selectedFb.id, comment.id)} className="text-slate-500 hover:text-red-400" title="Excluir"><X size={10} /></button>}
+                                                        </div>
+                                                        <p className="text-xs leading-relaxed">{comment.text}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            {(!selectedFb.comments || selectedFb.comments.length === 0) && <div className="text-center py-8 text-slate-600 text-xs italic bg-slate-900/30 rounded-xl border border-dashed border-slate-800">Nenhuma resposta ainda. Seja o primeiro a responder!</div>}
+                                        </div>
+                                    </div>
+
+                                    <div className="p-4 border-t border-slate-800 bg-[#0f172a] shrink-0">
+                                        <form onSubmit={handleSendReply} className="relative">
+                                            <input
+                                                type="text"
+                                                value={replyText}
+                                                onChange={e => setReplyText(e.target.value)}
+                                                placeholder="Escreva uma resposta oficial..."
+                                                className="w-full pl-5 pr-12 py-3 bg-slate-900 border border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-200 transition-all font-medium text-xs focus:bg-slate-800"
+                                            />
+                                            <button type="submit" disabled={!replyText.trim()} className="absolute right-2 top-2 p-1.5 bg-indigo-600 disabled:opacity-50 text-white rounded-lg shadow-lg hover:scale-105 active:scale-95 transition-all" title="Enviar resposta" aria-label="Enviar resposta">
+                                                <Send size={14} />
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
-                            )}
-                        </div>
+                            </div>
+                        )}
                     </div>
                 )
             }

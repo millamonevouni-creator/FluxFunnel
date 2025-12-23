@@ -12,6 +12,7 @@ interface AuthPageProps {
     initialView?: AuthView;
     onUpdatePassword?: (password: string) => Promise<void>;
     onResetPassword?: (email: string) => Promise<void>;
+    onGoogleLogin?: () => Promise<void>;
 }
 
 // Google G Logo SVG Component for button
@@ -26,7 +27,7 @@ const GoogleIcon = () => (
 
 type AuthView = 'LOGIN' | 'FORGOT_PASSWORD' | 'RESET_SENT' | 'UPDATE_PASSWORD' | 'SIGNUP_SUCCESS';
 
-const AuthPage = ({ onAuthSuccess, onBack, t, lang, customSubtitle, initialView = 'LOGIN', onUpdatePassword, onResetPassword }: AuthPageProps) => {
+const AuthPage = ({ onAuthSuccess, onBack, t, lang, customSubtitle, initialView = 'LOGIN', onUpdatePassword, onResetPassword, onGoogleLogin }: AuthPageProps) => {
     const [currentView, setCurrentView] = useState<AuthView>(initialView);
 
     // Allow parent to drive view changes (e.g. async auth listener)
@@ -131,8 +132,19 @@ const AuthPage = ({ onAuthSuccess, onBack, t, lang, customSubtitle, initialView 
         }
     };
 
-    const handleGoogleLogin = () => {
-        onAuthSuccess({ email: "google_user@gmail.com", name: "Google User", isSignup: false });
+    const handleGoogleLogin = async () => {
+        if (onGoogleLogin) {
+            setIsLoading(true);
+            try {
+                await onGoogleLogin();
+            } catch (error: any) {
+                setError(error.message || "Erro ao iniciar login com Google.");
+                setIsLoading(false);
+            }
+        } else {
+            console.warn("Google Login handler not provided");
+            setError("Login com Google não configurado.");
+        }
     };
 
     return (

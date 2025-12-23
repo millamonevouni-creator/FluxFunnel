@@ -1,6 +1,7 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
-import Stripe from "https://esm.sh/stripe@12.0.0?target=deno"
+/// <reference path="../ide_fix.d.ts" />
+import { serve } from "std/http/server.ts"
+import { createClient } from "@supabase/supabase-js"
+import Stripe from "stripe"
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -14,7 +15,7 @@ const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") ?? "", {
 
 console.log("Create Checkout Server started")
 
-serve(async (req) => {
+serve(async (req: Request) => {
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders })
     }
@@ -84,7 +85,7 @@ serve(async (req) => {
             }
         )
 
-    } catch (error) {
+    } catch (error: any) {
         return new Response(
             JSON.stringify({ error: error.message }),
             {

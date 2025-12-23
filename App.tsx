@@ -20,7 +20,7 @@ import { INITIAL_NODES, INITIAL_EDGES, TRANSLATIONS, PROJECT_TEMPLATES, NODE_CON
 import { Node, Edge } from 'reactflow';
 import { safeGet, safeSet, migrateFeedbacks } from './utils/storage';
 import { api } from './services/api_fixed';
-import { supabase } from './services/supabaseClient';
+import { supabase, isOffline } from './services/supabaseClient';
 
 const DEFAULT_PROJECT = (t: any): Project => ({ id: 'proj_default', name: t('newProject'), nodes: INITIAL_NODES as any, edges: INITIAL_EDGES, updatedAt: new Date() });
 
@@ -123,7 +123,7 @@ const App = () => {
         const apiProjects = await api.projects.list();
         setProjects(apiProjects.length ? apiProjects : [DEFAULT_PROJECT(t)]);
         if (shareId) {
-          const found = apiProjects.find(p => p.id === shareId);
+          const found = apiProjects.find((p: Project) => p.id === shareId);
           if (found) { setSharedProject(found); setCurrentView('SHARED'); }
         }
       } catch (e) { console.error(e); }
@@ -132,10 +132,28 @@ const App = () => {
     initApp();
   }, []); // Eslint deps fix or empty array as intentional once-run
 
+  // Real-time Subscriptions
+  useEffect(() => {
+    if (isOffline) return;
+
+    const channel = supabase.channel('realtime_updates')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'feedbacks' }, async () => {
+        setFeedbacks(await api.feedbacks.list());
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, async () => {
+        if (user?.isSystemAdmin) setAllUsers(await api.users.list());
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, isOffline]);
+
   const [upgradeModalInitialState, setUpgradeModalInitialState] = useState<{ planId: 'PRO' | 'PREMIUM', cycle: 'monthly' | 'yearly' } | null>(null);
 
   useEffect(() => {
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event: string, session: any) => {
       // Handle cleanup of hash params from URL
       if (window.location.hash && (window.location.hash.includes('access_token') || window.location.hash.includes('type=magiclink'))) {
         // Clear the hash without reloading
@@ -208,6 +226,26 @@ const App = () => {
       authListener.subscription.unsubscribe();
     };
   }, []);
+
+  // Real-time user sync for Admins
+  useEffect(() => {
+    if (!user?.isSystemAdmin) return;
+
+    const channel = supabase
+      .channel('public:profiles')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles' },
+        () => {
+          api.users.list().then(setAllUsers);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.isSystemAdmin]);
 
   useEffect(() => { if (isInitialized) { safeSet('theme', isDark ? 'dark' : 'light'); if (isDark) document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark'); } }, [isDark, isInitialized]);
   useEffect(() => { if (isInitialized) safeSet('lang', lang); }, [lang, isInitialized]);
@@ -449,6 +487,7 @@ const App = () => {
           initialView={viewToUse}
           onUpdatePassword={api.auth.updatePassword}
           onResetPassword={api.auth.resetPassword}
+          onGoogleLogin={api.auth.loginWithGoogle}
         />
       </>
     );
@@ -471,6 +510,7 @@ const App = () => {
           if (u.status) await api.admin.updateUserStatus(u.id, u.status);
         }}
         onDeleteUser={api.admin.deleteUser}
+        onBanUser={(id) => api.admin.updateUserStatus(id, 'BANNED')}
         onCreateUser={(u, p) => { }}
         onImpersonate={handleAdminImpersonate}
         plans={plans}
@@ -608,8 +648,8 @@ const App = () => {
           <div className="flex items-center gap-2">
             {appPage === 'BUILDER' && currentProjectId && (
               <>
-                {user?.plan === 'PREMIUM' && <button onClick={() => setShowAIAssistant(!showAIAssistant)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold transition-all ${showAIAssistant ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-700'}`}><Sparkles size={16} /> IA Audit</button>}
-                <button onClick={() => setAppMode(prev => prev === AppMode.BUILDER ? AppMode.PRESENTATION : AppMode.BUILDER)} className={`p-2 rounded-lg ${appMode === AppMode.PRESENTATION ? 'bg-green-100 text-green-700' : 'text-slate-500'}`} title="Modo Apresentação"><Presentation size={20} /></button>
+                {/* {user?.plan === 'PREMIUM' && <button onClick={() => setShowAIAssistant(!showAIAssistant)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold transition-all ${showAIAssistant ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-700'}`}><Sparkles size={16} /> IA Audit</button>} */}
+                <button onClick={() => setAppMode(prev => prev === AppMode.BUILDER ? AppMode.PRESENTATION : AppMode.BUILDER)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold transition-all ${appMode === AppMode.PRESENTATION ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/30' : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'}`} title="Modo Apresentação"><Presentation size={18} /> Modo Apresentação</button>
                 <button onClick={() => setOpenSaveModalSignal(prev => prev + 1)} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold shadow-lg shadow-indigo-500/20 transition-all active:scale-95 ml-2">
                   <Save size={18} /> Salvar
                 </button>
@@ -636,7 +676,8 @@ const App = () => {
             onUpdateFeedback={async (id, f) => { await api.feedbacks.update(id, f); setFeedbacks(await api.feedbacks.list()); }}
             users={allUsers || []}
             onUpdateUser={async (u) => { await api.admin.updateUserStatus(u.id, u.status); await api.admin.updateUserPlan(u.id, u.plan); setAllUsers(await api.users.list()); }}
-            onDeleteUser={async (id) => { await api.admin.updateUserStatus(id, 'BANNED'); setAllUsers(await api.users.list()); }}
+            onDeleteUser={async (id) => { await api.admin.deleteUser(id); setAllUsers(await api.users.list()); }}
+            onBanUser={async (id) => { await api.admin.updateUserStatus(id, 'BANNED'); setAllUsers(await api.users.list()); }}
             onCreateUser={() => { }}
             onImpersonate={handleAdminImpersonate}
             plans={plans}

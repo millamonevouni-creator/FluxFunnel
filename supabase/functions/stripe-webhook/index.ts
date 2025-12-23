@@ -1,6 +1,8 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
-import Stripe from "https://esm.sh/stripe@12.0.0?target=deno"
+/// <reference path="../ide_fix.d.ts" />
+import { serve } from "std/http/server.ts"
+import { createClient } from "@supabase/supabase-js"
+import Stripe from "stripe"
+
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") ?? "", {
     apiVersion: "2023-10-16",
@@ -13,7 +15,7 @@ const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? ""
 const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
 const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
 
-serve(async (req) => {
+serve(async (req: Request) => {
     const signature = req.headers.get("Stripe-Signature")
     const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET")
 
