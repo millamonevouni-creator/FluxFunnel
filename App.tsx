@@ -33,11 +33,12 @@ const App = () => {
   const [showNotes, setShowNotes] = useState(true);
   const [lang, setLang] = useState<Language>('pt');
   const [authReturnView, setAuthReturnView] = useState<AppView | null>(null);
-  const [authInitialView, setAuthInitialView] = useState<'LOGIN' | 'FORGOT_PASSWORD' | 'RESET_SENT' | 'UPDATE_PASSWORD' | 'SIGNUP_SUCCESS'>('LOGIN');
+  const [authInitialView, setAuthInitialView] = useState<'LOGIN' | 'FORGOT_PASSWORD' | 'RESET_SENT' | 'UPDATE_PASSWORD' | 'SIGNUP_SUCCESS' | 'SET_PASSWORD'>('LOGIN');
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showAIAssistant, setShowAIAssistant] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const initialHash = useRef(window.location.hash); // Capture hash immediately on mount
   const plansInitializedRef = useRef(false);
   const [toast, setToast] = useState<{ show: boolean, message: string, type: 'success' | 'error' } | null>(null);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
@@ -235,16 +236,30 @@ const App = () => {
             // SECURITY/UX FIX: If this is an INVITE flow, do NOT auto-redirect to APP.
             // Let the SET_PASSWORD view handle it.
             // We check for 'type=invite' (hash) OR 'intent=invite' (query param set by api.team.invite)
-            const isInviteFlow = (window.location.hash && window.location.hash.includes('type=invite')) ||
+            // Using initialHash to ensure we catch it even if Supabase clears the URL
+            const currentHash = window.location.hash;
+            const savedHash = initialHash.current;
+            const isInviteFlow = (currentHash && currentHash.includes('type=invite')) ||
+              (savedHash && savedHash.includes('type=invite')) ||
               (window.location.search && window.location.search.includes('intent=invite'));
 
-            if (!isInviteFlow) {
+            // FIX: Explicitly check for signup confirmation to ensure direct redirect to dashboard
+            const isSignupConfirmation = window.location.hash && window.location.hash.includes('type=signup');
+
+            if (isSignupConfirmation) {
+              console.log("Signup confirmation detected. Redirecting to Dashboard.");
+              setCurrentView('APP');
+              setAppPage('PROJECTS');
+              // Clear hash to prevent re-triggering (optional, handled by generic clear above)
+            } else if (!isInviteFlow) {
               setCurrentView((prev) => (prev === 'AUTH' || prev === 'LANDING' ? 'APP' : prev));
               if (currentView === 'LANDING' || currentView === 'AUTH') {
                 setAppPage('PROJECTS');
               }
             } else {
               // Ensure we are on AUTH view so the specialized viewToUse logic works
+              // Force the view to SET_PASSWORD for invites
+              setAuthInitialView('SET_PASSWORD');
               setCurrentView('AUTH');
             }
           }
@@ -519,9 +534,17 @@ const App = () => {
   if (currentView === 'LANDING') return <LandingPage onLoginClick={() => { setAuthReturnView('APP'); setCurrentView('AUTH'); }} onGetStartedClick={() => { setAuthReturnView('APP'); setCurrentView('AUTH'); }} onRoadmapClick={() => setCurrentView('ROADMAP')} onNavigate={setCurrentView} lang={lang} setLang={setLang} t={t} plans={plans} systemConfig={systemConfig} />;
   if (currentView === 'AUTH') {
     // Priority: State from listener > Hash check
+    const currentHash = window.location.hash;
+    const savedHash = initialHash.current;
+
+    // Improved Invite Logic: Check both current and initial hash
+    const isInvite = currentHash.includes('type=invite') ||
+      (savedHash && savedHash.includes('type=invite')) ||
+      window.location.search.includes('intent=invite');
+
     const viewToUse = authInitialView !== 'LOGIN' ? authInitialView :
-      (window.location.hash.includes('type=invite') || window.location.search.includes('intent=invite') || window.location.hash.includes('type=magiclink')) ? 'SET_PASSWORD' :
-        (window.location.hash.includes('type=recovery')) ? 'UPDATE_PASSWORD' : 'LOGIN';
+      (isInvite || currentHash.includes('type=magiclink')) ? 'SET_PASSWORD' :
+        (currentHash.includes('type=recovery')) ? 'UPDATE_PASSWORD' : 'LOGIN';
 
     return (
       <>

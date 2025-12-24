@@ -71,7 +71,7 @@ const TeamDashboard = ({ members = [], onInviteMember, onUpdateRole, onRemoveMem
         e.preventDefault();
         setIsInviteLoading(true);
         try {
-            await onInviteMember(inviteEmail, inviteRole, inviteName, invitePlan);
+            await onInviteMember(inviteEmail.trim(), inviteRole, inviteName, invitePlan);
             setInviteEmail('');
             setInviteName('');
             setInvitePlan('CONVIDADO');
@@ -199,9 +199,7 @@ const TeamDashboard = ({ members = [], onInviteMember, onUpdateRole, onRemoveMem
                                                             : 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-800'}
                                         `}
                                                 >
-                                                    <option value="VIEWER">Viewer</option>
                                                     <option value="EDITOR">Editor</option>
-                                                    <option value="ADMIN">Admin</option>
                                                 </select>
                                                 <ChevronDown size={12} className={`absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none ${member.role === 'ADMIN' ? 'text-amber-600' : 'text-indigo-600'}`} />
                                             </div>

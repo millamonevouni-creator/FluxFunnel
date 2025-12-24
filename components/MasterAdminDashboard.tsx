@@ -387,7 +387,13 @@ const MasterAdminDashboard = ({
 
                                 <div className="mb-8">
                                     <h4 className="text-2xl font-black mb-1 tracking-tight group-hover:text-indigo-400 transition-colors uppercase">{plan.label}</h4>
-                                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">PREÇO MENSAL: R$ {plan.priceMonthly}</p>
+                                    <div className="flex justify-between items-center">
+                                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">PREÇO MENSAL: R$ {plan.priceMonthly}</p>
+                                        <div className="flex items-center gap-1.5 px-2 py-1 bg-indigo-500/10 rounded-lg border border-indigo-500/20" title={`${users.filter(u => u.plan === plan.id).length} Usuários Ativos`} aria-label={`${users.filter(u => u.plan === plan.id).length} Usuários Ativos`}>
+                                            <Users size={12} className="text-indigo-400" />
+                                            <span className="text-[10px] font-black text-indigo-300">{users.filter(u => u.plan === plan.id).length}</span>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="space-y-3 mb-8 flex-1">
@@ -418,440 +424,453 @@ const MasterAdminDashboard = ({
                         ))}
                     </div>
                 </div>
-            )}
+            )
+            }
 
             {/* MODAL DE EDIÇÃO DE PLANO (ENGENHARIA DE OFERTA) */}
-            {editingPlan && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-8 bg-black/95 backdrop-blur-md animate-fade-in-up">
-                    <div className="w-full max-w-2xl bg-[#0f172a] rounded-[3.5rem] border border-slate-800 overflow-hidden shadow-2xl flex flex-col transform scale-100 transition-transform">
-                        <div className="p-10 border-b border-slate-800/60 flex justify-between items-center bg-[#0f172a]/50">
-                            <div>
-                                <h3 className="text-3xl font-black uppercase tracking-tight">Editor de Produto</h3>
-                                <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-1">REDEFININDO OFERTA GLOBAL: {editingPlan.label}</p>
+            {
+                editingPlan && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-8 bg-black/95 backdrop-blur-md animate-fade-in-up">
+                        <div className="w-full max-w-2xl bg-[#0f172a] rounded-[3.5rem] border border-slate-800 overflow-hidden shadow-2xl flex flex-col transform scale-100 transition-transform">
+                            <div className="p-10 border-b border-slate-800/60 flex justify-between items-center bg-[#0f172a]/50">
+                                <div>
+                                    <h3 className="text-3xl font-black uppercase tracking-tight">Editor de Produto</h3>
+                                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-1">REDEFININDO OFERTA GLOBAL: {editingPlan.label}</p>
+                                </div>
+                                <button onClick={() => setEditingPlan(null)} className="p-4 bg-slate-900 hover:bg-slate-800 rounded-3xl text-slate-500 transition-all border border-slate-800 shadow-2xl hover:scale-110 active:scale-95" title="Fechar" aria-label="Fechar">
+                                    <X size={28} aria-hidden="true" />
+                                </button>
                             </div>
-                            <button onClick={() => setEditingPlan(null)} className="p-4 bg-slate-900 hover:bg-slate-800 rounded-3xl text-slate-500 transition-all border border-slate-800 shadow-2xl hover:scale-110 active:scale-95" title="Fechar" aria-label="Fechar">
-                                <X size={28} aria-hidden="true" />
-                            </button>
+                            <form onSubmit={handleSavePlan} className="p-12 space-y-10 overflow-y-auto max-h-[75vh] scrollbar-thin">
+
+                                <div className="flex items-center justify-between p-8 bg-[#020617]/50 border border-slate-800/60 rounded-[2.5rem] group hover:border-indigo-500/30 transition-all">
+                                    <div className="flex items-center gap-5">
+                                        <div className={`p-5 rounded-2xl transition-all ${editingPlan.isPopular ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'bg-slate-900 text-slate-600'}`}>
+                                            <Sparkles size={24} />
+                                        </div>
+                                        <div>
+                                            <p className="font-black text-xs uppercase tracking-[0.2em] text-slate-200">Destacar como Popular</p>
+                                            <p className="text-[10px] text-slate-500 font-bold uppercase mt-1">ATIVAR CARD LUMINOSO NA LANDING PAGE</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setEditingPlan({ ...editingPlan, isPopular: !editingPlan.isPopular })}
+                                        className={`w-16 h-9 rounded-full relative transition-all duration-500 ${editingPlan.isPopular ? 'bg-indigo-600 shadow-[0_0_20px_rgba(79,70,229,0.3)]' : 'bg-slate-800'}`}
+                                        title={editingPlan.isPopular ? "Remover destaque" : "Destacar plano"}
+                                        aria-label={editingPlan.isPopular ? "Remover destaque" : "Destacar plano"}
+                                    >
+                                        <div className={`absolute top-1.5 w-6 h-6 bg-white rounded-full shadow-sm transition-all duration-300 ${editingPlan.isPopular ? 'right-1.5' : 'left-1.5'}`}></div>
+                                    </button>
+                                </div>
+
+                                <div className="flex items-center justify-between p-8 bg-[#020617]/50 border border-slate-800/60 rounded-[2.5rem] group hover:border-indigo-500/30 transition-all">
+                                    <div className="flex items-center gap-5">
+                                        <div className={`p-5 rounded-2xl transition-all ${editingPlan.isHidden ? 'bg-slate-700 text-slate-300' : 'bg-slate-900 text-slate-600'}`}>
+                                            <Eye size={24} />
+                                        </div>
+                                        <div>
+                                            <p className="font-black text-xs uppercase tracking-[0.2em] text-slate-200">Oculto na Landing Page</p>
+                                            <p className="text-[10px] text-slate-500 font-bold uppercase mt-1">NÃO MOSTRAR NOS PREÇOS PÚBLICOS</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setEditingPlan({ ...editingPlan, isHidden: !editingPlan.isHidden })}
+                                        className={`w-16 h-9 rounded-full relative transition-all duration-500 ${editingPlan.isHidden ? 'bg-indigo-600 shadow-[0_0_20px_rgba(79,70,229,0.3)]' : 'bg-slate-800'}`}
+                                        title={editingPlan.isHidden ? "Tornar visível" : "Ocultar"}
+                                        aria-label={editingPlan.isHidden ? "Tornar visível" : "Ocultar"}
+                                    >
+                                        <div className={`absolute top-1.5 w-6 h-6 bg-white rounded-full shadow-sm transition-all duration-300 ${editingPlan.isHidden ? 'right-1.5' : 'left-1.5'}`}></div>
+                                    </button>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Nome Comercial do Plano</label>
+                                    <input type="text" value={editingPlan.label} onChange={e => setEditingPlan({ ...editingPlan, label: e.target.value })} className="w-full p-6 bg-[#020617] border border-slate-800 rounded-2xl outline-none focus:border-indigo-500 transition-all text-sm font-black placeholder:text-slate-700" placeholder="Ex: Plano Elite / Business" />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-8">
+                                    <div className="space-y-4">
+                                        <label htmlFor="plan-price-monthly" className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Preço Mensal (R$)</label>
+                                        <div className="relative">
+                                            <div className="absolute left-6 top-1/2 -translate-y-1/2 text-indigo-500 font-black text-xs" aria-hidden="true">R$</div>
+                                            <input id="plan-price-monthly" title="Preço Mensal" type="number" step="0.01" value={editingPlan.priceMonthly} onChange={e => setEditingPlan({ ...editingPlan, priceMonthly: parseFloat(e.target.value) })} className="w-full p-6 pl-14 bg-[#020617] border border-slate-800 rounded-2xl outline-none focus:border-indigo-500 transition-all text-sm font-black" />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <label htmlFor="plan-price-yearly" className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Preço Anual (R$)</label>
+                                        <div className="relative">
+                                            <div className="absolute left-6 top-1/2 -translate-y-1/2 text-purple-500 font-black text-xs" aria-hidden="true">R$</div>
+                                            <input id="plan-price-yearly" title="Preço Anual" type="number" step="0.01" value={editingPlan.priceYearly} onChange={e => setEditingPlan({ ...editingPlan, priceYearly: parseFloat(e.target.value) })} className="w-full p-6 pl-14 bg-[#020617] border border-slate-800 rounded-2xl outline-none focus:border-indigo-500 transition-all text-sm font-black" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                    <div className="space-y-4">
+                                        <label htmlFor="plan-project-limit" className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Capacidade de Projetos</label>
+                                        <div className="relative">
+                                            <Folder className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-600" size={18} aria-hidden="true" />
+                                            <input id="plan-project-limit" title="Capacidade de Projetos" type="number" value={editingPlan.projectLimit} onChange={e => setEditingPlan({ ...editingPlan, projectLimit: parseInt(e.target.value) })} className="w-full p-6 pl-14 bg-[#020617] border border-slate-800 rounded-2xl outline-none focus:border-indigo-500 transition-all text-sm font-black" />
+                                        </div>
+                                        <p className="text-[9px] text-slate-600 font-bold uppercase px-2 italic">*Use 9999 para ilimitado</p>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <label htmlFor="plan-node-limit" className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Elementos no Fluxo</label>
+                                        <div className="relative">
+                                            <Activity className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-600" size={18} aria-hidden="true" />
+                                            <input id="plan-node-limit" title="Elementos no Fluxo" type="number" value={editingPlan.nodeLimit} onChange={e => setEditingPlan({ ...editingPlan, nodeLimit: parseInt(e.target.value) })} className="w-full p-6 pl-14 bg-[#020617] border border-slate-800 rounded-2xl outline-none focus:border-indigo-500 transition-all text-sm font-black" />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Limite da Equipe</label>
+                                        <div className="relative">
+                                            <Users className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-600" size={18} aria-hidden="true" />
+                                            <input id="team-limit" title="Limite da Equipe" type="number" value={editingPlan.teamLimit || 0} onChange={e => setEditingPlan({ ...editingPlan, teamLimit: parseInt(e.target.value) })} className="w-full p-6 pl-14 bg-[#020617] border border-slate-800 rounded-2xl outline-none focus:border-indigo-500 transition-all text-sm font-black" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Entregáveis de Valor (Uma por linha)</label>
+                                    <textarea
+                                        rows={6}
+                                        value={editingPlan.features.join('\n')}
+                                        onChange={e => setEditingPlan({ ...editingPlan, features: e.target.value.split('\n') })}
+                                        className="w-full p-8 bg-[#020617] border border-slate-800 rounded-[2.5rem] outline-none focus:border-indigo-500 transition-all resize-none text-xs font-bold leading-loose text-slate-400"
+                                        placeholder="Ex: Projetos Ilimitados&#10;Audit IA Ativo&#10;Suporte Prioritário"
+                                    />
+                                </div>
+
+                                <div className="pt-6 flex gap-6">
+                                    <button type="button" onClick={() => setPlanToDelete(editingPlan)} className="p-8 bg-red-600/10 text-red-500 border border-red-600/20 rounded-3xl font-black shadow-xl hover:bg-red-600 hover:text-white transition-all active:scale-90" title="Excluir Plano" aria-label="Excluir Plano">
+                                        <Trash2 size={28} aria-hidden="true" />
+                                    </button>
+                                    <button type="submit" className="flex-1 py-8 bg-indigo-600 hover:bg-indigo-500 text-white rounded-[2.5rem] font-black uppercase tracking-[0.4em] text-[11px] shadow-2xl shadow-indigo-500/30 transition-all active:scale-95" title="Publicar Alterações Globais" aria-label="Publicar Alterações Globais">
+                                        Publicar Alterações Globais
+                                    </button>
+                                </div>
+                            </form>
                         </div>
-                        <form onSubmit={handleSavePlan} className="p-12 space-y-10 overflow-y-auto max-h-[75vh] scrollbar-thin">
-
-                            <div className="flex items-center justify-between p-8 bg-[#020617]/50 border border-slate-800/60 rounded-[2.5rem] group hover:border-indigo-500/30 transition-all">
-                                <div className="flex items-center gap-5">
-                                    <div className={`p-5 rounded-2xl transition-all ${editingPlan.isPopular ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'bg-slate-900 text-slate-600'}`}>
-                                        <Sparkles size={24} />
-                                    </div>
-                                    <div>
-                                        <p className="font-black text-xs uppercase tracking-[0.2em] text-slate-200">Destacar como Popular</p>
-                                        <p className="text-[10px] text-slate-500 font-bold uppercase mt-1">ATIVAR CARD LUMINOSO NA LANDING PAGE</p>
-                                    </div>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setEditingPlan({ ...editingPlan, isPopular: !editingPlan.isPopular })}
-                                    className={`w-16 h-9 rounded-full relative transition-all duration-500 ${editingPlan.isPopular ? 'bg-indigo-600 shadow-[0_0_20px_rgba(79,70,229,0.3)]' : 'bg-slate-800'}`}
-                                    title={editingPlan.isPopular ? "Remover destaque" : "Destacar plano"}
-                                    aria-label={editingPlan.isPopular ? "Remover destaque" : "Destacar plano"}
-                                >
-                                    <div className={`absolute top-1.5 w-6 h-6 bg-white rounded-full shadow-sm transition-all duration-300 ${editingPlan.isPopular ? 'right-1.5' : 'left-1.5'}`}></div>
-                                </button>
-                            </div>
-
-                            <div className="flex items-center justify-between p-8 bg-[#020617]/50 border border-slate-800/60 rounded-[2.5rem] group hover:border-indigo-500/30 transition-all">
-                                <div className="flex items-center gap-5">
-                                    <div className={`p-5 rounded-2xl transition-all ${editingPlan.isHidden ? 'bg-slate-700 text-slate-300' : 'bg-slate-900 text-slate-600'}`}>
-                                        <Eye size={24} />
-                                    </div>
-                                    <div>
-                                        <p className="font-black text-xs uppercase tracking-[0.2em] text-slate-200">Oculto na Landing Page</p>
-                                        <p className="text-[10px] text-slate-500 font-bold uppercase mt-1">NÃO MOSTRAR NOS PREÇOS PÚBLICOS</p>
-                                    </div>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setEditingPlan({ ...editingPlan, isHidden: !editingPlan.isHidden })}
-                                    className={`w-16 h-9 rounded-full relative transition-all duration-500 ${editingPlan.isHidden ? 'bg-indigo-600 shadow-[0_0_20px_rgba(79,70,229,0.3)]' : 'bg-slate-800'}`}
-                                    title={editingPlan.isHidden ? "Tornar visível" : "Ocultar"}
-                                    aria-label={editingPlan.isHidden ? "Tornar visível" : "Ocultar"}
-                                >
-                                    <div className={`absolute top-1.5 w-6 h-6 bg-white rounded-full shadow-sm transition-all duration-300 ${editingPlan.isHidden ? 'right-1.5' : 'left-1.5'}`}></div>
-                                </button>
-                            </div>
-
-                            <div className="space-y-4">
-                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Nome Comercial do Plano</label>
-                                <input type="text" value={editingPlan.label} onChange={e => setEditingPlan({ ...editingPlan, label: e.target.value })} className="w-full p-6 bg-[#020617] border border-slate-800 rounded-2xl outline-none focus:border-indigo-500 transition-all text-sm font-black placeholder:text-slate-700" placeholder="Ex: Plano Elite / Business" />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-8">
-                                <div className="space-y-4">
-                                    <label htmlFor="plan-price-monthly" className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Preço Mensal (R$)</label>
-                                    <div className="relative">
-                                        <div className="absolute left-6 top-1/2 -translate-y-1/2 text-indigo-500 font-black text-xs" aria-hidden="true">R$</div>
-                                        <input id="plan-price-monthly" title="Preço Mensal" type="number" step="0.01" value={editingPlan.priceMonthly} onChange={e => setEditingPlan({ ...editingPlan, priceMonthly: parseFloat(e.target.value) })} className="w-full p-6 pl-14 bg-[#020617] border border-slate-800 rounded-2xl outline-none focus:border-indigo-500 transition-all text-sm font-black" />
-                                    </div>
-                                </div>
-                                <div className="space-y-4">
-                                    <label htmlFor="plan-price-yearly" className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Preço Anual (R$)</label>
-                                    <div className="relative">
-                                        <div className="absolute left-6 top-1/2 -translate-y-1/2 text-purple-500 font-black text-xs" aria-hidden="true">R$</div>
-                                        <input id="plan-price-yearly" title="Preço Anual" type="number" step="0.01" value={editingPlan.priceYearly} onChange={e => setEditingPlan({ ...editingPlan, priceYearly: parseFloat(e.target.value) })} className="w-full p-6 pl-14 bg-[#020617] border border-slate-800 rounded-2xl outline-none focus:border-indigo-500 transition-all text-sm font-black" />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                <div className="space-y-4">
-                                    <label htmlFor="plan-project-limit" className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Capacidade de Projetos</label>
-                                    <div className="relative">
-                                        <Folder className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-600" size={18} aria-hidden="true" />
-                                        <input id="plan-project-limit" title="Capacidade de Projetos" type="number" value={editingPlan.projectLimit} onChange={e => setEditingPlan({ ...editingPlan, projectLimit: parseInt(e.target.value) })} className="w-full p-6 pl-14 bg-[#020617] border border-slate-800 rounded-2xl outline-none focus:border-indigo-500 transition-all text-sm font-black" />
-                                    </div>
-                                    <p className="text-[9px] text-slate-600 font-bold uppercase px-2 italic">*Use 9999 para ilimitado</p>
-                                </div>
-                                <div className="space-y-4">
-                                    <label htmlFor="plan-node-limit" className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Elementos no Fluxo</label>
-                                    <div className="relative">
-                                        <Activity className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-600" size={18} aria-hidden="true" />
-                                        <input id="plan-node-limit" title="Elementos no Fluxo" type="number" value={editingPlan.nodeLimit} onChange={e => setEditingPlan({ ...editingPlan, nodeLimit: parseInt(e.target.value) })} className="w-full p-6 pl-14 bg-[#020617] border border-slate-800 rounded-2xl outline-none focus:border-indigo-500 transition-all text-sm font-black" />
-                                    </div>
-                                </div>
-                                <div className="space-y-4">
-                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Limite da Equipe</label>
-                                    <div className="relative">
-                                        <Users className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-600" size={18} aria-hidden="true" />
-                                        <input id="team-limit" title="Limite da Equipe" type="number" value={editingPlan.teamLimit || 0} onChange={e => setEditingPlan({ ...editingPlan, teamLimit: parseInt(e.target.value) })} className="w-full p-6 pl-14 bg-[#020617] border border-slate-800 rounded-2xl outline-none focus:border-indigo-500 transition-all text-sm font-black" />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="space-y-4">
-                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Entregáveis de Valor (Uma por linha)</label>
-                                <textarea
-                                    rows={6}
-                                    value={editingPlan.features.join('\n')}
-                                    onChange={e => setEditingPlan({ ...editingPlan, features: e.target.value.split('\n') })}
-                                    className="w-full p-8 bg-[#020617] border border-slate-800 rounded-[2.5rem] outline-none focus:border-indigo-500 transition-all resize-none text-xs font-bold leading-loose text-slate-400"
-                                    placeholder="Ex: Projetos Ilimitados&#10;Audit IA Ativo&#10;Suporte Prioritário"
-                                />
-                            </div>
-
-                            <div className="pt-6 flex gap-6">
-                                <button type="button" onClick={() => setPlanToDelete(editingPlan)} className="p-8 bg-red-600/10 text-red-500 border border-red-600/20 rounded-3xl font-black shadow-xl hover:bg-red-600 hover:text-white transition-all active:scale-90" title="Excluir Plano" aria-label="Excluir Plano">
-                                    <Trash2 size={28} aria-hidden="true" />
-                                </button>
-                                <button type="submit" className="flex-1 py-8 bg-indigo-600 hover:bg-indigo-500 text-white rounded-[2.5rem] font-black uppercase tracking-[0.4em] text-[11px] shadow-2xl shadow-indigo-500/30 transition-all active:scale-95" title="Publicar Alterações Globais" aria-label="Publicar Alterações Globais">
-                                    Publicar Alterações Globais
-                                </button>
-                            </div>
-                        </form>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO DE PLANO */}
-            {planToDelete && (
-                <div className="fixed inset-0 z-[250] flex items-center justify-center p-8 bg-black/95 backdrop-blur-md animate-fade-in-up">
-                    <div className="w-full max-w-md bg-[#0f172a] rounded-3xl border border-red-900/50 overflow-hidden shadow-2xl flex flex-col items-center text-center p-8">
-                        <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mb-6">
-                            <ShieldAlert size={40} className="text-red-500" />
-                        </div>
-                        <h3 className="text-2xl font-black uppercase tracking-tight text-white mb-2">Excluir Plano?</h3>
-                        <p className="text-slate-400 text-sm mb-8">
-                            Tem certeza que deseja excluir o plano <strong className="text-white">{planToDelete.label}</strong>? Essa ação não pode ser desfeita e pode afetar usuários ativos.
-                        </p>
-                        <div className="flex gap-4 w-full">
-                            <button
-                                onClick={() => setPlanToDelete(null)}
-                                className="flex-1 py-4 rounded-xl font-bold bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white transition-all"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={() => {
-                                    onDeletePlan(planToDelete.id);
-                                    setPlanToDelete(null);
-                                    setEditingPlan(null); // Close the edit modal too
-                                }}
-                                className="flex-1 py-4 rounded-xl font-bold bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-500/20 transition-all"
-                            >
-                                Confirmar Exclusão
-                            </button>
+            {
+                planToDelete && (
+                    <div className="fixed inset-0 z-[250] flex items-center justify-center p-8 bg-black/95 backdrop-blur-md animate-fade-in-up">
+                        <div className="w-full max-w-md bg-[#0f172a] rounded-3xl border border-red-900/50 overflow-hidden shadow-2xl flex flex-col items-center text-center p-8">
+                            <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mb-6">
+                                <ShieldAlert size={40} className="text-red-500" />
+                            </div>
+                            <h3 className="text-2xl font-black uppercase tracking-tight text-white mb-2">Excluir Plano?</h3>
+                            <p className="text-slate-400 text-sm mb-8">
+                                Tem certeza que deseja excluir o plano <strong className="text-white">{planToDelete.label}</strong>? Essa ação não pode ser desfeita e pode afetar usuários ativos.
+                            </p>
+                            <div className="flex gap-4 w-full">
+                                <button
+                                    onClick={() => setPlanToDelete(null)}
+                                    className="flex-1 py-4 rounded-xl font-bold bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white transition-all"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        onDeletePlan(planToDelete.id);
+                                        setPlanToDelete(null);
+                                        setEditingPlan(null); // Close the edit modal too
+                                    }}
+                                    className="flex-1 py-4 rounded-xl font-bold bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-500/20 transition-all"
+                                >
+                                    Confirmar Exclusão
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* ABAS RESTANTES (Sincronização / Skeleton) */}
             {/* TAB: OVERVIEW (DASHBOARD) */}
-            {activeTab === 'OVERVIEW' && (
-                <div className="animate-fade-in-up space-y-6">
-                    {/* KPI Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div className="bg-[#0f172a]/60 border border-slate-800 p-4 rounded-3xl shadow-lg relative overflow-hidden group hover:border-indigo-500/30 transition-all">
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl -translate-y-10 translate-x-10 group-hover:bg-indigo-500/20 transition-all"></div>
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-400"><DollarSign size={18} /></div>
-                                <span className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">MRR Mensal</span>
+            {
+                activeTab === 'OVERVIEW' && (
+                    <div className="animate-fade-in-up space-y-6">
+                        {/* KPI Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div className="bg-[#0f172a]/60 border border-slate-800 p-4 rounded-3xl shadow-lg relative overflow-hidden group hover:border-indigo-500/30 transition-all">
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl -translate-y-10 translate-x-10 group-hover:bg-indigo-500/20 transition-all"></div>
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-400"><DollarSign size={18} /></div>
+                                    <span className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">MRR Mensal</span>
+                                </div>
+                                <h3 className="text-2xl font-black text-white tracking-tight">R$ {stats.mrr.toFixed(2)}</h3>
+                                <div className="flex items-center gap-1.5 mt-2 text-emerald-400 text-[10px] font-bold">
+                                    <TrendingUp size={12} /> +12% vs mês anterior
+                                </div>
                             </div>
-                            <h3 className="text-2xl font-black text-white tracking-tight">R$ {stats.mrr.toFixed(2)}</h3>
-                            <div className="flex items-center gap-1.5 mt-2 text-emerald-400 text-[10px] font-bold">
-                                <TrendingUp size={12} /> +12% vs mês anterior
+
+                            <div className="bg-[#0f172a]/60 border border-slate-800 p-4 rounded-3xl shadow-lg relative overflow-hidden group hover:border-purple-500/30 transition-all">
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl -translate-y-10 translate-x-10 group-hover:bg-purple-500/20 transition-all"></div>
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className="p-2 bg-purple-500/10 rounded-xl text-purple-400"><Users size={18} /></div>
+                                    <span className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">Total Usuários</span>
+                                </div>
+                                <h3 className="text-2xl font-black text-white tracking-tight">{stats.totalUsers}</h3>
+                                <div className="flex items-center gap-1.5 mt-2 text-purple-400 text-[10px] font-bold">
+                                    <UserIcon size={12} /> {stats.activeUsers} Ativos agora
+                                </div>
+                            </div>
+
+                            <div className="bg-[#0f172a]/60 border border-slate-800 p-4 rounded-3xl shadow-lg relative overflow-hidden group hover:border-emerald-500/30 transition-all">
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl -translate-y-10 translate-x-10 group-hover:bg-emerald-500/20 transition-all"></div>
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-400"><Activity size={18} /></div>
+                                    <span className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">Saúde Sistema</span>
+                                </div>
+                                <h3 className="text-2xl font-black text-white tracking-tight">99.9%</h3>
+                                <div className="flex items-center gap-1.5 mt-2 text-emerald-400 text-[10px] font-bold">
+                                    <Server size={12} /> Todos serviços online
+                                </div>
+                            </div>
+
+                            <div className="bg-[#0f172a]/60 border border-slate-800 p-4 rounded-3xl shadow-lg relative overflow-hidden group hover:border-amber-500/30 transition-all">
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl -translate-y-10 translate-x-10 group-hover:bg-amber-500/20 transition-all"></div>
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className="p-2 bg-amber-500/10 rounded-xl text-amber-400"><ShoppingBag size={18} /></div>
+                                    <span className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">Marketplace</span>
+                                </div>
+                                <h3 className="text-2xl font-black text-white tracking-tight">{templates.length}</h3>
+                                <div className="flex items-center gap-1.5 mt-2 text-amber-400 text-[10px] font-bold">
+                                    <Star size={12} /> {templates.filter(t => t.status === 'PENDING').length} Para aprovação
+                                </div>
                             </div>
                         </div>
 
-                        <div className="bg-[#0f172a]/60 border border-slate-800 p-4 rounded-3xl shadow-lg relative overflow-hidden group hover:border-purple-500/30 transition-all">
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl -translate-y-10 translate-x-10 group-hover:bg-purple-500/20 transition-all"></div>
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="p-2 bg-purple-500/10 rounded-xl text-purple-400"><Users size={18} /></div>
-                                <span className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">Total Usuários</span>
+                        {/* Charts Row */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-80">
+                            <div className="lg:col-span-2 bg-[#0f172a]/60 border border-slate-800 p-6 rounded-3xl shadow-lg">
+                                <h4 className="text-sm font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2"><BarChart size={16} /> Crescimento MRR</h4>
+                                <div className="h-60 w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <AreaChart data={revenueData}>
+                                            <defs>
+                                                <linearGradient id="colorMrr" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4} />
+                                                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1e293b" />
+                                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 10 }} dy={10} />
+                                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 10 }} tickFormatter={(val) => `R$${val}`} />
+                                            <Tooltip
+                                                contentStyle={{ backgroundColor: '#0f172a', borderRadius: '12px', border: '1px solid #1e293b', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)' }}
+                                                itemStyle={{ color: '#fff', fontWeight: 'bold', fontSize: '12px' }}
+                                                labelStyle={{ color: '#94a3b8', marginBottom: '4px', fontSize: '11px' }}
+                                            />
+                                            <Area type="monotone" dataKey="mrr" stroke="#6366f1" strokeWidth={2} fillOpacity={1} fill="url(#colorMrr)" />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                </div>
                             </div>
-                            <h3 className="text-2xl font-black text-white tracking-tight">{stats.totalUsers}</h3>
-                            <div className="flex items-center gap-1.5 mt-2 text-purple-400 text-[10px] font-bold">
-                                <UserIcon size={12} /> {stats.activeUsers} Ativos agora
-                            </div>
-                        </div>
 
-                        <div className="bg-[#0f172a]/60 border border-slate-800 p-4 rounded-3xl shadow-lg relative overflow-hidden group hover:border-emerald-500/30 transition-all">
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl -translate-y-10 translate-x-10 group-hover:bg-emerald-500/20 transition-all"></div>
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-400"><Activity size={18} /></div>
-                                <span className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">Saúde Sistema</span>
-                            </div>
-                            <h3 className="text-2xl font-black text-white tracking-tight">99.9%</h3>
-                            <div className="flex items-center gap-1.5 mt-2 text-emerald-400 text-[10px] font-bold">
-                                <Server size={12} /> Todos serviços online
-                            </div>
-                        </div>
-
-                        <div className="bg-[#0f172a]/60 border border-slate-800 p-4 rounded-3xl shadow-lg relative overflow-hidden group hover:border-amber-500/30 transition-all">
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl -translate-y-10 translate-x-10 group-hover:bg-amber-500/20 transition-all"></div>
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="p-2 bg-amber-500/10 rounded-xl text-amber-400"><ShoppingBag size={18} /></div>
-                                <span className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">Marketplace</span>
-                            </div>
-                            <h3 className="text-2xl font-black text-white tracking-tight">{templates.length}</h3>
-                            <div className="flex items-center gap-1.5 mt-2 text-amber-400 text-[10px] font-bold">
-                                <Star size={12} /> {templates.filter(t => t.status === 'PENDING').length} Para aprovação
+                            <div className="bg-[#0f172a]/60 border border-slate-800 p-6 rounded-3xl shadow-lg">
+                                <h4 className="text-sm font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2"><PieChartIcon size={16} /> Distribuição Planos</h4>
+                                <div className="h-60 w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie
+                                                data={[
+                                                    { name: 'Free', value: users.filter(u => u.plan === 'FREE').length },
+                                                    { name: 'Pro', value: users.filter(u => u.plan === 'PRO').length },
+                                                    { name: 'Premium', value: users.filter(u => u.plan === 'PREMIUM').length },
+                                                    { name: 'Convidado', value: users.filter(u => u.plan === 'CONVIDADO').length },
+                                                ]}
+                                                cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={5}
+                                                dataKey="value"
+                                            >
+                                                <Cell key="cell-0" fill="#94a3b8" />
+                                                <Cell key="cell-1" fill="#6366f1" />
+                                                <Cell key="cell-2" fill="#a855f7" />
+                                                <Cell key="cell-3" fill="#06b6d4" />
+                                            </Pie>
+                                            <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '11px' }} />
+                                            <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderRadius: '12px', border: '1px solid #1e293b', fontSize: '12px' }} />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </div>
                             </div>
                         </div>
                     </div>
-
-                    {/* Charts Row */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-80">
-                        <div className="lg:col-span-2 bg-[#0f172a]/60 border border-slate-800 p-6 rounded-3xl shadow-lg">
-                            <h4 className="text-sm font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2"><BarChart size={16} /> Crescimento MRR</h4>
-                            <div className="h-60 w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={revenueData}>
-                                        <defs>
-                                            <linearGradient id="colorMrr" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4} />
-                                                <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1e293b" />
-                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 10 }} dy={10} />
-                                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 10 }} tickFormatter={(val) => `R$${val}`} />
-                                        <Tooltip
-                                            contentStyle={{ backgroundColor: '#0f172a', borderRadius: '12px', border: '1px solid #1e293b', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)' }}
-                                            itemStyle={{ color: '#fff', fontWeight: 'bold', fontSize: '12px' }}
-                                            labelStyle={{ color: '#94a3b8', marginBottom: '4px', fontSize: '11px' }}
-                                        />
-                                        <Area type="monotone" dataKey="mrr" stroke="#6366f1" strokeWidth={2} fillOpacity={1} fill="url(#colorMrr)" />
-                                    </AreaChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
-
-                        <div className="bg-[#0f172a]/60 border border-slate-800 p-6 rounded-3xl shadow-lg">
-                            <h4 className="text-sm font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2"><PieChartIcon size={16} /> Distribuição Planos</h4>
-                            <div className="h-60 w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie
-                                            data={[
-                                                { name: 'Free', value: users.filter(u => u.plan === 'FREE').length },
-                                                { name: 'Pro', value: users.filter(u => u.plan === 'PRO').length },
-                                                { name: 'Premium', value: users.filter(u => u.plan === 'PREMIUM').length },
-                                            ]}
-                                            cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={5}
-                                            dataKey="value"
-                                        >
-                                            <Cell key="cell-0" fill="#94a3b8" />
-                                            <Cell key="cell-1" fill="#6366f1" />
-                                            <Cell key="cell-2" fill="#a855f7" />
-                                        </Pie>
-                                        <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '11px' }} />
-                                        <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderRadius: '12px', border: '1px solid #1e293b', fontSize: '12px' }} />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+                )
+            }
 
             {/* TAB: USERS */}
-            {activeTab === 'USERS' && (
-                <div className="animate-fade-in-up space-y-4">
-                    <div className="flex gap-4 mb-4">
-                        <div className="flex-1 relative">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
-                            <input
-                                type="text"
-                                placeholder="Buscar usuários por nome ou email..."
-                                value={userSearch}
-                                onChange={(e) => setUserSearch(e.target.value)}
-                                className="w-full pl-10 pr-4 py-3 bg-[#0f172a]/60 border border-slate-800 rounded-xl outline-none focus:border-indigo-500 text-slate-200 transition-all font-medium text-sm"
-                            />
-                        </div>
-                        <div className="flex gap-2">
-                            {['ALL', 'ACTIVE', 'PREMIUM', 'BANNED'].map(f => (
-                                <button key={f} onClick={() => setUserFilter(f as any)} className={`px-4 py-3 rounded-xl font-bold uppercase tracking-wider text-[10px] border transition-all ${userFilter === f ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-[#0f172a]/60 border-slate-800 text-slate-500 hover:text-slate-300'}`} title={`Filtrar usuários: ${f}`} aria-label={`Filtrar usuários: ${f}`}>
-                                    {f}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="bg-[#0f172a]/60 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="border-b border-slate-800/60 bg-slate-900/50 text-[10px] uppercase tracking-widest text-slate-500">
-                                    <th className="p-4 font-black">Usuário</th>
-                                    <th className="p-4 font-black text-center">Plano</th>
-                                    <th className="p-4 font-black text-center">Status</th>
-                                    <th className="p-4 font-black text-center">Último Login</th>
-                                    <th className="p-4 font-black text-right">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-800/60 font-medium text-xs text-slate-400">
-                                {filteredUsers.map(user => (
-                                    <tr key={user.id} className="hover:bg-slate-800/30 transition-colors group">
-                                        <td className="p-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center font-bold text-white uppercase text-[10px]">
-                                                    {user.name.substring(0, 2)}
-                                                </div>
-                                                <div>
-                                                    <div className="text-white font-bold flex items-center gap-2">
-                                                        {user.name}
-                                                        {user.plan === 'PREMIUM' && !user.isInvitedMember && (
-                                                            <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500 text-[8px] font-black uppercase tracking-wider border border-amber-500/30" title="Dono do Sistema (Premium)" aria-label="Dono do Sistema">
-                                                                Dono
-                                                            </span>
-                                                        )}
-                                                        {user.isInvitedMember && (
-                                                            <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 text-[8px] font-black uppercase tracking-wider border border-blue-500/30" title="Membro Convidado" aria-label="Membro Convidado">
-                                                                Membro
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <div className="text-[10px] text-slate-500">{user.email}</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="p-4 text-center">
-                                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${user.plan === 'PREMIUM' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : (user.plan === 'PRO' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' : 'bg-slate-800 text-slate-400 border-slate-700')}`}>
-                                                {user.plan}
-                                            </span>
-                                        </td>
-                                        <td className="p-4 text-center">
-                                            <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold ${user.status === 'ACTIVE' ? 'text-emerald-400' : 'text-red-400'}`}>
-                                                <span className={`w-1.5 h-1.5 rounded-full ${user.status === 'ACTIVE' ? 'bg-emerald-400' : 'bg-red-400'} animate-pulse`}></span>
-                                                {user.status}
-                                            </span>
-                                        </td>
-                                        <td className="p-4 text-[10px] font-mono text-center">{new Date(user.lastLogin).toLocaleDateString()}</td>
-                                        <td className="p-4 text-right">
-                                            <div className="flex items-center justify-end gap-1 opacity-100 transition-opacity">
-                                                <button onClick={() => onImpersonate(user.id)} title="Acessar conta" aria-label="Acessar conta" className="p-1.5 bg-indigo-600/10 hover:bg-indigo-600 text-indigo-400 hover:text-white rounded-lg transition-colors">
-                                                    <LogIn size={14} aria-hidden="true" />
-                                                </button>
-                                                <button onClick={() => setEditingUser(user)} title="Editar Usuário" aria-label="Editar Usuário" className="p-1.5 bg-slate-800 hover:bg-indigo-600 text-slate-400 hover:text-white rounded-lg transition-colors">
-                                                    <Edit size={14} aria-hidden="true" />
-                                                </button>
-                                                <button onClick={() => { if (window.confirm('Tem certeza que deseja BANIR este usuário? Ele perderá o acesso ao sistema.')) onBanUser && onBanUser(user.id); }} title="Banir Usuário" aria-label="Banir Usuário" className="p-1.5 bg-slate-800 hover:bg-amber-600 text-slate-400 hover:text-white rounded-lg transition-colors">
-                                                    <ShieldAlert size={14} aria-hidden="true" />
-                                                </button>
-                                                <button onClick={() => { if (window.confirm('ATENÇÃO: Tem certeza que deseja EXCLUIR PERMANENTEMENTE este usuário? Todos os dados serão perdidos. Esta ação não pode ser desfeita.')) onDeleteUser(user.id); }} title="Excluir Permanentemente" aria-label="Excluir Permanentemente" className="p-1.5 bg-slate-800 hover:bg-red-600 text-slate-400 hover:text-white rounded-lg transition-colors">
-                                                    <Trash2 size={14} aria-hidden="true" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
+            {
+                activeTab === 'USERS' && (
+                    <div className="animate-fade-in-up space-y-4">
+                        <div className="flex gap-4 mb-4">
+                            <div className="flex-1 relative">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                                <input
+                                    type="text"
+                                    placeholder="Buscar usuários por nome ou email..."
+                                    value={userSearch}
+                                    onChange={(e) => setUserSearch(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-3 bg-[#0f172a]/60 border border-slate-800 rounded-xl outline-none focus:border-indigo-500 text-slate-200 transition-all font-medium text-sm"
+                                />
+                            </div>
+                            <div className="flex gap-2">
+                                {['ALL', 'ACTIVE', 'PREMIUM', 'BANNED'].map(f => (
+                                    <button key={f} onClick={() => setUserFilter(f as any)} className={`px-4 py-3 rounded-xl font-bold uppercase tracking-wider text-[10px] border transition-all ${userFilter === f ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-[#0f172a]/60 border-slate-800 text-slate-500 hover:text-slate-300'}`} title={`Filtrar usuários: ${f}`} aria-label={`Filtrar usuários: ${f}`}>
+                                        {f}
+                                    </button>
                                 ))}
-                            </tbody>
-                        </table>
-                        {filteredUsers.length === 0 && <div className="p-8 text-center text-slate-500 text-xs">Nenhum usuário encontrado.</div>}
+                            </div>
+                        </div>
+
+                        <div className="bg-[#0f172a]/60 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="border-b border-slate-800/60 bg-slate-900/50 text-[10px] uppercase tracking-widest text-slate-500">
+                                        <th className="p-4 font-black">Usuário</th>
+                                        <th className="p-4 font-black text-center">Plano</th>
+                                        <th className="p-4 font-black text-center">Status</th>
+                                        <th className="p-4 font-black text-center">Último Login</th>
+                                        <th className="p-4 font-black text-right">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-800/60 font-medium text-xs text-slate-400">
+                                    {filteredUsers.map(user => (
+                                        <tr key={user.id} className="hover:bg-slate-800/30 transition-colors group">
+                                            <td className="p-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center font-bold text-white uppercase text-[10px]">
+                                                        {user.name.substring(0, 2)}
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-white font-bold flex items-center gap-2">
+                                                            {user.name}
+                                                            {user.plan === 'PREMIUM' && !user.isInvitedMember && (
+                                                                <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500 text-[8px] font-black uppercase tracking-wider border border-amber-500/30" title="Dono do Sistema (Premium)" aria-label="Dono do Sistema">
+                                                                    Dono
+                                                                </span>
+                                                            )}
+                                                            {user.isInvitedMember && (
+                                                                <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 text-[8px] font-black uppercase tracking-wider border border-blue-500/30" title="Membro Convidado" aria-label="Membro Convidado">
+                                                                    Membro
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div className="text-[10px] text-slate-500">{user.email}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="p-4 text-center">
+                                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${user.plan === 'PREMIUM' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : (user.plan === 'PRO' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' : (user.plan === 'CONVIDADO' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' : 'bg-slate-800 text-slate-400 border-slate-700'))}`}>
+                                                    {user.plan}
+                                                </span>
+                                            </td>
+                                            <td className="p-4 text-center">
+                                                <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold ${user.status === 'ACTIVE' ? 'text-emerald-400' : 'text-red-400'}`}>
+                                                    <span className={`w-1.5 h-1.5 rounded-full ${user.status === 'ACTIVE' ? 'bg-emerald-400' : 'bg-red-400'} animate-pulse`}></span>
+                                                    {user.status}
+                                                </span>
+                                            </td>
+                                            <td className="p-4 text-[10px] font-mono text-center">{new Date(user.lastLogin).toLocaleDateString()}</td>
+                                            <td className="p-4 text-right">
+                                                <div className="flex items-center justify-end gap-1 opacity-100 transition-opacity">
+                                                    <button onClick={() => onImpersonate(user.id)} title="Acessar conta" aria-label="Acessar conta" className="p-1.5 bg-indigo-600/10 hover:bg-indigo-600 text-indigo-400 hover:text-white rounded-lg transition-colors">
+                                                        <LogIn size={14} aria-hidden="true" />
+                                                    </button>
+                                                    <button onClick={() => setEditingUser(user)} title="Editar Usuário" aria-label="Editar Usuário" className="p-1.5 bg-slate-800 hover:bg-indigo-600 text-slate-400 hover:text-white rounded-lg transition-colors">
+                                                        <Edit size={14} aria-hidden="true" />
+                                                    </button>
+                                                    <button onClick={() => { if (window.confirm('Tem certeza que deseja BANIR este usuário? Ele perderá o acesso ao sistema.')) onBanUser && onBanUser(user.id); }} title="Banir Usuário" aria-label="Banir Usuário" className="p-1.5 bg-slate-800 hover:bg-amber-600 text-slate-400 hover:text-white rounded-lg transition-colors">
+                                                        <ShieldAlert size={14} aria-hidden="true" />
+                                                    </button>
+                                                    <button onClick={() => { if (window.confirm('ATENÇÃO: Tem certeza que deseja EXCLUIR PERMANENTEMENTE este usuário? Todos os dados serão perdidos. Esta ação não pode ser desfeita.')) onDeleteUser(user.id); }} title="Excluir Permanentemente" aria-label="Excluir Permanentemente" className="p-1.5 bg-slate-800 hover:bg-red-600 text-slate-400 hover:text-white rounded-lg transition-colors">
+                                                        <Trash2 size={14} aria-hidden="true" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            {filteredUsers.length === 0 && <div className="p-8 text-center text-slate-500 text-xs">Nenhum usuário encontrado.</div>}
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* TAB: TEMPLATES (MARKETPLACE) */}
-            {activeTab === 'TEMPLATES' && (
-                <div className="animate-fade-in-up space-y-4">
-                    <div className="flex gap-4">
-                        <div className="flex-1 relative">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
-                            <input type="text" value={tplSearch} onChange={(e) => setTplSearch(e.target.value)} placeholder="Filtrar templates..." title="Filtrar templates" className="w-full pl-10 pr-4 py-3 bg-[#0f172a]/60 border border-slate-800 rounded-xl outline-none focus:border-indigo-500 text-slate-200 transition-all font-medium text-sm" />
+            {
+                activeTab === 'TEMPLATES' && (
+                    <div className="animate-fade-in-up space-y-4">
+                        <div className="flex gap-4">
+                            <div className="flex-1 relative">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                                <input type="text" value={tplSearch} onChange={(e) => setTplSearch(e.target.value)} placeholder="Filtrar templates..." title="Filtrar templates" className="w-full pl-10 pr-4 py-3 bg-[#0f172a]/60 border border-slate-800 rounded-xl outline-none focus:border-indigo-500 text-slate-200 transition-all font-medium text-sm" />
+                            </div>
+                            <select value={tplFilter} onChange={(e) => setTplFilter(e.target.value as any)} title="Filtrar por status" className="px-4 py-3 bg-[#0f172a]/60 border border-slate-800 rounded-xl text-slate-400 font-bold outline-none focus:border-indigo-500 uppercase text-[10px] tracking-wider cursor-pointer">
+                                <option value="ALL">Todos Status</option>
+                                <option value="PENDING">Pendentes</option>
+                                <option value="APPROVED">Aprovados</option>
+                                <option value="REJECTED">Rejeitados</option>
+                            </select>
                         </div>
-                        <select value={tplFilter} onChange={(e) => setTplFilter(e.target.value as any)} title="Filtrar por status" className="px-4 py-3 bg-[#0f172a]/60 border border-slate-800 rounded-xl text-slate-400 font-bold outline-none focus:border-indigo-500 uppercase text-[10px] tracking-wider cursor-pointer">
-                            <option value="ALL">Todos Status</option>
-                            <option value="PENDING">Pendentes</option>
-                            <option value="APPROVED">Aprovados</option>
-                            <option value="REJECTED">Rejeitados</option>
-                        </select>
+
+                        {filteredTemplates.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center p-12 text-center text-slate-500 rounded-3xl border border-slate-800 border-dashed bg-[#0f172a]/30">
+                                <LayoutDashboard size={48} className="mb-4 opacity-50" />
+                                <h3 className="text-lg font-bold text-slate-400 mb-2">Nenhum template encontrado</h3>
+                                <p className="text-sm">Tente ajustar os filtros ou busque por outro termo.</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                {filteredTemplates.map(tpl => (
+                                    <div key={tpl.id} className="bg-[#0f172a]/60 border border-slate-800 p-4 rounded-3xl shadow-lg flex flex-col hover:border-indigo-500/30 transition-all group">
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div className="p-3 bg-slate-900 rounded-xl text-slate-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                                                <LayoutDashboard size={18} />
+                                            </div>
+                                            <div className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${tpl.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : (tpl.status === 'PENDING' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20')}`}>
+                                                {tpl.status}
+                                            </div>
+                                        </div>
+                                        <h4 className="text-sm font-bold text-white mb-1 line-clamp-1">{tpl.customLabel || tpl.labelKey}</h4>
+                                        <p className="text-slate-500 text-[10px] font-medium mb-4 line-clamp-2 min-h-[2.5em]">{tpl.customDescription || 'Sem descrição.'}</p>
+
+                                        <div className="flex items-center gap-3 text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-4">
+                                            <span className="flex items-center gap-1"><Download size={10} /> {tpl.downloads || 0}</span>
+                                            <span className="flex items-center gap-1"><Star size={10} /> {tpl.rating?.toFixed(1) || '0.0'}</span>
+                                            <span className="flex items-center gap-1"><UserIcon size={10} /> {tpl.authorName || 'Anon'}</span>
+                                        </div>
+
+                                        <div className="mt-auto flex gap-2">
+                                            <button onClick={() => setQuickLookTemplate(tpl)} className="p-2 bg-slate-900 border border-slate-800 rounded-lg text-indigo-400 hover:text-indigo-300 hover:bg-indigo-900/20 transition-all" title="Visualizar Template" aria-label="Visualizar Template"><Eye size={14} aria-hidden="true" /></button>
+                                            {tpl.status === 'PENDING' && (
+                                                <>
+                                                    <button onClick={() => handleModerateTemplate(tpl.id, 'APPROVED')} className="flex-1 py-2 bg-emerald-600/10 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-600/20 rounded-lg font-bold text-[10px] uppercase transition-all" title="Aprovar Template" aria-label="Aprovar Template">Aprovar</button>
+                                                    <button onClick={() => handleModerateTemplate(tpl.id, 'REJECTED')} className="flex-1 py-2 bg-red-600/10 hover:bg-red-600 text-red-400 hover:text-white border border-red-600/20 rounded-lg font-bold text-[10px] uppercase transition-all" title="Rejeitar Template" aria-label="Rejeitar Template">Rejeitar</button>
+                                                </>
+                                            )}
+                                            {tpl.status === 'APPROVED' && (
+                                                <button onClick={() => handleToggleFeatured(tpl.id, !tpl.isFeatured)} className={`flex-1 py-2 rounded-lg font-bold text-[10px] uppercase transition-all border ${tpl.isFeatured ? 'bg-amber-500 text-white border-amber-500' : 'bg-slate-900 text-slate-500 border-slate-800 hover:text-amber-400'}`} title={tpl.isFeatured ? "Remover destaque" : "Destacar template"} aria-label={tpl.isFeatured ? "Remover destaque" : "Destacar template"}>
+                                                    {tpl.isFeatured ? 'Destaque Ativo' : 'Destacar'}
+                                                </button>
+                                            )}
+                                            <button onClick={() => handleRemoveTemplate(tpl.id)} className="p-2 bg-slate-900 border border-slate-800 rounded-lg text-slate-500 hover:text-red-400 transition-all" title="Remover Template" aria-label="Remover Template"><Trash2 size={14} aria-hidden="true" /></button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
-
-                    {filteredTemplates.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center p-12 text-center text-slate-500 rounded-3xl border border-slate-800 border-dashed bg-[#0f172a]/30">
-                            <LayoutDashboard size={48} className="mb-4 opacity-50" />
-                            <h3 className="text-lg font-bold text-slate-400 mb-2">Nenhum template encontrado</h3>
-                            <p className="text-sm">Tente ajustar os filtros ou busque por outro termo.</p>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            {filteredTemplates.map(tpl => (
-                                <div key={tpl.id} className="bg-[#0f172a]/60 border border-slate-800 p-4 rounded-3xl shadow-lg flex flex-col hover:border-indigo-500/30 transition-all group">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className="p-3 bg-slate-900 rounded-xl text-slate-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                                            <LayoutDashboard size={18} />
-                                        </div>
-                                        <div className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${tpl.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : (tpl.status === 'PENDING' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20')}`}>
-                                            {tpl.status}
-                                        </div>
-                                    </div>
-                                    <h4 className="text-sm font-bold text-white mb-1 line-clamp-1">{tpl.customLabel || tpl.labelKey}</h4>
-                                    <p className="text-slate-500 text-[10px] font-medium mb-4 line-clamp-2 min-h-[2.5em]">{tpl.customDescription || 'Sem descrição.'}</p>
-
-                                    <div className="flex items-center gap-3 text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-4">
-                                        <span className="flex items-center gap-1"><Download size={10} /> {tpl.downloads || 0}</span>
-                                        <span className="flex items-center gap-1"><Star size={10} /> {tpl.rating?.toFixed(1) || '0.0'}</span>
-                                        <span className="flex items-center gap-1"><UserIcon size={10} /> {tpl.authorName || 'Anon'}</span>
-                                    </div>
-
-                                    <div className="mt-auto flex gap-2">
-                                        <button onClick={() => setQuickLookTemplate(tpl)} className="p-2 bg-slate-900 border border-slate-800 rounded-lg text-indigo-400 hover:text-indigo-300 hover:bg-indigo-900/20 transition-all" title="Visualizar Template" aria-label="Visualizar Template"><Eye size={14} aria-hidden="true" /></button>
-                                        {tpl.status === 'PENDING' && (
-                                            <>
-                                                <button onClick={() => handleModerateTemplate(tpl.id, 'APPROVED')} className="flex-1 py-2 bg-emerald-600/10 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-600/20 rounded-lg font-bold text-[10px] uppercase transition-all" title="Aprovar Template" aria-label="Aprovar Template">Aprovar</button>
-                                                <button onClick={() => handleModerateTemplate(tpl.id, 'REJECTED')} className="flex-1 py-2 bg-red-600/10 hover:bg-red-600 text-red-400 hover:text-white border border-red-600/20 rounded-lg font-bold text-[10px] uppercase transition-all" title="Rejeitar Template" aria-label="Rejeitar Template">Rejeitar</button>
-                                            </>
-                                        )}
-                                        {tpl.status === 'APPROVED' && (
-                                            <button onClick={() => handleToggleFeatured(tpl.id, !tpl.isFeatured)} className={`flex-1 py-2 rounded-lg font-bold text-[10px] uppercase transition-all border ${tpl.isFeatured ? 'bg-amber-500 text-white border-amber-500' : 'bg-slate-900 text-slate-500 border-slate-800 hover:text-amber-400'}`} title={tpl.isFeatured ? "Remover destaque" : "Destacar template"} aria-label={tpl.isFeatured ? "Remover destaque" : "Destacar template"}>
-                                                {tpl.isFeatured ? 'Destaque Ativo' : 'Destacar'}
-                                            </button>
-                                        )}
-                                        <button onClick={() => handleRemoveTemplate(tpl.id)} className="p-2 bg-slate-900 border border-slate-800 rounded-lg text-slate-500 hover:text-red-400 transition-all" title="Remover Template" aria-label="Remover Template"><Trash2 size={14} aria-hidden="true" /></button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            )}
+                )
+            }
 
             {/* TAB: FEEDBACK (ROADMAP) */}
             {
@@ -1103,71 +1122,73 @@ const MasterAdminDashboard = ({
                 )
             }
             {/* QUICK LOOK MODAL */}
-            {quickLookTemplate && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-8 bg-black/90 backdrop-blur-xl animate-fade-in-up">
-                    <div className="w-full max-w-6xl rounded-[3rem] border border-slate-800 bg-slate-950 overflow-hidden flex flex-col h-[90vh]">
-                        <div className="p-8 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
-                            <div>
-                                <h3 className="text-3xl font-black text-white">Visualizar: {quickLookTemplate.customLabel}</h3>
-                                <p className="text-slate-400">Verificando estrutura para aprovação.</p>
+            {
+                quickLookTemplate && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-8 bg-black/90 backdrop-blur-xl animate-fade-in-up">
+                        <div className="w-full max-w-6xl rounded-[3rem] border border-slate-800 bg-slate-950 overflow-hidden flex flex-col h-[90vh]">
+                            <div className="p-8 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+                                <div>
+                                    <h3 className="text-3xl font-black text-white">Visualizar: {quickLookTemplate.customLabel}</h3>
+                                    <p className="text-slate-400">Verificando estrutura para aprovação.</p>
+                                </div>
+                                <button onClick={() => setQuickLookTemplate(null)} className="p-4 hover:bg-slate-800 rounded-3xl transition-all text-slate-400 hover:text-white" aria-label="Fechar" title="Fechar">
+                                    <X size={28} />
+                                </button>
                             </div>
-                            <button onClick={() => setQuickLookTemplate(null)} className="p-4 hover:bg-slate-800 rounded-3xl transition-all text-slate-400 hover:text-white" aria-label="Fechar" title="Fechar">
-                                <X size={28} />
-                            </button>
-                        </div>
-                        <div key={quickLookTemplate.id} className="flex-1 bg-slate-900 overflow-hidden relative">
-                            <ReactFlow
-                                nodes={quickLookTemplate.nodes.map(n => ({
-                                    ...n,
-                                    id: `preview-${n.id}`,
-                                    draggable: false,
-                                    selectable: false,
-                                    data: { ...n.data, isPresentationMode: true }
-                                }))}
-                                edges={quickLookTemplate.edges.map(e => ({
-                                    ...e,
-                                    id: `preview-${e.id}`,
-                                    source: `preview-${e.source}`,
-                                    target: `preview-${e.target}`,
-                                    type: 'default',
-                                    animated: true,
-                                    style: {
-                                        stroke: '#a5b4fc',
-                                        strokeWidth: 2,
-                                    }
-                                }))}
-                                nodeTypes={nodeTypes}
-                                edgeTypes={edgeTypes}
-                                fitView
-                                proOptions={{ hideAttribution: true }}
-                                nodesDraggable={false}
-                                nodesConnectable={false}
-                                elementsSelectable={false}
-                            >
-                                <Background color="#334155" gap={24} />
-                                <Controls showInteractive={false} />
-                            </ReactFlow>
-                        </div>
-                        <div className="p-8 border-t border-slate-800 flex justify-center gap-4 bg-slate-950">
-                            {/* Action Buttons for Quick Access */}
-                            {quickLookTemplate.status === 'PENDING' && (
-                                <>
-                                    <button onClick={() => { handleModerateTemplate(quickLookTemplate.id, 'APPROVED'); setQuickLookTemplate(null); }} className="px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-bold shadow-lg transition-all">
-                                        Aprovar Agora
-                                    </button>
-                                    <button onClick={() => { handleModerateTemplate(quickLookTemplate.id, 'REJECTED'); setQuickLookTemplate(null); }} className="px-8 py-4 bg-red-600 hover:bg-red-500 text-white rounded-2xl font-bold shadow-lg transition-all">
-                                        Rejeitar
-                                    </button>
-                                </>
-                            )}
-                            <button onClick={() => setQuickLookTemplate(null)} className="px-8 py-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl font-bold transition-all">
-                                Fechar Visualização
-                            </button>
+                            <div key={quickLookTemplate.id} className="flex-1 bg-slate-900 overflow-hidden relative">
+                                <ReactFlow
+                                    nodes={quickLookTemplate.nodes.map(n => ({
+                                        ...n,
+                                        id: `preview-${n.id}`,
+                                        draggable: false,
+                                        selectable: false,
+                                        data: { ...n.data, isPresentationMode: true }
+                                    }))}
+                                    edges={quickLookTemplate.edges.map(e => ({
+                                        ...e,
+                                        id: `preview-${e.id}`,
+                                        source: `preview-${e.source}`,
+                                        target: `preview-${e.target}`,
+                                        type: 'default',
+                                        animated: true,
+                                        style: {
+                                            stroke: '#a5b4fc',
+                                            strokeWidth: 2,
+                                        }
+                                    }))}
+                                    nodeTypes={nodeTypes}
+                                    edgeTypes={edgeTypes}
+                                    fitView
+                                    proOptions={{ hideAttribution: true }}
+                                    nodesDraggable={false}
+                                    nodesConnectable={false}
+                                    elementsSelectable={false}
+                                >
+                                    <Background color="#334155" gap={24} />
+                                    <Controls showInteractive={false} />
+                                </ReactFlow>
+                            </div>
+                            <div className="p-8 border-t border-slate-800 flex justify-center gap-4 bg-slate-950">
+                                {/* Action Buttons for Quick Access */}
+                                {quickLookTemplate.status === 'PENDING' && (
+                                    <>
+                                        <button onClick={() => { handleModerateTemplate(quickLookTemplate.id, 'APPROVED'); setQuickLookTemplate(null); }} className="px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-bold shadow-lg transition-all">
+                                            Aprovar Agora
+                                        </button>
+                                        <button onClick={() => { handleModerateTemplate(quickLookTemplate.id, 'REJECTED'); setQuickLookTemplate(null); }} className="px-8 py-4 bg-red-600 hover:bg-red-500 text-white rounded-2xl font-bold shadow-lg transition-all">
+                                            Rejeitar
+                                        </button>
+                                    </>
+                                )}
+                                <button onClick={() => setQuickLookTemplate(null)} className="px-8 py-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl font-bold transition-all">
+                                    Fechar Visualização
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 

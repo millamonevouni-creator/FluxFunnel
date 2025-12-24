@@ -4,6 +4,17 @@ import { supabase, isOffline } from './supabaseClient';
 import { Folder } from 'lucide-react';
 import React from 'react';
 
+const safeGetErrorMessage = (error: any): string => {
+    if (typeof error === 'string') return error;
+    if (error?.message) return error.message;
+    if (error?.context?.message) return error.context.message; // Sometimes Supabase wraps it
+    try {
+        return JSON.stringify(error);
+    } catch {
+        return 'Erro desconhecido';
+    }
+};
+
 const mapProfileToUser = (profile: any): User => ({
     id: profile.id,
     name: profile.name || 'Usuário',
@@ -100,7 +111,7 @@ export const api = {
                     id: data.user.id,
                     name: data.user.user_metadata?.name || email.split('@')[0],
                     email: email,
-                    plan: 'FREE', // Default fallback
+                    plan: data.user.user_metadata?.plan || 'FREE', // Use metadata plan (e.g. CONVIDADO)
                     status: 'ACTIVE',
                     lastLogin: new Date(),
                     isSystemAdmin: false // SECURITY FIX: Never grant admin on fallback
@@ -159,7 +170,7 @@ export const api = {
                     id: data.user.id,
                     name: data.user.user_metadata?.name || data.user.email?.split('@')[0] || 'Usuário',
                     email: data.user.email || '',
-                    plan: 'FREE',
+                    plan: data.user.user_metadata?.plan || 'FREE',
                     status: 'ACTIVE',
                     lastLogin: new Date(),
                     isSystemAdmin: false // SECURITY FIX: Never grant admin on fallback
@@ -596,7 +607,7 @@ export const api = {
 
                 // 1. Add to team table (Maintain local pending state)
                 const { data: memberData, error: dbError } = await supabase.from('team_members').insert({
-                    email,
+                    email: email.trim(),
                     role,
                     owner_id: user.id,
                     name: name || null,
@@ -612,13 +623,16 @@ export const api = {
                         role,
                         name,
                         planId: assigned_plan_id || 'CONVIDADO',
-                        redirectTo: window.location.origin + '/auth/callback'
+                        redirectTo: window.location.origin
                     }
                 });
 
                 if (fnError) {
                     console.error("Edge Function Invite Failed:", fnError);
-                    throw new Error("Falha ao enviar e-mail de convite. Tente reenviar.");
+                    // Extract specific error message if available
+                    // The Supabase invoke error might be wrapped
+                    const specificMessage = safeGetErrorMessage(fnError);
+                    throw new Error(`Erro no envio: ${specificMessage}`);
                 }
 
                 return memberData;
