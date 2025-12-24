@@ -151,7 +151,15 @@ const App = () => {
         if (dbPlans && dbPlans.length > 0) setPlans(dbPlans);
 
         setFeedbacks(await api.feedbacks.list());
-        if (loggedUser?.isSystemAdmin) setAllUsers(await api.users.list());
+        if (loggedUser?.isSystemAdmin) {
+          try {
+            setAllUsers(await api.admin.getUsers());
+          } catch (err) {
+            console.error("Fail to load users for admin:", err);
+            // Fallback just in case
+            setAllUsers(await api.users.list());
+          }
+        }
         setIsSidebarCollapsed(safeGet('sidebarCollapsed', false));
         setIsLoadingProjects(true);
         if (shareId) {
@@ -188,14 +196,18 @@ const App = () => {
         setFeedbacks(await api.feedbacks.list());
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, async () => {
-        if (user?.isSystemAdmin) setAllUsers(await api.users.list());
+        // Use a functional update or rely on the captured 'user' ref if we were using refs,
+        // but since we are in a dependency array [user], we can use it directly.
+        if (user?.isSystemAdmin) {
+          api.admin.getUsers().then(setAllUsers).catch(() => api.users.list().then(setAllUsers));
+        }
       })
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, isOffline]);
+  }, [user?.isSystemAdmin, isOffline]); // Depend on admin status specifically for the profile listener logic
 
   const [upgradeModalInitialState, setUpgradeModalInitialState] = useState<{ planId: 'PRO' | 'PREMIUM', cycle: 'monthly' | 'yearly' } | null>(null);
 
@@ -249,17 +261,23 @@ const App = () => {
 
             // FIX: Explicitly check for signup confirmation to ensure direct redirect to dashboard
             const isSignupConfirmation = window.location.hash && window.location.hash.includes('type=signup');
+            const isRecoveryFlow = (currentHash && currentHash.includes('type=recovery')) ||
+              (savedHash && savedHash.includes('type=recovery'));
 
             if (isSignupConfirmation) {
               console.log("Signup confirmation detected. Redirecting to Dashboard.");
               setCurrentView('APP');
               setAppPage('PROJECTS');
               // Clear hash to prevent re-triggering (optional, handled by generic clear above)
-            } else if (!isInviteFlow) {
+            } else if (!isInviteFlow && !isRecoveryFlow) {
               setCurrentView((prev) => (prev === 'AUTH' || prev === 'LANDING' ? 'APP' : prev));
               if (currentView === 'LANDING' || currentView === 'AUTH') {
                 setAppPage('PROJECTS');
               }
+            } else if (isRecoveryFlow) {
+              console.log("Recovery flow detected. Staying in AUTH view.");
+              setAuthInitialView('UPDATE_PASSWORD');
+              setCurrentView('AUTH');
             } else {
               // Ensure we are on AUTH view so the specialized viewToUse logic works
               // Force the view to SET_PASSWORD for invites
@@ -276,25 +294,7 @@ const App = () => {
     };
   }, []);
 
-  // Real-time user sync for Admins
-  useEffect(() => {
-    if (!user?.isSystemAdmin) return;
 
-    const channel = supabase
-      .channel('public:profiles')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'profiles' },
-        () => {
-          api.users.list().then(setAllUsers);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user?.isSystemAdmin]);
 
   useEffect(() => { if (isInitialized) { safeSet('theme', isDark ? 'dark' : 'light'); if (isDark) document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark'); } }, [isDark, isInitialized]);
   useEffect(() => { if (isInitialized) safeSet('lang', lang); }, [lang, isInitialized]);
@@ -362,12 +362,11 @@ const App = () => {
 
       if (newUser.isSystemAdmin) {
         console.log("DEBUG: Fetching all users for System Admin");
-        // Also wrap this in timeout or just let it fly async without await? 
-        // Better to await but fast fail. 
         try {
-          setAllUsers(await api.users.list());
+          setAllUsers(await api.admin.getUsers());
         } catch (err) {
           console.error("Failed to fetch all users", err);
+          setAllUsers(await api.users.list());
         }
       }
 
@@ -569,6 +568,13 @@ const App = () => {
           onResetPassword={api.auth.resetPassword}
           onGoogleLogin={api.auth.loginWithGoogle}
           onInviteComplete={async () => {
+            // SECURITY: Clear recovery/invite indicators to prevent re-triggering this view
+            if (window.location.hash) {
+              window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            }
+            initialHash.current = '';
+            setAuthInitialView('LOGIN');
+
             // Fetch latest profile state (plan updated by DB trigger)
             const profile = await api.auth.getProfile();
             if (profile) {
@@ -586,7 +592,7 @@ const App = () => {
   }
   if (currentView === 'ROADMAP') return (
     <React.Suspense fallback={<LoadingScreen />}>
-      <RoadmapPage onBack={() => setCurrentView(user ? 'APP' : 'LANDING')} feedbacks={feedbacks} onSubmitFeedback={async (item) => { await api.feedbacks.create(item); setFeedbacks(await api.feedbacks.list()); }} onVote={async (id) => { await api.feedbacks.vote(id); setFeedbacks(await api.feedbacks.list()); }} onAddComment={async (id, text) => { await api.feedbacks.addComment(id, text); setFeedbacks(await api.feedbacks.list()); }} isAuthenticated={!!user} currentUser={user} onLoginRequest={() => { setAuthReturnView('ROADMAP'); setCurrentView('AUTH'); }} t={t} isDark={isDark} />
+      <RoadmapPage onBack={() => setCurrentView(user ? 'APP' : 'LANDING')} feedbacks={feedbacks} onSubmitFeedback={async (item) => { await api.feedbacks.create({ ...item, authorId: user?.id }); setFeedbacks(await api.feedbacks.list()); }} onVote={async (id) => { await api.feedbacks.vote(id); setFeedbacks(await api.feedbacks.list()); }} onAddComment={async (id, text) => { await api.feedbacks.addComment(id, text); setFeedbacks(await api.feedbacks.list()); }} isAuthenticated={!!user} currentUser={user} onLoginRequest={() => { setAuthReturnView('ROADMAP'); setCurrentView('AUTH'); }} t={t} isDark={isDark} />
     </React.Suspense>
   );
 
@@ -598,10 +604,37 @@ const App = () => {
           feedbacks={feedbacks}
 
           onDeleteFeedback={api.feedbacks.delete}
-          onUpdateFeedback={api.feedbacks.update}
+          onUpdateFeedback={async (id, updates) => {
+            try {
+              await api.feedbacks.update(id, updates);
+              if (updates.status) {
+                const fb = feedbacks.find(f => f.id === id);
+                if (fb && fb.authorId) {
+                  await api.notifications.send(
+                    fb.authorId,
+                    'Atualização de Status',
+                    `O status da sua sugestão "${fb.title}" foi alterado para ${updates.status}.`,
+                    'STATUS_CHANGE',
+                    id
+                  );
+                }
+              }
+              setFeedbacks(await api.feedbacks.list());
+            } catch (e) { showNotification('Erro ao atualizar feedback.', 'error'); }
+          }}
           onReplyFeedback={async (id, text) => {
             try {
               await api.feedbacks.addComment(id, text, true);
+              const fb = feedbacks.find(f => f.id === id);
+              if (fb && fb.authorId) {
+                await api.notifications.send(
+                  fb.authorId,
+                  'Resposta ao seu Feedback',
+                  `Um administrador respondeu à sua sugestão: "${fb.title}"`,
+                  'FEEDBACK_REPLY',
+                  id
+                );
+              }
               setFeedbacks(await api.feedbacks.list());
               showNotification('Resposta enviada com sucesso!');
             } catch (e) { showNotification('Erro ao enviar resposta.', 'error'); }

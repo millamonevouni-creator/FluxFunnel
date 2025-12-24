@@ -436,36 +436,53 @@ const CustomNode = ({ id, data, selected }: NodeProps<FunnelNodeData>) => {
     // --- Helper to Render 4 Handles with MASSIVE Hit Area for easy dragging ---
     const renderHandles = () => {
         const interact = isPresentation ? "pointer-events-none" : "cursor-crosshair";
-        // Hit Area INCREASED to w-12 h-12 (48px) for easier grabbing
-        const baseClasses = `absolute w-12 h-12 !bg-transparent !border-none z-[100] flex items-center justify-center ${interact}`;
+        // Hit Area INCREASED to w-16 h-16 (64px) for MAXIMUM grabbing precision
+        // Z-Index increased to ensure handles are always on top
+        const baseClasses = `absolute w-16 h-16 !bg-transparent !border-none z-[110] flex items-center justify-center ${interact}`;
 
         // Hide handles if swap menu is open
         if (showSwapMenu) return null;
 
         // The visual dot is inside the handle, preventing it from blocking the click
-        // CHANGED: Increased size to w-4 h-4 (16px) for better visibility
         const VisualDot = () => (
             <div className={`
-            w-3.5 h-3.5 bg-white rounded-full border-[3px] border-indigo-500 shadow-sm transition-all duration-200 pointer-events-none
-            ${isPresentation ? 'opacity-0' : 'opacity-0 group-hover:opacity-100'}
-            ${selected ? '!opacity-100 scale-110 border-indigo-600' : ''}
-            hover:scale-125
+            w-3.5 h-3.5 bg-white rounded-full border-[3px] border-indigo-500 shadow-md transition-all duration-300 pointer-events-none
+            ${isPresentation ? 'opacity-0' : 'opacity-0 group-hover:opacity-40'}
+            ${selected ? '!opacity-80 scale-110 border-indigo-600' : ''}
         `}></div>
         );
 
-        // Adjusted positioning to center the larger hit area on the edge
-        // Offsets adjusted for larger 48px container (-1.5rem = -24px center, but applied as -6? No, -12 is -3rem... wait.
-        // -top-6 is -1.5rem (24px). If handle is 48px (12rem/4 = 3rem? No. w-12 is 3rem (48px)).
-        // So -top-6 places the top edge at -24px. The center is at 0px relative to handle? No.
-        // We want the handle CENTER to be at the edge.
-        // If handle is 48px. Center is 24px.
-        // To center on Top edge (y=0). We want top of handle at -24px. So -top-6.
+        const positions = [
+            { pos: Position.Top, id: 'top', class: '-top-8 left-1/2 -translate-x-1/2' },
+            { pos: Position.Right, id: 'right', class: '-right-8 top-1/2 -translate-y-1/2' },
+            { pos: Position.Bottom, id: 'bottom', class: '-bottom-8 left-1/2 -translate-x-1/2' },
+            { pos: Position.Left, id: 'left', class: '-left-8 top-1/2 -translate-y-1/2' }
+        ];
+
         return (
             <>
-                <Handle type="source" position={Position.Top} id="top" className={`${baseClasses} -top-6 left-1/2 -translate-x-1/2`} onClick={(e) => handleConnect(e, 'top')}><VisualDot /></Handle>
-                <Handle type="source" position={Position.Right} id="right" className={`${baseClasses} -right-6 top-1/2 -translate-y-1/2`} onClick={(e) => handleConnect(e, 'right')}><VisualDot /></Handle>
-                <Handle type="source" position={Position.Bottom} id="bottom" className={`${baseClasses} -bottom-6 left-1/2 -translate-x-1/2`} onClick={(e) => handleConnect(e, 'bottom')}><VisualDot /></Handle>
-                <Handle type="source" position={Position.Left} id="left" className={`${baseClasses} -left-6 top-1/2 -translate-y-1/2`} onClick={(e) => handleConnect(e, 'left')}><VisualDot /></Handle>
+                {positions.map(({ pos, id: hid, class: cls }) => (
+                    <React.Fragment key={hid}>
+                        {/* Target handle - allows incoming connections */}
+                        <Handle
+                            type="target"
+                            position={pos}
+                            id={`${hid}-target`}
+                            className={`${baseClasses} ${cls} opacity-0 hover:opacity-10`} // Invisible but functional target
+                            style={{ zIndex: 111 }}
+                        />
+                        {/* Source handle - allows outgoing connections (drag start) */}
+                        <Handle
+                            type="source"
+                            position={pos}
+                            id={`${hid}-source`}
+                            className={`${baseClasses} ${cls} [&>div]:hover:scale-150 [&>div]:hover:!opacity-100 [&>div]:hover:shadow-indigo-500/50 [&>div]:hover:border-indigo-400 [&>div]:hover:shadow-[0_0_15px_rgba(99,102,241,0.6)]`}
+                            style={{ zIndex: 112 }}
+                        >
+                            <VisualDot />
+                        </Handle>
+                    </React.Fragment>
+                ))}
             </>
         );
     };
@@ -911,12 +928,35 @@ const CustomNode = ({ id, data, selected }: NodeProps<FunnelNodeData>) => {
                         `}></div>
                         );
 
+                        const positions = [
+                            { pos: Position.Top, id: 'top', class: '-top-8 left-1/2 -translate-x-1/2' },
+                            { pos: Position.Right, id: 'right', class: '-right-8 top-1/2 -translate-y-1/2' },
+                            { pos: Position.Bottom, id: 'bottom', class: '-bottom-8 left-1/2 -translate-x-1/2' },
+                            { pos: Position.Left, id: 'left', class: '-left-8 top-1/2 -translate-y-1/2' }
+                        ];
+
                         return (
                             <>
-                                <Handle type="source" position={Position.Top} id="top" className={`${base} -top-4 left-1/2 -translate-x-1/2`} onClick={(e) => handleConnect(e, 'top')}><VisualDot /></Handle>
-                                <Handle type="source" position={Position.Right} id="right" className={`${base} -right-4 top-1/2 -translate-y-1/2`} onClick={(e) => handleConnect(e, 'right')}><VisualDot /></Handle>
-                                <Handle type="source" position={Position.Bottom} id="bottom" className={`${base} -bottom-4 left-1/2 -translate-x-1/2`} onClick={(e) => handleConnect(e, 'bottom')}><VisualDot /></Handle>
-                                <Handle type="source" position={Position.Left} id="left" className={`${base} -left-4 top-1/2 -translate-y-1/2`} onClick={(e) => handleConnect(e, 'left')}><VisualDot /></Handle>
+                                {positions.map(({ pos, id: hid, class: cls }) => (
+                                    <React.Fragment key={hid}>
+                                        <Handle
+                                            type="target"
+                                            position={pos}
+                                            id={`${hid}-target`}
+                                            className={`${base} ${cls} opacity-0 hover:opacity-10`}
+                                            style={{ zIndex: 111 }}
+                                        />
+                                        <Handle
+                                            type="source"
+                                            position={pos}
+                                            id={`${hid}-source`}
+                                            className={`${base} ${cls} [&>div]:hover:scale-150 [&>div]:hover:!opacity-100 [&>div]:hover:shadow-cyan-500/50 [&>div]:hover:bg-cyan-400 [&>div]:hover:shadow-[0_0_15px_rgba(6,182,212,0.6)]`}
+                                            style={{ zIndex: 112 }}
+                                        >
+                                            <VisualDot />
+                                        </Handle>
+                                    </React.Fragment>
+                                ))}
                             </>
                         );
                     })()}

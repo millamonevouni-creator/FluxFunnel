@@ -213,6 +213,7 @@ export interface FeedbackItem {
   votes: number;
   votedUserIds: string[];
   authorName: string;
+  authorId?: string;
   createdAt: Date;
   comments: FeedbackComment[];
   startDate?: string;

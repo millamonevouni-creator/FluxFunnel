@@ -156,7 +156,23 @@ serve(async (req: Request) => {
         }
 
         return new Response(
-            JSON.stringify(data),
+            JSON.stringify({
+                id: data.id,
+                label: data.label,
+                description: data.description,
+                priceMonthly: data.price_monthly,
+                priceYearly: data.price_yearly,
+                projectLimit: data.project_limit,
+                nodeLimit: data.node_limit,
+                teamLimit: data.team_limit,
+                features: data.features,
+                isPopular: data.is_popular,
+                order: data.order,
+                stripe_product_id: data.stripe_product_id,
+                stripe_price_id_monthly: data.stripe_price_id_monthly,
+                stripe_price_id_yearly: data.stripe_price_id_yearly,
+                isHidden: data.is_hidden
+            }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
         )
 

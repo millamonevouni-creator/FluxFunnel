@@ -56,11 +56,18 @@ serve(async (req: Request) => {
         switch (action) {
             case 'UPDATE_PLAN':
                 if (!payload?.plan) throw new Error('Plan is required')
-                result = await supabaseAdmin
-                    .from('profiles')
-                    .update({ plan: payload.plan })
-                    .eq('id', targetId)
-                    .select()
+                // Synchronize both DB profile and Auth Metadata
+                const [dbUpdate, authUpdate] = await Promise.all([
+                    supabaseAdmin
+                        .from('profiles')
+                        .update({ plan: payload.plan })
+                        .eq('id', targetId),
+                    supabaseAdmin.auth.admin.updateUserById(targetId, {
+                        user_metadata: { plan: payload.plan }
+                    })
+                ])
+                result = dbUpdate;
+                if (authUpdate.error) console.error("Auth Metadata Update Failed:", authUpdate.error);
                 break;
 
             case 'UPDATE_STATUS':

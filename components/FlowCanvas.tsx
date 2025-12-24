@@ -20,6 +20,7 @@ import ReactFlow, {
   applyNodeChanges,
   applyEdgeChanges
 } from 'reactflow';
+import 'reactflow/dist/style.css';
 import Sidebar from './Sidebar';
 import CustomNode from './CustomNode';
 import CustomEdge from './CustomEdge';

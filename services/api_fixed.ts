@@ -474,9 +474,11 @@ export const api = {
             }));
         },
         update: async (id: string, p: any) => {
-            // Map camelCase to snake_case for DB
-            const dbPlan = {
+            // Map camelCase to snake_case for the edge function
+            const planPayload = {
+                id,
                 label: p.label,
+                description: p.description,
                 price_monthly: p.priceMonthly,
                 price_yearly: p.priceYearly,
                 project_limit: p.projectLimit,
@@ -491,27 +493,27 @@ export const api = {
                 stripe_price_id_yearly: p.stripe_price_id_yearly
             };
 
-            // STRATEGY: Direct DB Update FIRST (Ensures data is saved even if Edge Function is outdated/fails)
-            const { error: dbError } = await supabase.from('plans').update(dbPlan).eq('id', id);
-            if (dbError) throw dbError;
+            if (isOffline) return planPayload;
 
-            // Sync with Stripe (Best Effort - requires deployed Edge Function)
-            if (!isOffline) {
-                try {
-                    await supabase.functions.invoke('manage-plan', {
-                        body: { plan: { ...dbPlan, id }, operation: 'UPDATE' }
-                    });
-                } catch (err) {
-                    console.warn("Stripe Sync Warning:", err);
-                    // We do not throw here to allow local save success
-                }
+            // STRATEGY: Server-Side Authority
+            // We NO LONGER write to DB first. We let the Edge Function handle both Stripe and DB updates atomically.
+            try {
+                const updatedPlan = await invokeEdgeFunction('manage-plan', {
+                    plan: planPayload,
+                    operation: 'UPDATE'
+                });
+                return updatedPlan;
+            } catch (err) {
+                console.error("Stripe Sync Error (Plan Update Failed):", err);
+                throw new Error("Falha ao atualizar plano: Erro de sincronização com o Stripe.");
             }
-            return dbPlan;
         },
         create: async (p: any) => {
-            // Map camelCase to snake_case for DB
-            const dbPlan = {
+            // Map camelCase to snake_case for the edge function
+            const planPayload = {
+                id: (p.id && !p.id.startsWith('NEW_')) ? p.id : crypto.randomUUID(),
                 label: p.label,
+                description: p.description,
                 price_monthly: p.priceMonthly,
                 price_yearly: p.priceYearly,
                 project_limit: p.projectLimit,
@@ -523,51 +525,22 @@ export const api = {
                 order: p.order,
                 stripe_product_id: p.stripe_product_id,
                 stripe_price_id_monthly: p.stripe_price_id_monthly,
-                stripe_price_id_yearly: p.stripe_price_id_yearly,
-                // ID GENERATION: DB lacks default value for ID, so we must generate one.
-                // If ID is missing or temporary (NEW_), generate a proper UUID.
-                id: (p.id && !p.id.startsWith('NEW_')) ? p.id : crypto.randomUUID()
+                stripe_price_id_yearly: p.stripe_price_id_yearly
             };
 
-            let finalData = dbPlan; // Default to input (offline fallback)
+            if (isOffline) return planPayload;
 
-            // Direct DB Insert FIRST
-            if (!isOffline) {
-                const { data: dbData, error: dbError } = await supabase.from('plans').insert(dbPlan).select().single();
-                if (dbError) throw dbError;
-                finalData = dbData;
-            } else {
-                await supabase.from('plans').insert(dbPlan);
-            }
-
-            // Sync with Stripe (Best Effort)
+            // STRATEGY: Server-Side Authority
             try {
-                if (!isOffline) {
-                    await supabase.functions.invoke('manage-plan', {
-                        body: { plan: dbPlan, operation: 'CREATE' }
-                    });
-                }
+                const createdPlan = await invokeEdgeFunction('manage-plan', {
+                    plan: planPayload,
+                    operation: 'CREATE'
+                });
+                return createdPlan;
             } catch (err) {
-                console.warn("Stripe Create Sync Warning:", err);
+                console.error("Stripe Sync Error (Plan Creation Failed):", err);
+                throw new Error("Falha ao criar plano: Erro de sincronização com o Stripe.");
             }
-
-            // MAP BACK TO APP format (CamelCase)
-            return {
-                id: finalData.id || dbPlan.id,
-                label: finalData.label,
-                priceMonthly: finalData.price_monthly,
-                priceYearly: finalData.price_yearly,
-                projectLimit: finalData.project_limit,
-                nodeLimit: finalData.node_limit,
-                teamLimit: finalData.team_limit,
-                features: finalData.features || [],
-                isPopular: finalData.is_popular,
-                order: finalData.order,
-                stripe_product_id: finalData.stripe_product_id,
-                stripe_price_id_monthly: finalData.stripe_price_id_monthly,
-                stripe_price_id_yearly: finalData.stripe_price_id_yearly,
-                isHidden: finalData.is_hidden
-            };
         },
         delete: async (id: string) => {
             if (!isOffline) {
@@ -588,7 +561,8 @@ export const api = {
                 status: f.status,
                 votes: f.votes,
                 votedUserIds: f.voted_user_ids,
-                authorName: f.author_name, // Map Snake Case DB to Camel Case App
+                authorName: f.author_name,
+                authorId: f.author_id, // Map Snake Case DB to Camel Case App
                 createdAt: f.created_at,
                 comments: f.comments || []
             }));
@@ -600,7 +574,8 @@ export const api = {
                 title: f.title,
                 description: f.description,
                 type: f.type,
-                author_name: f.authorName, // Correct mapping
+                author_name: f.authorName,
+                author_id: f.authorId, // Include author ID
                 status: 'PENDING',
                 votes: 0,
                 voted_user_ids: []
@@ -790,6 +765,24 @@ export const api = {
                 // Fallback to minimal info if function fails
                 return { mrr: 0, totalUsers: 0, activeUsers: 0, health: 0 };
             }
+        }
+    },
+    notifications: {
+        send: async (userId: string, title: string, message: string, type: string, relatedEntityId?: string) => {
+            if (isOffline) return;
+            try {
+                await invokeEdgeFunction('notify-user', { userId, title, message, type, relatedEntityId });
+            } catch (err) {
+                console.warn("Failed to send notification:", err);
+            }
+        },
+        list: async () => {
+            if (isOffline) return [];
+            const { data } = await supabase.from('notifications').select('*').order('created_at', { ascending: false });
+            return data || [];
+        },
+        markAsRead: async (id: string) => {
+            if (!isOffline) await supabase.from('notifications').update({ is_read: true }).eq('id', id);
         }
     }
 };

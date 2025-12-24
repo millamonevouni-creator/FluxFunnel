@@ -85,7 +85,7 @@ const MasterAdminDashboard = ({
 
     // User Module State
     const [userSearch, setUserSearch] = useState('');
-    const [userFilter, setUserFilter] = useState<'ALL' | 'ACTIVE' | 'BANNED' | 'PREMIUM'>('ALL');
+    const [userFilter, setUserFilter] = useState<'ALL' | 'ACTIVE' | 'BANNED' | 'PREMIUM' | 'CONVIDADO'>('ALL');
 
     // Marketplace Moderation State
     const [tplSearch, setTplSearch] = useState('');
@@ -203,7 +203,8 @@ const MasterAdminDashboard = ({
             const matchesFilter = userFilter === 'ALL' ||
                 (userFilter === 'ACTIVE' && u.status === 'ACTIVE') ||
                 (userFilter === 'BANNED' && u.status === 'BANNED') ||
-                (userFilter === 'PREMIUM' && u.plan === 'PREMIUM');
+                (userFilter === 'PREMIUM' && u.plan === 'PREMIUM') ||
+                (userFilter === 'CONVIDADO' && u.plan === 'CONVIDADO');
             return matchesSearch && matchesFilter;
         });
     }, [users, userSearch, userFilter]);
@@ -730,7 +731,7 @@ const MasterAdminDashboard = ({
                                 />
                             </div>
                             <div className="flex gap-2">
-                                {['ALL', 'ACTIVE', 'PREMIUM', 'BANNED'].map(f => (
+                                {['ALL', 'ACTIVE', 'PREMIUM', 'CONVIDADO', 'BANNED'].map(f => (
                                     <button key={f} onClick={() => setUserFilter(f as any)} className={`px-4 py-3 rounded-xl font-bold uppercase tracking-wider text-[10px] border transition-all ${userFilter === f ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-[#0f172a]/60 border-slate-800 text-slate-500 hover:text-slate-300'}`} title={`Filtrar usuários: ${f}`} aria-label={`Filtrar usuários: ${f}`}>
                                         {f}
                                     </button>
@@ -1103,6 +1104,7 @@ const MasterAdminDashboard = ({
                                             <option value="FREE">Free</option>
                                             <option value="PRO">Pro</option>
                                             <option value="PREMIUM">Premium</option>
+                                            <option value="CONVIDADO">Convidado</option>
                                         </select>
                                     </div>
                                     <div className="space-y-2">

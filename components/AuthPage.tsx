@@ -146,9 +146,14 @@ const AuthPage = ({ onAuthSuccess, onBack, t, lang, customSubtitle, initialView 
                     return;
                 }
 
+                if (onInviteComplete) {
+                    onInviteComplete();
+                    return;
+                }
+
                 setCurrentView('LOGIN');
                 // Show success message or auto-login? For now just go to login.
-                alert('Senha atualizada com sucesso! Por favor, faça login.');
+                alert('Senha atualizada com sucesso! Bem-vindo(a).');
             }
         } catch (e: any) {
             setError(e.message || 'Erro ao atualizar senha.');
