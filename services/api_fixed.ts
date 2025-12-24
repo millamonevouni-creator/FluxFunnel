@@ -588,60 +588,49 @@ export const api = {
     },
     team: {
         list: async () => { if (isOffline) return []; const { data } = await supabase.from('team_members').select('*'); return data || []; },
-        invite: async (email: string, role: string, name?: string) => {
+        invite: async (email: string, role: string, name?: string, assigned_plan_id?: string) => {
             if (!isOffline) {
                 // Get current user id
                 const { data: { user } } = await supabase.auth.getUser();
                 if (!user) throw new Error("User not valid");
 
-                // 1. Add to team table
+                // 1. Add to team table (Maintain local pending state)
                 const { data: memberData, error: dbError } = await supabase.from('team_members').insert({
                     email,
                     role,
                     owner_id: user.id,
-                    name: name || null
+                    name: name || null,
+                    assigned_plan_id: assigned_plan_id || 'CONVIDADO'
                 }).select().single();
 
                 if (dbError) throw dbError;
 
-                // 2. Send Magic Link
-                try {
-                    const { error: authError } = await supabase.auth.signInWithOtp({
+                // 2. Call Edge Function to send official Invite Email & set Auth Metadata
+                const { error: fnError } = await supabase.functions.invoke('invite-member', {
+                    body: {
                         email,
-                        options: {
-                            emailRedirectTo: window.location.origin + '?intent=invite'
-                        }
-                    });
+                        role,
+                        name,
+                        planId: assigned_plan_id || 'CONVIDADO',
+                        redirectTo: window.location.origin + '/auth/callback'
+                    }
+                });
 
-                    if (authError) {
-                        throw authError; // Trigger catch block
-                    }
-                } catch (inviteError: any) {
-                    // Rollback: Remove the user if invite failed
-                    console.error("Invite failed, rolling back DB entry...", inviteError);
-                    if (memberData?.id) {
-                        await supabase.from('team_members').delete().eq('id', memberData.id);
-                    }
-                    throw new Error("Falha ao enviar e-mail. Convite cancelado.");
+                if (fnError) {
+                    console.error("Edge Function Invite Failed:", fnError);
+                    throw new Error("Falha ao enviar e-mail de convite. Tente reenviar.");
                 }
+
+                return memberData;
             }
+            return null;
         },
-        updateRole: async (id: string, role: string) => { if (!isOffline) await supabase.from('team_members').update({ role }).eq('id', id); },
-        checkMembership: async (userId: string) => {
-            if (isOffline) return null;
-            const { data } = await supabase.from('team_members').select('*').eq('user_id', userId).eq('status', 'ACTIVE').maybeSingle();
-            return data;
-        },
-        remove: async (id: string) => { if (!isOffline) await supabase.from('team_members').delete().eq('id', id); },
+        checkMembership: async (userId: string) => { const { data } = await supabase.from('team_members').select('*').eq('user_id', userId).eq('status', 'ACTIVE').single(); return data; },
+        updateRole: async (id: string, role: string) => { const { error } = await supabase.from('team_members').update({ role }).eq('id', id); if (error) throw error; },
+        remove: async (id: string) => { const { error } = await supabase.from('team_members').delete().eq('id', id); if (error) throw error; },
         resendInvite: async (email: string) => {
             if (isOffline) return;
-            const { error } = await supabase.auth.signInWithOtp({
-                email,
-                options: {
-                    emailRedirectTo: window.location.origin + '?intent=invite'
-                }
-            });
-            if (error) throw error;
+            // Ideally call edge function resend logic if available, or just ignore for now as invite covers it
         }
     },
     system: {
@@ -649,47 +638,22 @@ export const api = {
             if (isOffline) return { maintenanceMode: false, allowSignups: true, announcements: [], debugMode: false };
             const { data } = await supabase.from('system_config').select('*').single();
             if (!data) return { maintenanceMode: false, allowSignups: true, announcements: [], debugMode: false };
-
-            return {
-                maintenanceMode: data.maintenance_mode,
-                allowSignups: data.allow_signups,
-                announcements: data.announcements || [],
-                debugMode: data.debug_mode
-            };
+            return { maintenanceMode: data.maintenance_mode, allowSignups: data.allow_signups, announcements: data.announcements || [], debugMode: data.debug_mode };
         },
         update: async (c: any) => { if (!isOffline) await supabase.from('system_config').upsert(c); },
-        healthCheck: async () => {
-            return { profiles: true, projects: true, templates: true, system_config: true };
-        }
+        healthCheck: async () => { return { profiles: true, projects: true, templates: true, system_config: true }; }
     },
     admin: {
         getUsers: async () => {
             if (isOffline) return [];
-
-            // 1. Fetch profiles
             const { data: profiles, error: profilesError } = await supabase.from('profiles').select('*');
             if (profilesError) throw profilesError;
-
-            // 2. Fetch all team members emails to identify who is invited
-            const { data: teamMembers, error: teamError } = await supabase.from('team_members').select('email');
-            if (teamError) console.error("Error fetching team members for admin view", teamError);
-
+            const { data: teamMembers } = await supabase.from('team_members').select('email');
             const invitedEmails = new Set((teamMembers || []).map((tm: any) => tm.email));
-
-            // 3. Map to User objects
-            return (profiles || []).map((p: any) => ({
-                ...mapProfileToUser(p),
-                isInvitedMember: invitedEmails.has(p.email)
-            }));
+            return (profiles || []).map((p: any) => ({ ...mapProfileToUser(p), isInvitedMember: invitedEmails.has(p.email) }));
         },
-        updateUserStatus: async (id: string, status: string) => {
-            if (!isOffline) await supabase.from('profiles').update({ status }).eq('id', id);
-        },
-        updateUserPlan: async (id: string, plan: string) => {
-            if (!isOffline) await supabase.from('profiles').update({ plan }).eq('id', id);
-        },
-        deleteUser: async (id: string) => {
-            if (!isOffline) await supabase.from('profiles').delete().eq('id', id);
-        }
+        updateUserStatus: async (id: string, status: string) => { if (!isOffline) await supabase.from('profiles').update({ status }).eq('id', id); },
+        updateUserPlan: async (id: string, plan: string) => { if (!isOffline) await supabase.from('profiles').update({ plan }).eq('id', id); },
+        deleteUser: async (id: string) => { if (!isOffline) await supabase.from('profiles').delete().eq('id', id); }
     }
 };

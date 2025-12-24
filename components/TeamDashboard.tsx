@@ -7,7 +7,7 @@ import PremiumLockScreen from './PremiumLockScreen';
 
 interface TeamDashboardProps {
     members: TeamMember[];
-    onInviteMember: (email: string, role: 'ADMIN' | 'EDITOR' | 'VIEWER', name?: string) => Promise<void>;
+    onInviteMember: (email: string, role: 'ADMIN' | 'EDITOR' | 'VIEWER', name?: string, planId?: string) => Promise<void>;
     onUpdateRole: (id: string, newRole: 'ADMIN' | 'EDITOR' | 'VIEWER') => void;
     onRemoveMember: (id: string) => void;
     onResendInvite: (email: string) => Promise<void>;
@@ -31,6 +31,7 @@ const TeamDashboard = ({ members = [], onInviteMember, onUpdateRole, onRemoveMem
     // Modal State
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [inviteName, setInviteName] = useState('');
+    const [invitePlan, setInvitePlan] = useState('CONVIDADO');
     const [inviteEmail, setInviteEmail] = useState('');
     const [inviteRole, setInviteRole] = useState<'ADMIN' | 'EDITOR' | 'VIEWER'>('EDITOR');
     const [isInviteLoading, setIsInviteLoading] = useState(false);
@@ -70,9 +71,10 @@ const TeamDashboard = ({ members = [], onInviteMember, onUpdateRole, onRemoveMem
         e.preventDefault();
         setIsInviteLoading(true);
         try {
-            await onInviteMember(inviteEmail, inviteRole, inviteName);
+            await onInviteMember(inviteEmail, inviteRole, inviteName, invitePlan);
             setInviteEmail('');
             setInviteName('');
+            setInvitePlan('CONVIDADO');
             setShowInviteModal(false);
         } catch (error) {
             // Error is handled by parent notification, but we keep modal open
@@ -248,6 +250,7 @@ const TeamDashboard = ({ members = [], onInviteMember, onUpdateRole, onRemoveMem
                     <div className={`w-full max-w-md rounded-2xl shadow-2xl p-6 border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
                         <div className="flex justify-between items-center mb-6">
                             <h3 className={`text-xl font-bold ${textTitle}`}>Convidar Membro</h3>
+                            {/* Invite Form */}
                             <button onClick={() => setShowInviteModal(false)} className={`p-1.5 rounded-full ${isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`} title="Fechar modal" aria-label="Fechar modal">
                                 <X size={20} aria-hidden="true" />
                             </button>
@@ -266,6 +269,19 @@ const TeamDashboard = ({ members = [], onInviteMember, onUpdateRole, onRemoveMem
                                     placeholder="Ex: Ana Silva"
                                     className={`w-full p-3 rounded-xl border outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
                                 />
+                            </div>
+
+                            <div>
+                                <label htmlFor="invite-plan" className={`block text-sm font-bold mb-1 ${textSub}`}>Tipo de Convite</label>
+                                <select
+                                    id="invite-plan"
+                                    value="CONVIDADO"
+                                    disabled
+                                    className={`w-full p-3 rounded-xl border outline-none bg-slate-100 text-slate-500 cursor-not-allowed ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}
+                                >
+                                    <option value="CONVIDADO">Convidado (Plano Convidado)</option>
+                                </select>
+                                <p className="text-xs text-slate-500 mt-1">O usuário será adicionado automaticamente ao Plano Convidado.</p>
                             </div>
 
                             <div>

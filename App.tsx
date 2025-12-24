@@ -433,7 +433,7 @@ const App = () => {
 
   const handleLogout = async () => { await api.auth.logout(); setUser(null); setProjects([]); setCurrentView('LANDING'); setAppPage('PROJECTS'); setCurrentProjectId(null); setIsProfileMenuOpen(false); };
 
-  const handleInviteMember = async (email: string, role: 'ADMIN' | 'EDITOR' | 'VIEWER', name?: string) => {
+  const handleInviteMember = async (email: string, role: 'ADMIN' | 'EDITOR' | 'VIEWER', name?: string, planId?: string) => {
     if (isOffline) {
       showNotification('Modo offline: convites indisponíveis.', 'error');
       return;
@@ -442,7 +442,7 @@ const App = () => {
       if (user?.plan === 'FREE' && teamMembers.length >= 1) { // Example limit
         throw new Error("Limite do plano Free atingido.");
       }
-      await api.team.invite(email, role, name);
+      await api.team.invite(email, role, name, planId);
       const members = await api.team.list();
       setTeamMembers(members);
       showNotification('Convite enviado com sucesso!', 'success');
