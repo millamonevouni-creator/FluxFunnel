@@ -39,15 +39,40 @@ serve(async (req: Request) => {
             throw new Error('Email is required')
         }
 
-        console.log(`Inviting user: ${email}, Plan: ${planId}, Name: ${name}`)
+        // 2. SECURITY HARDENING: Fetch Caller Profile & Enforce Limits
+        const { data: callerProfile, error: profileError } = await supabaseAdmin
+            .from('profiles')
+            .select('id, plan, is_system_admin')
+            .eq('id', user.id)
+            .single();
+
+        if (profileError || !callerProfile) {
+            throw new Error('Perfil do usuário não encontrado. Faça login novamente.');
+        }
+
+        // 3. ENFORCE PLAN LIMITS (Optional - can be expanded)
+        // Example: Free users might have 0 invites, but for now we trust the UI limit 
+        // essentially, but we MUST prevent them from creating PREMIUM users.
+
+        // 4. PREVENT PRIVILEGE ESCALATION
+        // CRITICAL: Force the invited user's plan to 'CONVIDADO'. 
+        // Never trust 'planId' from the client body for invites.
+        const SAFE_PLAN = 'CONVIDADO';
+
+        // Validate Role (Prevent arbitrary strings)
+        const allowedRoles = ['VIEWER', 'EDITOR', 'ADMIN']; // Team roles, not System Admin
+        const safeRole = allowedRoles.includes(role) ? role : 'VIEWER';
+
+        console.log(`Inviting user: ${email} as ${safeRole} (Plan: ${SAFE_PLAN}) by ${callerProfile.id}`);
 
         // Invite User via Admin API
         const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
             data: {
                 name: name,
-                plan: planId || 'CONVIDADO', // Force plan in metadata
-                is_invited_member: true,
-                role: role // Optional: store role in metadata too
+                plan: SAFE_PLAN, // HARDCODED SECURITY ENFORCEMENT
+                is_invited_member: true, // Marker for frontend logic
+                role: safeRole,
+                invited_by: callerProfile.id
             },
             redirectTo: redirectTo || undefined
         })
@@ -56,18 +81,6 @@ serve(async (req: Request) => {
             console.error("Error inviting user:", error)
             throw error
         }
-
-        // Optional: Synchronize with team_members table immediately if needed, 
-        // but the trigger on "profiles" (which gets created when user accepts?) 
-        // ACTUALLY: inviteUserByEmail creates the user in `auth.users` immediately with `invited_at`. 
-        // The profile might not exist until they sign in OR we might relying on trigger.
-        // The previous trigger `handle_new_team_member` listens on `profiles`.
-        // If we want to ensure `team_members` row exists:
-
-        // We should ensure the team_members row exists so the trigger can link it later.
-        // However, the caller (frontend) usually inserts into team_members too?
-        // Let's rely on the frontend to manage `team_members` for now to avoid permission complexities 
-        // unless we pass the owner_id to the function.
 
         // Returning the user data
         return new Response(

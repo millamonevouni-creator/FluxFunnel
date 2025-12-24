@@ -738,7 +738,7 @@ const MasterAdminDashboard = ({
                             </div>
                         </div>
 
-                        <div className="bg-[#0f172a]/60 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
+                        <div className="bg-[#0f172a]/60 border border-slate-800 rounded-3xl overflow-hidden overflow-x-auto shadow-xl">
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="border-b border-slate-800/60 bg-slate-900/50 text-[10px] uppercase tracking-widest text-slate-500">

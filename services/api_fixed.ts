@@ -750,20 +750,32 @@ export const api = {
         },
         updateUserStatus: async (id: string, status: string) => {
             if (!isOffline) {
-                await supabase.from('profiles').update({ status }).eq('id', id);
-                await logAdminAction('UPDATE_STATUS', 'profiles', id, { status });
+                // SECURE: Use Edge Function
+                await invokeEdgeFunction('admin-action', {
+                    action: 'UPDATE_STATUS',
+                    targetId: id,
+                    payload: { status }
+                });
             }
         },
         updateUserPlan: async (id: string, plan: string) => {
             if (!isOffline) {
-                await supabase.from('profiles').update({ plan }).eq('id', id);
-                await logAdminAction('UPDATE_PLAN', 'profiles', id, { plan });
+                // SECURE: Use Edge Function
+                await invokeEdgeFunction('admin-action', {
+                    action: 'UPDATE_PLAN',
+                    targetId: id,
+                    payload: { plan }
+                });
             }
         },
         deleteUser: async (id: string) => {
             if (!isOffline) {
-                await supabase.from('profiles').delete().eq('id', id);
-                await logAdminAction('DELETE_USER', 'profiles', id);
+                // SECURE: Use Edge Function
+                await invokeEdgeFunction('admin-action', {
+                    action: 'DELETE_USER',
+                    targetId: id,
+                    payload: {}
+                });
             }
         },
         getDashboardStats: async () => {

@@ -15,9 +15,10 @@ interface UpgradeModalProps {
     // New props for context-aware messages
     reason?: 'LIMIT_REACHED' | 'FEATURE_LOCKED';
     featureName?: string;
+    showNotification?: (msg: string, type: 'success' | 'error') => void;
 }
 
-const UpgradeModal = ({ onClose, onUpgrade, isDark, limitType = 'NODES', plans, userPlan, initialPlan, initialCycle, reason = 'LIMIT_REACHED', featureName }: UpgradeModalProps) => {
+const UpgradeModal = ({ onClose, onUpgrade, isDark, limitType = 'NODES', plans, userPlan, initialPlan, initialCycle, reason = 'LIMIT_REACHED', featureName, showNotification }: UpgradeModalProps) => {
     const isProjectLimit = limitType === 'PROJECTS';
     const [selectedPlan, setSelectedPlan] = React.useState<'PRO' | 'PREMIUM'>(initialPlan || 'PRO');
     const [cycle, setCycle] = React.useState<'monthly' | 'yearly'>(initialCycle || 'monthly');
@@ -55,12 +56,12 @@ const UpgradeModal = ({ onClose, onUpgrade, isDark, limitType = 'NODES', plans, 
             }
 
             if (!priceId || priceId.includes('price_fake') || priceId.includes('ID_AQUI')) {
-                alert("Preço não configurado. Por favor, atualize este plano no Painel Master para gerar os IDs do Stripe.");
+                showNotification ? showNotification("Preço não configurado. Contate o suporte.", "error") : alert("Preço não configurado.");
                 return;
             }
 
             // Call the API function we created
-            // Store choice for post-checkout processing (Fix for missing webhooks in dev)
+            // Store choice for post-checkout processing
             localStorage.setItem('flux_pending_checkout', JSON.stringify({
                 planId,
                 cycle,
@@ -72,7 +73,6 @@ const UpgradeModal = ({ onClose, onUpgrade, isDark, limitType = 'NODES', plans, 
             const { sessionId, url } = await api.subscriptions.createCheckoutSession(priceId);
 
             if (url) {
-                // Modern implementation: Redirect to the URL provided by Stripe/Backend
                 window.location.href = url;
                 return;
             }
@@ -85,8 +85,8 @@ const UpgradeModal = ({ onClose, onUpgrade, isDark, limitType = 'NODES', plans, 
             const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 
             if (!stripeKey) {
-                console.error("Stripe Publishable Key is missing in environment variables.");
-                alert("Erro interna: Chave pública do Stripe não configurada (VITE_STRIPE_PUBLISHABLE_KEY). Contate o administrador.");
+                console.error("Stripe Publishable Key is missing.");
+                showNotification ? showNotification("Erro interno: Chave Stripe não configurada.", "error") : alert("Erro Stripe Key Missing");
                 return;
             }
 
@@ -99,7 +99,8 @@ const UpgradeModal = ({ onClose, onUpgrade, isDark, limitType = 'NODES', plans, 
 
         } catch (error) {
             console.error("CHECKOUT ERROR:", error);
-            alert("Erro ao iniciar checkout: " + (error instanceof Error ? error.message : "Erro desconhecido"));
+            const msg = error instanceof Error ? error.message : "Erro desconhecido";
+            showNotification ? showNotification(`Erro ao iniciar checkout: ${msg}`, "error") : alert(msg);
         }
     };
 
