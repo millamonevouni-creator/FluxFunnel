@@ -55,7 +55,47 @@ export interface FlowCanvasProps {
   plans?: PlanConfig[];
 }
 
+
+interface SnapLinesProps {
+  snapLines: { x?: number; y?: number };
+  reactFlowInstance: any;
+}
+
+const SnapLines: React.FC<SnapLinesProps> = ({ snapLines, reactFlowInstance }) => {
+  const xLineRef = useRef<HTMLDivElement>(null);
+  const yLineRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    if (xLineRef.current && snapLines.x !== undefined && reactFlowInstance) {
+      const x = reactFlowInstance.project({ x: snapLines.x, y: 0 }).x;
+      xLineRef.current.style.transform = `translateX(${x}px)`;
+    }
+    if (yLineRef.current && snapLines.y !== undefined && reactFlowInstance) {
+      const y = reactFlowInstance.project({ x: 0, y: snapLines.y }).y;
+      yLineRef.current.style.transform = `translateY(${y}px)`;
+    }
+  }, [snapLines, reactFlowInstance]);
+
+  return (
+    <div className="absolute inset-0 pointer-events-none z-[10]">
+      {snapLines.x !== undefined && (
+        <div
+          ref={xLineRef}
+          className="absolute top-0 bottom-0 border-l border-cyan-400/50"
+        />
+      )}
+      {snapLines.y !== undefined && (
+        <div
+          ref={yLineRef}
+          className="absolute left-0 right-0 border-t border-cyan-400/50"
+        />
+      )}
+    </div>
+  );
+};
+
 const FlowCanvas = ({
+
   project, onSaveProject, onSaveTemplate, onUnsavedChanges, triggerSaveSignal,
   isDark, toggleTheme, isPresentationMode, showNotesInPresentation,
   t, userPlan, showAIAssistant, onToggleAIAssistant, isSharedView, onShareToMarketplace,
@@ -352,38 +392,7 @@ const FlowCanvas = ({
           fitView
           snapToGrid={true}
         >
-          {snapLines && (() => {
-            const xLineRef = useRef<HTMLDivElement>(null);
-            const yLineRef = useRef<HTMLDivElement>(null);
-
-            useLayoutEffect(() => {
-              if (xLineRef.current && snapLines.x !== undefined && reactFlowInstance) {
-                const x = reactFlowInstance.project({ x: snapLines.x, y: 0 }).x;
-                xLineRef.current.style.transform = `translateX(${x}px)`;
-              }
-              if (yLineRef.current && snapLines.y !== undefined && reactFlowInstance) {
-                const y = reactFlowInstance.project({ x: 0, y: snapLines.y }).y;
-                yLineRef.current.style.transform = `translateY(${y}px)`;
-              }
-            }, [snapLines, reactFlowInstance]);
-
-            return (
-              <div className="absolute inset-0 pointer-events-none z-[10]">
-                {snapLines.x !== undefined && (
-                  <div
-                    ref={xLineRef}
-                    className="absolute top-0 bottom-0 border-l border-cyan-400/50"
-                  />
-                )}
-                {snapLines.y !== undefined && (
-                  <div
-                    ref={yLineRef}
-                    className="absolute left-0 right-0 border-t border-cyan-400/50"
-                  />
-                )}
-              </div>
-            );
-          })()}
+          {snapLines && <SnapLines snapLines={snapLines} reactFlowInstance={reactFlowInstance} />}
           <Background color={isDark ? "#334155" : "#cbd5e1"} gap={24} variant={BackgroundVariant.Dots} />
           <Controls />
           <MiniMap />

@@ -127,20 +127,18 @@ const AuthPage = ({ onAuthSuccess, onBack, t, lang, customSubtitle, initialView 
                 if (currentView === 'SET_PASSWORD') {
                     // Call the success handler directly to transition without reload
                     // We construct a synthetic success data object since we are already authenticated
-                    if (onAuthSuccess) {
-                        // We might not have email here, but handleLogin in App.tsx might need it? 
-                        // Actually handleLogin does api.auth.login which we DON'T want if already logged in.
-                        // But wait, if we are here, we just updated password.
-                        // The user is authenticated.
-                        // We should probably have a separate prop for "just finish" or use a flag.
-                        // Let's assume onAuthSuccess handles "just switch view" if we pass a special flag? 
-                        // No, handleLogin calls login.
+                    // We might not have email here, but handleLogin in App.tsx might need it? 
+                    // Actually handleLogin does api.auth.login which we DON'T want if already logged in.
+                    // But wait, if we are here, we just updated password.
+                    // The user is authenticated.
+                    // We should probably have a separate prop for "just finish" or use a flag.
+                    // Let's assume onAuthSuccess handles "just switch view" if we pass a special flag? 
+                    // No, handleLogin calls login.
 
-                        // FIX: check if onInviteComplete is provided (we will add this prop)
-                        if (onInviteComplete) {
-                            onInviteComplete();
-                            return;
-                        }
+                    // FIX: check if onInviteComplete is provided (we will add this prop)
+                    if (onInviteComplete) {
+                        onInviteComplete();
+                        return;
                     }
 
                     // Fallback to reload if handler not provided yet
