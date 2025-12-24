@@ -215,13 +215,19 @@ const MasterAdminDashboard = ({
         e.preventDefault();
         if (editingPlan) {
             try {
+                // Determine user-friendly cleanup: remove empty lines
+                const cleanedPlan = {
+                    ...editingPlan,
+                    features: editingPlan.features.filter(f => f.trim() !== '')
+                };
+
                 if (editingPlan.id.startsWith('NEW_')) {
                     // For new plans, assuming backend or App.tsx handles ID generation or accepts this one
                     // Ideally we should strip the ID if the backend generates it, but for now passing as is.
                     // IMPORTANT: Check if onCreatePlan wraps api.plans.create
-                    await onCreatePlan(editingPlan);
+                    await onCreatePlan(cleanedPlan);
                 } else {
-                    await onUpdatePlan(editingPlan);
+                    await onUpdatePlan(cleanedPlan);
                 }
                 setEditingPlan(null);
             } catch (error: any) {
@@ -523,7 +529,7 @@ const MasterAdminDashboard = ({
                                 <textarea
                                     rows={6}
                                     value={editingPlan.features.join('\n')}
-                                    onChange={e => setEditingPlan({ ...editingPlan, features: e.target.value.split('\n').filter(f => f.trim() !== '') })}
+                                    onChange={e => setEditingPlan({ ...editingPlan, features: e.target.value.split('\n') })}
                                     className="w-full p-8 bg-[#020617] border border-slate-800 rounded-[2.5rem] outline-none focus:border-indigo-500 transition-all resize-none text-xs font-bold leading-loose text-slate-400"
                                     placeholder="Ex: Projetos Ilimitados&#10;Audit IA Ativo&#10;Suporte Prioritário"
                                 />

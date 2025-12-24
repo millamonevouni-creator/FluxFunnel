@@ -7,7 +7,7 @@ import PremiumLockScreen from './PremiumLockScreen';
 
 interface TeamDashboardProps {
     members: TeamMember[];
-    onInviteMember: (email: string, role: 'ADMIN' | 'EDITOR' | 'VIEWER') => Promise<void>;
+    onInviteMember: (email: string, role: 'ADMIN' | 'EDITOR' | 'VIEWER', name?: string) => Promise<void>;
     onUpdateRole: (id: string, newRole: 'ADMIN' | 'EDITOR' | 'VIEWER') => void;
     onRemoveMember: (id: string) => void;
     onResendInvite: (email: string) => Promise<void>;
@@ -30,6 +30,7 @@ const TeamDashboard = ({ members = [], onInviteMember, onUpdateRole, onRemoveMem
 
     // Modal State
     const [showInviteModal, setShowInviteModal] = useState(false);
+    const [inviteName, setInviteName] = useState('');
     const [inviteEmail, setInviteEmail] = useState('');
     const [inviteRole, setInviteRole] = useState<'ADMIN' | 'EDITOR' | 'VIEWER'>('EDITOR');
     const [isInviteLoading, setIsInviteLoading] = useState(false);
@@ -69,8 +70,9 @@ const TeamDashboard = ({ members = [], onInviteMember, onUpdateRole, onRemoveMem
         e.preventDefault();
         setIsInviteLoading(true);
         try {
-            await onInviteMember(inviteEmail, inviteRole);
+            await onInviteMember(inviteEmail, inviteRole, inviteName);
             setInviteEmail('');
+            setInviteName('');
             setShowInviteModal(false);
         } catch (error) {
             // Error is handled by parent notification, but we keep modal open
@@ -253,12 +255,25 @@ const TeamDashboard = ({ members = [], onInviteMember, onUpdateRole, onRemoveMem
 
                         <form onSubmit={handleInviteSubmit} className="space-y-4">
                             <div>
+                                <label htmlFor="invite-name" className={`block text-sm font-bold mb-1 ${textSub}`}>Nome do Colaborador</label>
+                                <input
+                                    id="invite-name"
+                                    type="text"
+                                    required
+                                    autoFocus
+                                    value={inviteName}
+                                    onChange={(e) => setInviteName(e.target.value)}
+                                    placeholder="Ex: Ana Silva"
+                                    className={`w-full p-3 rounded-xl border outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
+                                />
+                            </div>
+
+                            <div>
                                 <label htmlFor="invite-email" className={`block text-sm font-bold mb-1 ${textSub}`}>E-mail do Colaborador</label>
                                 <input
                                     id="invite-email"
                                     type="email"
                                     required
-                                    autoFocus
                                     value={inviteEmail}
                                     onChange={(e) => setInviteEmail(e.target.value)}
                                     placeholder="nome@empresa.com"

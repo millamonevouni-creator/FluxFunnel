@@ -588,7 +588,7 @@ export const api = {
     },
     team: {
         list: async () => { if (isOffline) return []; const { data } = await supabase.from('team_members').select('*'); return data || []; },
-        invite: async (email: string, role: string) => {
+        invite: async (email: string, role: string, name?: string) => {
             if (!isOffline) {
                 // Get current user id
                 const { data: { user } } = await supabase.auth.getUser();
@@ -598,7 +598,8 @@ export const api = {
                 const { data: memberData, error: dbError } = await supabase.from('team_members').insert({
                     email,
                     role,
-                    owner_id: user.id
+                    owner_id: user.id,
+                    name: name || null
                 }).select().single();
 
                 if (dbError) throw dbError;

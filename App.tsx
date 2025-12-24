@@ -433,15 +433,24 @@ const App = () => {
 
   const handleLogout = async () => { await api.auth.logout(); setUser(null); setProjects([]); setCurrentView('LANDING'); setAppPage('PROJECTS'); setCurrentProjectId(null); setIsProfileMenuOpen(false); };
 
-  const handleInviteMember = async (email: string, role: string) => {
+  const handleInviteMember = async (email: string, role: 'ADMIN' | 'EDITOR' | 'VIEWER', name?: string) => {
+    if (isOffline) {
+      showNotification('Modo offline: convites indisponíveis.', 'error');
+      return;
+    }
     try {
-      await api.team.invite(email, role);
-      setTeamMembers(await api.team.list());
-      showNotification("Convite enviado com sucesso!");
-    } catch (e: any) {
-      console.error(e);
-      showNotification(e.message || "Erro ao convidar membro.", 'error');
-      throw e;
+      if (user?.plan === 'FREE' && teamMembers.length >= 1) { // Example limit
+        throw new Error("Limite do plano Free atingido.");
+      }
+      await api.team.invite(email, role, name);
+      const members = await api.team.list();
+      setTeamMembers(members);
+      showNotification('Convite enviado com sucesso!', 'success');
+    } catch (err: any) {
+      console.error(err);
+      showNotification(`Erro ao convidar: ${err.message}`, 'error');
+      // Re-throw so modal stays open
+      throw err;
     }
   };
 
@@ -526,6 +535,18 @@ const App = () => {
           onUpdatePassword={api.auth.updatePassword}
           onResetPassword={api.auth.resetPassword}
           onGoogleLogin={api.auth.loginWithGoogle}
+          onInviteComplete={async () => {
+            // Fetch latest profile state (plan updated by DB trigger)
+            const profile = await api.auth.getProfile();
+            if (profile) {
+              setUser(profile);
+              // Ensure Invited Mode is active if plan is CONVIDADO
+              if (profile.plan === 'CONVIDADO') setIsInvitedMode(true);
+            }
+            setCurrentView('APP');
+            setAppPage('PROJECTS');
+            showNotification("Senha definida com sucesso! Bem-vindo(a).", 'success');
+          }}
         />
       </>
     );

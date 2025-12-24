@@ -13,6 +13,7 @@ interface AuthPageProps {
     onUpdatePassword?: (password: string) => Promise<void>;
     onResetPassword?: (email: string) => Promise<void>;
     onGoogleLogin?: () => Promise<void>;
+    onInviteComplete?: () => void; // Callback to switch view without reload
 }
 
 // Google G Logo SVG Component for button
@@ -20,14 +21,14 @@ const GoogleIcon = () => (
     <svg className="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
         <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.47 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
         <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
     </svg>
 );
 
 type AuthView = 'LOGIN' | 'FORGOT_PASSWORD' | 'RESET_SENT' | 'UPDATE_PASSWORD' | 'SIGNUP_SUCCESS' | 'SET_PASSWORD';
 
-const AuthPage = ({ onAuthSuccess, onBack, t, lang, customSubtitle, initialView = 'LOGIN', onUpdatePassword, onResetPassword, onGoogleLogin }: AuthPageProps) => {
+const AuthPage = ({ onAuthSuccess, onBack, t, lang, customSubtitle, initialView = 'LOGIN', onUpdatePassword, onResetPassword, onGoogleLogin, onInviteComplete }: AuthPageProps) => {
     const [currentView, setCurrentView] = useState<AuthView>(initialView);
 
     // Allow parent to drive view changes (e.g. async auth listener)
@@ -124,8 +125,25 @@ const AuthPage = ({ onAuthSuccess, onBack, t, lang, customSubtitle, initialView 
 
                 // If we are in SET_PASSWORD mode (onboarding), we want to go straight to APP
                 if (currentView === 'SET_PASSWORD') {
-                    // Force a clean redirect to root to clear all query params and triggers session check in App.tsx
-                    // Using reload ensures fresh state from Supabase
+                    // Call the success handler directly to transition without reload
+                    // We construct a synthetic success data object since we are already authenticated
+                    if (onAuthSuccess) {
+                        // We might not have email here, but handleLogin in App.tsx might need it? 
+                        // Actually handleLogin does api.auth.login which we DON'T want if already logged in.
+                        // But wait, if we are here, we just updated password.
+                        // The user is authenticated.
+                        // We should probably have a separate prop for "just finish" or use a flag.
+                        // Let's assume onAuthSuccess handles "just switch view" if we pass a special flag? 
+                        // No, handleLogin calls login.
+
+                        // FIX: check if onInviteComplete is provided (we will add this prop)
+                        if (onInviteComplete) {
+                            onInviteComplete();
+                            return;
+                        }
+                    }
+
+                    // Fallback to reload if handler not provided yet
                     window.location.href = '/';
                     return;
                 }
