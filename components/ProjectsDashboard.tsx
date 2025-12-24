@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { Plus, Folder, Clock, Trash2, Edit, Layout, ArrowRight, X, Type, ChevronLeft, Sparkles, Lock, BookmarkPlus, ShoppingBag, Send, AlertCircle } from 'lucide-react';
+import { Plus, Folder, Clock, Trash2, Edit, Layout, ArrowRight, X, Type, ChevronLeft, Sparkles, Lock, BookmarkPlus, Share2, ShoppingBag, Send, AlertCircle } from 'lucide-react';
 import { Project, Template, UserPlan } from '../types';
 import { PROJECT_TEMPLATES } from '../constants';
 import { api } from '../services/api_fixed';
@@ -19,12 +18,13 @@ interface ProjectsDashboardProps {
     onRefreshTemplates?: () => Promise<void>;
     showNotification?: (msg: string, type?: 'success' | 'error') => void;
     projectsLimit?: number;
+    onUpgrade?: () => void;
 }
 
 const ProjectsDashboard = ({
     projects, onCreateProject, onOpenProject, onDeleteProject, isDark, t,
     userPlan = 'FREE', customTemplates = [], onSaveAsTemplate, onRenameProject, onRefreshTemplates,
-    showNotification, projectsLimit = 3
+    showNotification, projectsLimit = 3, onUpgrade
 }: ProjectsDashboardProps) => {
     const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
     const [creationStep, setCreationStep] = useState<'SELECT' | 'NAME'>('SELECT');
@@ -171,6 +171,22 @@ const ProjectsDashboard = ({
                                             title="Renomear"
                                         >
                                             <Edit size={18} />
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (userPlan !== 'PREMIUM') {
+                                                    onUpgrade?.();
+                                                    return;
+                                                }
+                                                const url = `${window.location.origin}/?share=${project.id}`;
+                                                navigator.clipboard.writeText(url);
+                                                alert("Link de apresentação copiado!");
+                                            }}
+                                            className={`p-2 hover:bg-slate-100 dark:hover:bg-indigo-900/20 rounded-lg transition-colors ${userPlan === 'PREMIUM' ? 'text-slate-400 hover:text-indigo-500' : 'text-slate-300 hover:text-amber-500'}`}
+                                            title={userPlan === 'PREMIUM' ? "Copiar Link de Apresentação" : "Recurso Premium (Bloqueado)"}
+                                        >
+                                            {userPlan === 'PREMIUM' ? <Share2 size={18} /> : <Lock size={18} />}
                                         </button>
                                         {userPlan === 'PREMIUM' && (
                                             <button

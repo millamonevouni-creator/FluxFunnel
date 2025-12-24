@@ -17,7 +17,7 @@ interface SettingsDashboardProps {
 }
 
 const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setLang, t, projectsCount = 0, onUpgrade, isInvited = false }: SettingsDashboardProps) => {
-    const [activeTab, setActiveTab] = useState<'PROFILE' | 'PLAN' | 'PREFERENCES' | 'SECURITY' | 'NOTIFICATIONS' | 'MY_ACCOUNT'>('PROFILE');
+    const [activeTab, setActiveTab] = useState<'PROFILE' | 'PLAN' | 'PREFERENCES' | 'SECURITY' | 'NOTIFICATIONS' | 'MY_ACCOUNT' | 'SUBSCRIPTION'>('PROFILE');
     const [name, setName] = useState(user.name);
     const [email, setEmail] = useState(user.email);
     const [company, setCompany] = useState(user.company_name || '');
@@ -50,10 +50,16 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
         { id: 'SECURITY', label: t('tabSecurity'), icon: <Lock size={18} /> },
     ];
 
-    if (!isInvited) {
+    if (!isInvited && user.plan !== 'CONVIDADO') {
         tabs = [
             ...tabs,
             { id: 'PLAN', label: t('tabPlan'), icon: <CreditCard size={18} /> },
+            { id: 'NOTIFICATIONS', label: t('tabNotifications'), icon: <Bell size={18} /> },
+        ];
+    } else if (user.plan === 'CONVIDADO') {
+        tabs = [
+            ...tabs,
+            { id: 'SUBSCRIPTION', label: 'Assinar Plano', icon: <Crown size={18} /> },
             { id: 'NOTIFICATIONS', label: t('tabNotifications'), icon: <Bell size={18} /> },
         ];
     } else {
@@ -569,6 +575,27 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
                                     <button className="px-5 py-2.5 border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl text-sm font-bold transition-colors" title={t('deleteAccount')} aria-label={t('deleteAccount')}>
                                         {t('deleteAccount')}
                                     </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* SUBSCRIPTION TAB (For Guest/Convidado to Upgrade) */}
+                        {activeTab === 'SUBSCRIPTION' && (
+                            <div className="space-y-6">
+                                <div className={`p-8 rounded-2xl border relative overflow-hidden bg-gradient-to-br from-indigo-900 to-slate-900 text-white shadow-xl`}>
+                                    <div className="absolute top-0 right-0 p-32 bg-indigo-500 opacity-20 rounded-full blur-3xl transform translate-x-10 -translate-y-10"></div>
+                                    <div className="relative z-10 text-center py-10">
+                                        <Crown size={64} className="mx-auto text-yellow-400 mb-6" />
+                                        <h3 className="text-3xl font-bold mb-4">Potencialize seu FluxFunnel</h3>
+                                        <p className="opacity-90 max-w-xl mx-auto mb-8 text-lg">
+                                            Você está usando um plano de Convidado. Para criar seus próprios projetos ilimitados, acessar o Marketplace e ter controle total, assine um plano PRO ou PREMIUM.
+                                        </p>
+                                        <div className="flex justify-center gap-4">
+                                            <button onClick={onUpgrade} className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white px-8 py-4 rounded-xl font-bold transition-all shadow-lg hover:shadow-indigo-500/50 transform hover:-translate-y-1">
+                                                Ver Planos e Assinar
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )}

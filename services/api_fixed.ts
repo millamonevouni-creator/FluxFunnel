@@ -56,6 +56,27 @@ const invokeEdgeFunction = async (functionName: string, body: any) => {
     return data;
 }
 
+// Helper for Audit Logging (Graceful Failure)
+const logAdminAction = async (action: string, targetResource: string, targetId: string, details?: any) => {
+    if (isOffline) return;
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        await supabase.from('audit_logs').insert({
+            actor_id: user.id,
+            action,
+            target_resource: targetResource,
+            target_id: targetId,
+            details,
+            ip_address: 'client-side' // Real IP requires Edge Function
+        });
+    } catch (e) {
+        // Silent fail if table doesn't exist yet
+        console.warn("Audit Log failed (table might be missing):", e);
+    }
+};
+
 export const api = {
     subscriptions: {
         createCheckoutSession: async (priceId: string) => {
@@ -118,6 +139,16 @@ export const api = {
                 };
                 return { user: fallbackUser, token: data.session?.access_token || '' };
             }
+
+            // SELF-HEALING: Link Team Memberships if user_id is missing
+            try {
+                if (data.user?.email) {
+                    await supabase.from('team_members')
+                        .update({ user_id: data.user.id })
+                        .eq('email', data.user.email)
+                        .is('user_id', null);
+                }
+            } catch (err) { console.error("Auto-link team error:", err); }
 
             return { user: mapProfileToUser(profile), token: data.session?.access_token || '' };
         },
@@ -255,23 +286,69 @@ export const api = {
     projects: {
         list: async () => {
             if (isOffline) return [];
-            const { data } = await supabase.from('projects').select('*');
+            // Use RPC to fetch projects including those shared via team membership
+            const { data, error } = await supabase.rpc('get_accessible_projects');
+            if (error) {
+                console.error("RPC Error (get_accessible_projects):", error);
+                // Fallback to standard RLS select if RPC fails
+                const { data: fallbackData } = await supabase.from('projects').select('*');
+                return (fallbackData || []).map(mapDBProjectToApp);
+            }
             return (data || []).map(mapDBProjectToApp);
         },
-        create: async (p: any) => {
-            if (isOffline) return { ...p, id: 'proj_' + Date.now() };
-            const dbPayload = {
-                name: p.name,
-                nodes: p.nodes,
-                edges: p.edges,
-                owner_id: p.ownerId,
-                updated_at: p.updatedAt
+        create: async (project: Partial<Project>): Promise<Project> => {
+            if (isOffline) {
+                // Mock return for offline mode, ensuring all Project fields
+                return {
+                    id: 'proj_' + Date.now(),
+                    name: project.name || 'Sem Nome',
+                    nodes: project.nodes || [],
+                    edges: project.edges || [],
+                    updatedAt: new Date(),
+                    ownerId: project.ownerId || 'mock_user',
+                    collaborators: [],
+                    ...project
+                } as Project;
+            }
+            const dbProject = {
+                name: project.name,
+                nodes: project.nodes,
+                edges: project.edges,
+                owner_id: project.ownerId,
+                updated_at: new Date()
             };
-            const { data, error } = await supabase.from('projects').insert(dbPayload).select().single();
+            const { data, error } = await supabase.from('projects').insert(dbProject).select().single();
             if (error) throw error;
             return mapDBProjectToApp(data);
         },
-        update: async (id: string, p: any) => { if (!isOffline) await supabase.from('projects').update(p).eq('id', id); },
+        get: async (id: string) => {
+            if (isOffline) return null;
+
+            // Try standard select first (works for owner)
+            let { data, error } = await supabase
+                .from('projects')
+                .select('*')
+                .eq('id', id)
+                .single();
+
+            // If error (RLS or not found), try public RPC which bypasses RLS for ID lookup
+            if (error) {
+                // Ignore initial error details, try fallback
+                const { data: rpcData, error: rpcError } = await supabase.rpc('get_project_public', { p_id: id });
+
+                if (!rpcError && rpcData && rpcData.length > 0) {
+                    data = rpcData[0];
+                    error = null;
+                } else {
+                    // If RPC also fails, throw the original error (or RPC error if relevant)
+                    if (rpcError) console.error("RPC Error:", rpcError);
+                    throw error;
+                }
+            }
+
+            return mapDBProjectToApp(data);
+        },
+        update: async (id: string, updates: Partial<Project>) => { if (!isOffline) await supabase.from('projects').update(updates).eq('id', id); },
         delete: async (id: string) => {
             if (!isOffline) {
                 const { error } = await supabase.from('projects').delete().eq('id', id);
@@ -654,7 +731,12 @@ export const api = {
             if (!data) return { maintenanceMode: false, allowSignups: true, announcements: [], debugMode: false };
             return { maintenanceMode: data.maintenance_mode, allowSignups: data.allow_signups, announcements: data.announcements || [], debugMode: data.debug_mode };
         },
-        update: async (c: any) => { if (!isOffline) await supabase.from('system_config').upsert(c); },
+        update: async (c: any) => {
+            if (!isOffline) {
+                await supabase.from('system_config').upsert(c);
+                await logAdminAction('UPDATE_CONFIG', 'system_config', 'global', c);
+            }
+        },
         healthCheck: async () => { return { profiles: true, projects: true, templates: true, system_config: true }; }
     },
     admin: {
@@ -666,8 +748,36 @@ export const api = {
             const invitedEmails = new Set((teamMembers || []).map((tm: any) => tm.email));
             return (profiles || []).map((p: any) => ({ ...mapProfileToUser(p), isInvitedMember: invitedEmails.has(p.email) }));
         },
-        updateUserStatus: async (id: string, status: string) => { if (!isOffline) await supabase.from('profiles').update({ status }).eq('id', id); },
-        updateUserPlan: async (id: string, plan: string) => { if (!isOffline) await supabase.from('profiles').update({ plan }).eq('id', id); },
-        deleteUser: async (id: string) => { if (!isOffline) await supabase.from('profiles').delete().eq('id', id); }
+        updateUserStatus: async (id: string, status: string) => {
+            if (!isOffline) {
+                await supabase.from('profiles').update({ status }).eq('id', id);
+                await logAdminAction('UPDATE_STATUS', 'profiles', id, { status });
+            }
+        },
+        updateUserPlan: async (id: string, plan: string) => {
+            if (!isOffline) {
+                await supabase.from('profiles').update({ plan }).eq('id', id);
+                await logAdminAction('UPDATE_PLAN', 'profiles', id, { plan });
+            }
+        },
+        deleteUser: async (id: string) => {
+            if (!isOffline) {
+                await supabase.from('profiles').delete().eq('id', id);
+                await logAdminAction('DELETE_USER', 'profiles', id);
+            }
+        },
+        getDashboardStats: async () => {
+            if (isOffline) return { mrr: 0, totalUsers: 0, activeUsers: 0, health: 100 };
+            try {
+                // Call Edge Function for Secure Admin Stats (Bypasses RLS safely)
+                const { data, error } = await supabase.functions.invoke('get-admin-stats');
+                if (error) throw error;
+                return data;
+            } catch (e) {
+                console.error("Stats Calc Failed (Edge Function):", e);
+                // Fallback to minimal info if function fails
+                return { mrr: 0, totalUsers: 0, activeUsers: 0, health: 0 };
+            }
+        }
     }
 };

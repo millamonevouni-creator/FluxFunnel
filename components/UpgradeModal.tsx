@@ -8,13 +8,16 @@ interface UpgradeModalProps {
     onUpgrade: () => void;
     isDark: boolean;
     limitType?: 'NODES' | 'PROJECTS';
-    plans?: PlanConfig[]; // New: Pass plans to read updated limits
+    plans?: PlanConfig[];
     userPlan?: UserPlan;
     initialPlan?: 'PRO' | 'PREMIUM';
     initialCycle?: 'monthly' | 'yearly';
+    // New props for context-aware messages
+    reason?: 'LIMIT_REACHED' | 'FEATURE_LOCKED';
+    featureName?: string;
 }
 
-const UpgradeModal = ({ onClose, onUpgrade, isDark, limitType = 'NODES', plans, userPlan, initialPlan, initialCycle }: UpgradeModalProps) => {
+const UpgradeModal = ({ onClose, onUpgrade, isDark, limitType = 'NODES', plans, userPlan, initialPlan, initialCycle, reason = 'LIMIT_REACHED', featureName }: UpgradeModalProps) => {
     const isProjectLimit = limitType === 'PROJECTS';
     const [selectedPlan, setSelectedPlan] = React.useState<'PRO' | 'PREMIUM'>(initialPlan || 'PRO');
     const [cycle, setCycle] = React.useState<'monthly' | 'yearly'>(initialCycle || 'monthly');
@@ -106,133 +109,98 @@ const UpgradeModal = ({ onClose, onUpgrade, isDark, limitType = 'NODES', plans, 
 
     return (
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in-up">
-            <div className={`relative w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
-
-                {/* Header Background */}
-                <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-indigo-600 to-purple-700 z-0"></div>
+            <div className={`relative w-full max-w-lg md:max-w-4xl overflow-hidden rounded-3xl shadow-2xl border flex flex-col md:flex-row ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
 
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 z-20 p-1.5 rounded-full bg-black/20 text-white hover:bg-black/40 transition-colors"
+                    className="absolute top-4 right-4 z-50 p-2 rounded-full bg-black/10 hover:bg-black/20 text-slate-500 dark:text-slate-400 dark:hover:bg-white/10 transition-colors"
                     title="Fechar"
-                    aria-label="Fechar modal"
                 >
-                    <X size={20} aria-hidden="true" />
+                    <X size={20} />
                 </button>
 
-                <div className="relative z-10 px-8 pt-8 pb-8 flex flex-col items-center text-center">
-                    {/* Icon */}
-                    <div className="w-20 h-20 rounded-2xl bg-white shadow-xl flex items-center justify-center mb-6 rotate-3 transform hover:rotate-0 transition-transform duration-500">
-                        {isProjectLimit ? (
-                            <Layout size={40} className="text-indigo-600 fill-indigo-100" />
-                        ) : (
-                            <Crown size={40} className="text-indigo-600 fill-indigo-100" />
-                        )}
-                    </div>
-
-                    <h2 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                        {isProjectLimit ? 'Limite de Projetos Atingido' : 'Limite de Elementos Atingido'}
-                    </h2>
-
-                    <p className={`text-sm mb-6 max-w-xs leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-                        {isProjectLimit
-                            ? `No seu plano atual, você pode ter apenas ${userPlan === 'FREE' ? freePlan.projectLimit : proPlan.projectLimit} projeto(s) ativo(s).`
-                            : `Você atingiu o limite de ${userPlan === 'FREE' ? freePlan.nodeLimit : proPlan.nodeLimit} elementos no fluxo.`
-                        }
-                    </p>
-
-                    {/* Plan Selection Toggles */}
-                    <div className="flex gap-2 p-1 bg-slate-100 rounded-lg mb-4 w-full dark:bg-slate-800">
-                        <button onClick={() => setSelectedPlan('PRO')} className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${selectedPlan === 'PRO' ? 'bg-white shadow text-indigo-600 dark:bg-slate-700 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700'}`}>PRO</button>
-                        <button onClick={() => setSelectedPlan('PREMIUM')} className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${selectedPlan === 'PREMIUM' ? 'bg-white shadow text-purple-600 dark:bg-slate-700 dark:text-purple-400' : 'text-slate-500 hover:text-slate-700'}`}>PREMIUM</button>
-                    </div>
-                    <div className="flex gap-2 p-1 bg-slate-100 rounded-lg mb-6 w-full dark:bg-slate-800">
-                        <button onClick={() => setCycle('monthly')} className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${cycle === 'monthly' ? 'bg-white shadow text-indigo-600 dark:bg-slate-700 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700'}`}>Mensal</button>
-                        <button onClick={() => setCycle('yearly')} className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${cycle === 'yearly' ? 'bg-white shadow text-green-600 dark:bg-slate-700 dark:text-green-400' : 'text-slate-500 hover:text-slate-700'}`}>Anual (-15%)</button>
-                    </div>
-
-                    {/* Dynamic Price & Benefits Summary */}
-                    {(() => {
-                        const currentPlanConfig = plans?.find(p => p.id === selectedPlan);
-                        const currentPrice = cycle === 'monthly' ? currentPlanConfig?.priceMonthly : currentPlanConfig?.priceYearly;
-                        const priceDisplay = currentPrice ? `R$ ${currentPrice.toFixed(2).replace('.', ',')}` : 'Sob consulta';
-
-                        return (
-                            <div className="w-full mb-6 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
-                                <div className="text-center mb-4">
-                                    <div className="text-3xl font-extrabold text-slate-800 dark:text-white">{priceDisplay}</div>
-                                    <div className="text-xs font-medium text-slate-500 uppercase tracking-wide">
-                                        por {cycle === 'monthly' ? 'mês' : 'ano'}
-                                    </div>
-                                </div>
-
-                                <div className="mb-4 flex flex-col gap-2">
-                                    <div className="flex items-center justify-between px-3 py-2 bg-white dark:bg-slate-700/50 rounded-lg border border-slate-100 dark:border-slate-600">
-                                        <span className="text-xs text-slate-500 dark:text-slate-400">Elementos no Fluxo</span>
-                                        <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                                            {(currentPlanConfig?.nodeLimit ?? 0) >= 9999 ? 'Ilimitado' : currentPlanConfig?.nodeLimit}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center justify-between px-3 py-2 bg-white dark:bg-slate-700/50 rounded-lg border border-slate-100 dark:border-slate-600">
-                                        <span className="text-xs text-slate-500 dark:text-slate-400">Limite de Projetos</span>
-                                        <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                                            {(currentPlanConfig?.projectLimit ?? 0) >= 9999 ? 'Ilimitado' : currentPlanConfig?.projectLimit}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2 text-left">
-                                    {currentPlanConfig?.features?.slice(0, 3).map((feature, idx) => (
-                                        <div key={idx} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">
-                                            <CheckCircle size={14} className="mt-0.5 text-green-500 shrink-0" />
-                                            <span className="leading-tight">{feature}</span>
-                                        </div>
-                                    ))}
-                                    {(!currentPlanConfig?.features || currentPlanConfig.features.length === 0) && (
-                                        <div className="text-xs text-center text-slate-400 italic">Detalhes em breve...</div>
-                                    )}
-                                </div>
+                {/* Left Side: The "Pain" / Context */}
+                <div className={`md:w-2/5 p-8 flex flex-col justify-center relative overflow-hidden ${isDark ? 'bg-slate-800' : 'bg-slate-50'}`}>
+                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/10 to-purple-600/10 z-0"></div>
+                    <div className="relative z-10">
+                        <div className="w-14 h-14 rounded-2xl bg-white dark:bg-slate-700 shadow-lg flex items-center justify-center mb-6 text-indigo-600 dark:text-indigo-400">
+                            {isProjectLimit ? <Layout size={28} /> : <Crown size={28} />}
+                        </div>
+                        <h2 className={`text-2xl font-black mb-4 leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                            {reason === 'FEATURE_LOCKED'
+                                ? (featureName || 'Desbloqueie todo o potencial')
+                                : 'Limite Atingido'
+                            }
+                        </h2>
+                        <p className={`text-sm mb-8 font-medium leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                            {reason === 'FEATURE_LOCKED' ? (
+                                <span>
+                                    Este recurso é exclusivo para assinantes <b>Premium</b>.
+                                    {userPlan === 'CONVIDADO' && <span className="block mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 rounded-xl border border-amber-100 dark:border-amber-800/50 text-xs">
+                                        <b className="block mb-1">Nota para Convidados:</b>
+                                        Você tem acesso aos projetos da equipe, mas recursos avançados exigem uma conta própria.
+                                    </span>}
+                                </span>
+                            ) : (
+                                isProjectLimit
+                                    ? `Você atingiu o limite de ${userPlan === 'FREE' ? freePlan.projectLimit : proPlan.projectLimit} projetos ativos.`
+                                    : `Você usou todos os ${userPlan === 'FREE' ? freePlan.nodeLimit : proPlan.nodeLimit} elementos disponíveis.`
+                            )}
+                        </p>
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-3 text-sm font-bold text-slate-700 dark:text-slate-300">
+                                <CheckCircle size={16} className="text-green-500" /> Projetos e Elementos Ilimitados
                             </div>
-                        );
-                    })()}
-
-                    {/* Comparison Table */}
-                    <div className={`w-full rounded-xl p-4 mb-6 text-left space-y-3 ${isDark ? 'bg-slate-800 border border-slate-700' : 'bg-slate-50 border border-slate-100'}`}>
-                        <div className="flex items-center justify-between text-sm">
-                            <span className="text-slate-500">Plano Grátis</span>
-                            <span className="font-bold text-slate-500">
-                                {isProjectLimit ? `${freePlan.projectLimit} Projeto(s)` : `${freePlan.nodeLimit} Elementos`}
-                            </span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                            <span className="font-bold text-indigo-500 flex items-center gap-2"><Zap size={14} /> Plano Pro</span>
-                            <span className="font-bold text-indigo-600">
-                                {isProjectLimit ? `${proPlan.projectLimit} Projetos` : `${proPlan.nodeLimit} Elementos`}
-                            </span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                            <span className="font-bold text-purple-500 flex items-center gap-2"><Crown size={14} /> Plano Premium</span>
-                            <span className="font-bold text-purple-600">
-                                {premiumPlan.projectLimit >= 9999 ? 'Ilimitado' : premiumPlan.projectLimit}
-                            </span>
+                            <div className="flex items-center gap-3 text-sm font-bold text-slate-700 dark:text-slate-300">
+                                <CheckCircle size={16} className="text-green-500" /> Acesso a todos os ícones
+                            </div>
+                            <div className="flex items-center gap-3 text-sm font-bold text-slate-700 dark:text-slate-300">
+                                <CheckCircle size={16} className="text-green-500" /> Suporte Prioritário
+                            </div>
                         </div>
                     </div>
+                </div>
 
-                    <button
-                        onClick={handleUpgradeClick}
-                        className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/25 transition-all transform hover:-translate-y-1 mb-3"
-                        title="Fazer Upgrade de Plano"
-                        aria-label="Fazer Upgrade de Plano"
-                    >
-                        Fazer Upgrade Agora
-                    </button>
+                {/* Right Side: The Offer */}
+                <div className="md:w-3/5 p-8 flex flex-col relative bg-white dark:bg-slate-900">
+                    <div className="flex-1 flex flex-col justify-center">
+                        <div className="mb-4 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl inline-flex self-center">
+                            <button onClick={() => setSelectedPlan('PRO')} className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${selectedPlan === 'PRO' ? 'bg-white dark:bg-slate-700 shadow-md text-indigo-600 dark:text-indigo-300' : 'text-slate-500'}`}>Pro</button>
+                            <button onClick={() => setSelectedPlan('PREMIUM')} className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${selectedPlan === 'PREMIUM' ? 'bg-white dark:bg-slate-700 shadow-md text-purple-600 dark:text-purple-300' : 'text-slate-500'}`}>Premium</button>
+                        </div>
 
-                    <button
-                        onClick={onClose}
-                        className={`text-xs font-medium hover:underline ${isDark ? 'text-slate-400' : 'text-slate-500'}`}
-                    >
-                        {isProjectLimit ? 'Voltar para meus projetos' : 'Não, obrigado. Vou remover elementos.'}
-                    </button>
+                        {(() => {
+                            const currentPlanConfig = plans?.find(p => p.id === selectedPlan);
+                            const currentPrice = cycle === 'monthly' ? currentPlanConfig?.priceMonthly : currentPlanConfig?.priceYearly;
+                            const priceDisplay = currentPrice ? `R$ ${currentPrice.toFixed(2).replace('.', ',')}` : 'Sob consulta';
+
+                            return (
+                                <div className="text-center mb-8">
+                                    <h3 className="text-5xl font-black text-slate-900 dark:text-white mb-2 tracking-tighter">{priceDisplay}<span className="text-lg text-slate-400 font-medium ml-1 outline-none align-super">/ {cycle === 'monthly' ? 'mês' : 'ano'}</span></h3>
+                                    <div className="flex justify-center gap-4 text-sm font-bold text-slate-500">
+                                        <button onClick={() => setCycle('monthly')} className={`hover:text-indigo-500 transition-colors ${cycle === 'monthly' ? 'text-indigo-600 underline underline-offset-4' : ''}`}>Mensal</button>
+                                        <button onClick={() => setCycle('yearly')} className={`hover:text-green-500 transition-colors ${cycle === 'yearly' ? 'text-green-600 underline underline-offset-4' : ''}`}>Anual (-15%)</button>
+                                    </div>
+                                </div>
+                            );
+                        })()}
+
+                        <button
+                            onClick={handleUpgradeClick}
+                            className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black text-lg shadow-xl shadow-indigo-500/20 transition-all hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-2 group"
+                        >
+                            Fazer Upgrade Agora <Zap size={20} className="group-hover:text-yellow-300 transition-colors" />
+                        </button>
+                        <p className="text-center mt-4 text-xs text-slate-400">Pagamento seguro via Stripe. Cancele quando quiser.
+                        </p>
+
+                        <button
+                            onClick={onClose}
+                            className={`mt-4 text-xs font-medium hover:underline text-center ${isDark ? 'text-slate-500' : 'text-slate-400'}`}
+                        >
+                            Não, obrigado. Quero continuar limitado.
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

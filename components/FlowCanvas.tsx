@@ -109,6 +109,7 @@ const FlowCanvas = ({
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
 
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeModalContext, setUpgradeModalContext] = useState<{ reason: 'LIMIT_REACHED' | 'FEATURE_LOCKED', featureName?: string, limitType?: 'NODES' | 'PROJECTS' }>({ reason: 'LIMIT_REACHED', limitType: 'NODES' });
   const [showSaveOptions, setShowSaveOptions] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [saveStep, setSaveStep] = useState<'OPTIONS' | 'TEMPLATE_NAME' | 'MARKETPLACE_DETAILS'>('OPTIONS');
@@ -305,7 +306,11 @@ const FlowCanvas = ({
   const onDrop = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     if (isPresentationMode) return;
-    if (nodes.length >= MAX_NODES) { setShowUpgradeModal(true); return; }
+    if (nodes.length >= MAX_NODES) {
+      setUpgradeModalContext({ reason: 'LIMIT_REACHED', limitType: 'NODES' });
+      setShowUpgradeModal(true);
+      return;
+    }
     const type = event.dataTransfer.getData('application/reactflow') as NodeType;
     if (!type) return;
     if (userPlan === 'FREE' && NODE_CONFIG[type].isPro) return;
@@ -337,7 +342,7 @@ const FlowCanvas = ({
     <div className="flex h-full w-full relative">
       {!isPresentationMode && <Sidebar isDark={isDark} t={t} userPlan={userPlan} />}
 
-      {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} onUpgrade={() => { alert("Redirecionando..."); setShowUpgradeModal(false); }} isDark={isDark} limitType="NODES" plans={plans} />}
+      {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} onUpgrade={() => { alert("Redirecionando..."); setShowUpgradeModal(false); }} isDark={isDark} plans={plans} limitType={upgradeModalContext.limitType} reason={upgradeModalContext.reason} featureName={upgradeModalContext.featureName} userPlan={userPlan} />}
 
       {showShareModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in-up">
@@ -357,7 +362,7 @@ const FlowCanvas = ({
               {saveStep === 'OPTIONS' ? (
                 <div className="grid grid-cols-2 gap-4">
                   <button onClick={() => { onSaveProject(nodes, edges); setShowSaveOptions(false); alert("Salvo!"); }} className="flex flex-col items-center p-4 rounded-xl border-2 hover:border-indigo-500 transition-all"><FileText size={28} className="mb-2 text-indigo-600" /> <span className="font-bold text-sm">Projeto</span></button>
-                  <button onClick={() => { if (userPlan === 'FREE') setShowUpgradeModal(true); else { setTemplateNameInput(''); setSaveStep('TEMPLATE_NAME'); } }} className="flex flex-col items-center p-4 rounded-xl border-2 hover:border-purple-500 transition-all"><Layout size={28} className="mb-2 text-purple-600" /> <span className="font-bold text-sm">Modelo</span></button>
+                  <button onClick={() => { if (userPlan === 'FREE') { setUpgradeModalContext({ reason: 'FEATURE_LOCKED', featureName: 'Modelos Personalizados' }); setShowUpgradeModal(true); } else { setTemplateNameInput(''); setSaveStep('TEMPLATE_NAME'); } }} className="flex flex-col items-center p-4 rounded-xl border-2 hover:border-purple-500 transition-all"><Layout size={28} className="mb-2 text-purple-600" /> <span className="font-bold text-sm">Modelo</span></button>
                 </div>
               ) : (
                 <div className="flex flex-col gap-4">
@@ -401,7 +406,23 @@ const FlowCanvas = ({
               <div className={`w-2 h-2 rounded-full ${nodes.length >= MAX_NODES ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></div>
               {nodes.length} / {MAX_NODES >= 9999 ? '∞' : MAX_NODES}
             </div>
-            <button onClick={toggleTheme} className="p-2 rounded-lg bg-white dark:bg-slate-800 border">{isDark ? <Sun /> : <Moon />}</button>
+            <button
+              onClick={() => {
+                if (userPlan !== 'PREMIUM') {
+                  setUpgradeModalContext({ reason: 'FEATURE_LOCKED', featureName: 'Compartilhar Link' });
+                  setShowUpgradeModal(true);
+                  return;
+                }
+                const url = `${window.location.origin}/?share=${project.id}`;
+                navigator.clipboard.writeText(url);
+                alert("Link de apresentação copiado!");
+              }}
+              className={`p-2 rounded-lg bg-white dark:bg-slate-800 border transition-colors ${userPlan === 'PREMIUM' ? 'text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20' : 'text-slate-400 hover:text-amber-500 hover:bg-slate-100'}`}
+              title={userPlan === 'PREMIUM' ? "Compartilhar Link" : "Recurso Premium (Bloqueado)"}
+            >
+              {userPlan === 'PREMIUM' ? <Share2 size={20} /> : <Lock size={20} />}
+            </button>
+            <button onClick={toggleTheme} className="p-2 rounded-lg bg-white dark:bg-slate-800 border">{isDark ? <Sun size={20} /> : <Moon size={20} />}</button>
           </Panel>
         </ReactFlow>
       </div>

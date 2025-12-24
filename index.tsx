@@ -20,18 +20,14 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ padding: '20px', color: '#ff3333', backgroundColor: '#1a1a1a', minHeight: '100vh', fontFamily: 'monospace' }}>
-          <h1 style={{ fontSize: '24px', marginBottom: '20px' }}>Application Crashed</h1>
-          <div style={{ padding: '15px', backgroundColor: '#333', borderRadius: '8px', overflow: 'auto' }}>
-            <h3 style={{ margin: '0 0 10px 0', color: '#fff' }}>Error Name: {this.state.error?.name}</h3>
-            <p style={{ margin: '0 0 10px 0', color: '#ffaaaa' }}>Message: {this.state.error?.message}</p>
-            <pre style={{ margin: 0, color: '#ccc', fontSize: '12px' }}>{this.state.error?.stack}</pre>
-          </div>
+        <div className="flex flex-col items-center justify-center h-screen bg-red-50 text-red-900 p-5 font-sans">
+          <h2 className="text-2xl font-bold mb-2">Algo deu errado.</h2>
+          <p className="mb-4">Por favor, recarregue a página.</p>
           <button
             onClick={() => window.location.reload()}
-            style={{ marginTop: '20px', padding: '10px 20px', cursor: 'pointer', backgroundColor: '#fff', border: 'none', borderRadius: '4px', fontWeight: 'bold' }}
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
           >
-            Reload Application
+            Recarregar
           </button>
         </div>
       );

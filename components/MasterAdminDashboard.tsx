@@ -72,6 +72,17 @@ const MasterAdminDashboard = ({
     const [planToDelete, setPlanToDelete] = useState<PlanConfig | null>(null);
     const [editingUser, setEditingUser] = useState<User | null>(null);
 
+    // Stats State
+    const [realStats, setRealStats] = useState({ mrr: 0, totalUsers: 0, activeUsers: 0, health: 100 });
+
+    useEffect(() => {
+        const loadStats = async () => {
+            const s = await api.admin.getDashboardStats();
+            setRealStats(prev => ({ ...prev, ...s }));
+        };
+        loadStats();
+    }, [users]); // Re-fetch when users change
+
     // User Module State
     const [userSearch, setUserSearch] = useState('');
     const [userFilter, setUserFilter] = useState<'ALL' | 'ACTIVE' | 'BANNED' | 'PREMIUM'>('ALL');
@@ -137,12 +148,9 @@ const MasterAdminDashboard = ({
     }, [localFeedbacks, fbSearch, fbStatusFilter, fbTypeFilter]);
 
     const revenueData = [
-        { name: 'Jan', mrr: 450, users: 12 },
-        { name: 'Fev', mrr: 1200, users: 28 },
-        { name: 'Mar', mrr: 2800, users: 54 },
-        { name: 'Abr', mrr: 3900, users: 82 },
-        { name: 'Mai', mrr: 5200, users: 110 },
-        { name: 'Jun', mrr: 8400, users: 165 },
+        { name: 'Atual', mrr: realStats.mrr, users: realStats.activeUsers },
+        // Placeholder history for now, could be fetched via history API in future phase
+        { name: 'Hist.', mrr: Math.max(0, realStats.mrr * 0.9), users: Math.max(0, realStats.activeUsers - 2) },
     ];
 
     const fetchTemplates = async () => {
@@ -605,7 +613,7 @@ const MasterAdminDashboard = ({
                                     <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-400"><DollarSign size={18} /></div>
                                     <span className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">MRR Mensal</span>
                                 </div>
-                                <h3 className="text-2xl font-black text-white tracking-tight">R$ {stats.mrr.toFixed(2)}</h3>
+                                <h3 className="text-2xl font-black text-white tracking-tight">R$ {realStats.mrr.toFixed(2)}</h3>
                                 <div className="flex items-center gap-1.5 mt-2 text-emerald-400 text-[10px] font-bold">
                                     <TrendingUp size={12} /> +12% vs mês anterior
                                 </div>
@@ -617,9 +625,9 @@ const MasterAdminDashboard = ({
                                     <div className="p-2 bg-purple-500/10 rounded-xl text-purple-400"><Users size={18} /></div>
                                     <span className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">Total Usuários</span>
                                 </div>
-                                <h3 className="text-2xl font-black text-white tracking-tight">{stats.totalUsers}</h3>
+                                <h3 className="text-2xl font-black text-white tracking-tight">{realStats.totalUsers}</h3>
                                 <div className="flex items-center gap-1.5 mt-2 text-purple-400 text-[10px] font-bold">
-                                    <UserIcon size={12} /> {stats.activeUsers} Ativos agora
+                                    <UserIcon size={12} /> {realStats.activeUsers} Ativos agora
                                 </div>
                             </div>
 

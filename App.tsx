@@ -15,6 +15,7 @@ import TeamDashboard from './components/TeamDashboard';
 import AIAssistant from './components/AIAssistant';
 import MarketplaceDashboard from './components/MarketplaceDashboard';
 import AnnouncementBanner from './components/AnnouncementBanner';
+import ProfileCompletionBanner from './components/ProfileCompletionBanner';
 import { Project, AppMode, User, Language, AppPage, AppView, FeedbackItem, FeedbackStatus, UserStatus, UserPlan, PlanConfig, TeamMember, Template, SystemConfig, NodeType, Announcement } from './types';
 import { INITIAL_NODES, INITIAL_EDGES, TRANSLATIONS, PROJECT_TEMPLATES, NODE_CONFIG, NODE_CATEGORY } from './constants';
 import { Node, Edge } from 'reactflow';
@@ -47,7 +48,9 @@ const App = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null);
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+  const [showProfileBanner, setShowProfileBanner] = useState(() => !localStorage.getItem('hide_profile_banner'));
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeModalContext, setUpgradeModalContext] = useState<{ reason: 'LIMIT_REACHED' | 'FEATURE_LOCKED', featureName?: string, limitType?: 'NODES' | 'PROJECTS' }>({ reason: 'LIMIT_REACHED', limitType: 'NODES' });
   const [showProjectLimitModal, setShowProjectLimitModal] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
@@ -84,6 +87,16 @@ const App = () => {
         const loggedUser = await api.auth.getProfile();
         if (loggedUser) {
           setUser(loggedUser);
+
+          // FIX: Auto-link team member if invite exists by email but not linked
+          const { data: authUser } = await supabase.auth.getUser();
+          if (authUser.user?.email) {
+            const { data: invite } = await supabase.from('team_members').select('*').eq('email', authUser.user.email).maybeSingle();
+            if (invite && (invite.user_id !== loggedUser.id || invite.status !== 'ACTIVE')) {
+              console.log("Linking user to team invite...");
+              await supabase.from('team_members').update({ user_id: loggedUser.id, status: 'ACTIVE' }).eq('id', invite.id);
+            }
+          }
           setTeamMembers(await api.team.list());
           setCustomTemplates(await api.templates.list());
           const membership = await api.team.checkMembership(loggedUser.id);
@@ -139,11 +152,24 @@ const App = () => {
         if (loggedUser?.isSystemAdmin) setAllUsers(await api.users.list());
         setIsSidebarCollapsed(safeGet('sidebarCollapsed', false));
         setIsLoadingProjects(true);
-        const apiProjects = await api.projects.list();
-        setProjects(apiProjects.length ? apiProjects : [DEFAULT_PROJECT(t)]);
         if (shareId) {
-          const found = apiProjects.find((p: Project) => p.id === shareId);
-          if (found) { setSharedProject(found); setCurrentView('SHARED'); }
+          try {
+            // Try to fetch project directly (public/shared access)
+            const sharedProj = await api.projects.get(shareId);
+            if (sharedProj) {
+              setSharedProject(sharedProj);
+              setCurrentView('SHARED');
+            }
+          } catch (err) {
+            console.error("Error loading shared project:", err);
+            showNotification("Não foi possível carregar o projeto compartilhado.", "error");
+          }
+        }
+
+        // Only load user projects if logged in and NOT in shared view (or load in bg)
+        if (loggedUser) {
+          const apiProjects = await api.projects.list();
+          setProjects(apiProjects.length ? apiProjects : [DEFAULT_PROJECT(t)]);
         }
       } catch (e) { console.error(e); }
       finally { setIsInitialized(true); setIsLoadingProjects(false); }
@@ -198,31 +224,7 @@ const App = () => {
           if (profile) {
             setUser(profile);
 
-            // POST-LOGIN CHECKOUT PROCESSING
-            // If we have a pending checkout that wasn't processed URL-side (due to session loss)
-            const pendingCheckout = localStorage.getItem('flux_pending_checkout');
-            if (pendingCheckout) {
-              try {
-                const { planId } = JSON.parse(pendingCheckout);
-                // Double check if we need to apply it (e.g. if profile is still FREE)
-                if (planId && profile.plan !== planId) {
-                  console.log("Processing pending checkout after login:", planId);
 
-                  // Optimistic Update
-                  const updatedUser = { ...profile, plan: planId, status: 'ACTIVE' };
-                  setUser(updatedUser as User); // Immediate UI feedback
-
-                  // DB Update
-                  await supabase.from('profiles').update({
-                    plan: planId,
-                    status: 'ACTIVE'
-                  }).eq('id', profile.id);
-
-                  showNotification(t('upgradeSuccess'), 'success');
-                  localStorage.removeItem('flux_pending_checkout');
-                }
-              } catch (e) { console.error(e); }
-            }
 
             setTeamMembers(await api.team.list());
 
@@ -419,6 +421,7 @@ const App = () => {
       const created = await api.projects.create(newProj);
       setProjects(prev => [...prev, created]);
       setCurrentProjectId(created.id);
+      setOpenSaveModalSignal(0); // Reset save signal to prevent modal from opening on new project
       setAppPage('BUILDER');
       showNotification("Projeto criado!");
     } catch (e) { showNotification("Erro ao criar projeto.", 'error'); }
@@ -628,6 +631,66 @@ const App = () => {
     );
   }
 
+  if (currentView === 'SHARED' && sharedProject) {
+    return (
+      <div className={`flex flex-col h-screen ${isDark ? 'dark bg-slate-950' : 'bg-slate-50'}`}>
+        {toast?.show && <div className={`fixed top-14 left-1/2 -translate-x-1/2 z-[300] px-6 py-3 rounded-xl shadow-2xl border ${toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>{toast.message}</div>}
+
+        <header className="h-16 flex items-center justify-between px-6 border-b bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 z-10 relative shadow-sm">
+          <div className="flex items-center gap-2">
+            <div onClick={() => window.location.href = '/'} className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
+              <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-500/30">
+                <GitGraph size={18} className="text-white" />
+              </div>
+              <span className="font-bold text-lg text-slate-800 dark:text-white hidden sm:block">FluxFunnel</span>
+            </div>
+            <div className="h-6 w-px bg-slate-300 dark:bg-slate-700 mx-2 hidden sm:block"></div>
+            <h1 className="text-sm sm:text-lg font-bold text-slate-700 dark:text-slate-200 truncate max-w-[200px] sm:max-w-md">
+              {sharedProject.name}
+            </h1>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setCurrentView('LANDING')}
+              className="hidden sm:flex px-4 py-2 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg font-bold transition-colors"
+            >
+              Criar meu Funil
+            </button>
+            <button
+              onClick={() => setCurrentView('LANDING')}
+              className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg font-bold shadow-lg shadow-indigo-500/20 transition-all active:scale-95"
+            >
+              Começar Grátis
+            </button>
+          </div>
+        </header>
+
+        <div className="flex-1 overflow-hidden relative">
+          <FlowCanvasWrapped
+            project={sharedProject}
+            onSaveProject={async () => { }} // No-op for read-only
+            onUnsavedChanges={() => { }}
+            triggerSaveSignal={0}
+            openSaveModalSignal={0}
+            isDark={isDark}
+            toggleTheme={() => setIsDark(!isDark)}
+            isPresentationMode={true}
+            showNotesInPresentation={true}
+            t={t}
+            userPlan={'FREE'} // Default for viewing
+            maxNodes={9999}
+            plans={[]}
+            showAIAssistant={false}
+            onToggleAIAssistant={() => { }}
+            onSaveTemplate={() => { }}
+            onShareToMarketplace={() => { }}
+            isSharedView={true}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`flex h-screen overflow-hidden ${isDark ? 'dark' : ''}`}>
       {toast?.show && <div className={`fixed top-14 left-1/2 -translate-x-1/2 z-[300] px-6 py-3 rounded-xl shadow-2xl border ${toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>{toast.message}</div>}
@@ -638,18 +701,15 @@ const App = () => {
           onClose={() => setShowUpgradeModal(false)}
           initialPlan={upgradeModalInitialState?.planId}
           initialCycle={upgradeModalInitialState?.cycle}
-          onUpgrade={async () => {
-            // Mock upgrade for testing - effectively update user plan immediately for verifying UI
-            if (user) {
-              await api.admin.updateUserPlan(user.id, 'PREMIUM');
-              const up = await api.auth.getProfile();
-              if (up) setUser(up);
-              setShowUpgradeModal(false);
-              showNotification('Upgrade para PREMIUM realizado com sucesso!', 'success');
-            }
+          onUpgrade={() => {
+            // Logic handled internally by UpgradeModal (Stripe Checkout)
+            setShowUpgradeModal(false);
           }}
           isDark={isDark}
           plans={plans}
+          limitType={upgradeModalContext.limitType}
+          reason={upgradeModalContext.reason}
+          featureName={upgradeModalContext.featureName}
 
         />
       )}
@@ -717,12 +777,8 @@ const App = () => {
                 onClick={() => {
                   // Guest (Invited) Restriction Logic
                   if (isInvitedMode && (item.id === 'MARKETPLACE' || item.id === 'TEAM')) {
-                    showNotification("Recurso exclusivo para assinantes Premium. Crie sua própria conta para acessar.", 'error');
-                    // Optional: Open upgrade modal or direct to settings
-                    // For now, let's just notify. Or maybe redirect to Settings -> My Account
-                    setAppPage('SETTINGS');
-                    // We can't easily force the tab to MY_ACCOUNT here without prop drilling or context, 
-                    // but the user will see the restriction.
+                    setUpgradeModalContext({ reason: 'FEATURE_LOCKED', featureName: item.label });
+                    setShowUpgradeModal(true);
                     return;
                   }
 
@@ -731,14 +787,19 @@ const App = () => {
                     else setAppPage(item.id as AppPage);
                   })
                 }}
-                className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all ${isSidebarCollapsed ? 'justify-center' : 'lg:justify-start lg:px-4'} ${appPage === item.id ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+                className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all ${isSidebarCollapsed ? 'justify-center' : 'lg:justify-start lg:px-4'} 
+                  ${appPage === item.id ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}
+                  ${(isInvitedMode && (item.id === 'MARKETPLACE' || item.id === 'TEAM')) ? 'opacity-60 cursor-not-allowed group' : ''}
+                `}
                 title={item.label}
               >
                 {item.icon}
-                <span className={`hidden font-medium ${isSidebarCollapsed ? '' : 'lg:block'}`}>
+                <span className={`hidden font-medium flex-1 flex items-center justify-between ${isSidebarCollapsed ? '' : 'lg:flex'}`}>
                   {item.label}
                   {/* Visual lock for guests */}
-                  {isInvitedMode && (item.id === 'MARKETPLACE' || item.id === 'TEAM') && <Lock size={12} className="ml-auto opacity-50" />}
+                  {isInvitedMode && (item.id === 'MARKETPLACE' || item.id === 'TEAM') && (
+                    <Lock size={14} className="text-amber-500" />
+                  )}
                 </span>
               </button>
             ))}
@@ -760,6 +821,7 @@ const App = () => {
             <div className="absolute bottom-full left-0 w-56 mb-2 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl overflow-hidden z-50">
               <button onClick={() => { attemptNavigation(() => setAppPage('SETTINGS')); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-slate-300 hover:bg-slate-700">Configurações</button>
               {user?.isSystemAdmin && <button onClick={() => { attemptNavigation(() => setCurrentView('ADMIN')); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-amber-400 hover:bg-slate-700">Admin Panel</button>}
+
               <button onClick={handleLogout} className="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-slate-700 border-t border-slate-700">Sair</button>
             </div>
           )}
@@ -792,10 +854,19 @@ const App = () => {
         {/* Global Announcements */}
         {appPage !== 'BUILDER' && <AnnouncementBanner announcements={systemConfig.announcements} />}
 
+        {/* Profile Completion Warning */}
+        {appPage !== 'BUILDER' && user && showProfileBanner && (
+          <ProfileCompletionBanner
+            user={user}
+            onDismiss={() => { setShowProfileBanner(false); localStorage.setItem('hide_profile_banner', 'true'); }}
+            onAction={() => setAppPage('SETTINGS')}
+          />
+        )}
+
         <div className="flex-1 overflow-hidden relative flex">
-          {appPage === 'PROJECTS' && <ProjectsDashboard projects={user?.isSystemAdmin ? projects : projects.filter(p => p.ownerId === user?.id || (isInvitedMode && p.collaborators?.includes(user?.id || '')))} projectsLimit={isInvitedMode ? 999 : (plans.find(p => p.id === (user?.plan || 'FREE'))?.projectLimit || 3)} onCreateProject={createProject} onOpenProject={(id) => { setCurrentProjectId(id); setAppPage('BUILDER'); }} onDeleteProject={handleDeleteProject} onRenameProject={handleRenameProject} onRefreshTemplates={refreshTemplates} showNotification={showNotification} isDark={isDark} t={t} userPlan={user?.plan} customTemplates={customTemplates} onSaveAsTemplate={async (p) => { await api.templates.create({ customLabel: p.name, nodes: p.nodes, edges: p.edges, isCustom: true }); refreshTemplates(); }} />}
-          {appPage === 'MARKETPLACE' && <MarketplaceDashboard userPlan={user?.plan || 'FREE'} onDownload={async (t) => { await createProject(t.id, t.customLabel); showNotification("Template baixado!"); }} isDark={isDark} t={t} userId={user?.id} onUpgrade={() => setShowUpgradeModal(true)} />}
-          {appPage === 'TEAM' && <TeamDashboard members={teamMembers} onInviteMember={handleInviteMember} onUpdateRole={handleUpdateMemberRole} onRemoveMember={handleRemoveMember} onResendInvite={handleResendInvite} onUpgrade={() => setShowUpgradeModal(true)} plan={user?.plan || 'FREE'} maxMembers={plans.find(p => p.id === user?.plan)?.teamLimit ?? (user?.plan === 'PREMIUM' ? 10 : 0)} isDark={isDark} t={t} />}
+          {appPage === 'PROJECTS' && <ProjectsDashboard projects={projects} projectsLimit={isInvitedMode ? 999 : (plans.find(p => p.id === (user?.plan || 'FREE'))?.projectLimit || 3)} onCreateProject={createProject} onOpenProject={(id) => { setCurrentProjectId(id); setOpenSaveModalSignal(0); setAppPage('BUILDER'); }} onDeleteProject={handleDeleteProject} onRenameProject={handleRenameProject} onRefreshTemplates={refreshTemplates} showNotification={showNotification} isDark={isDark} t={t} userPlan={user?.plan} customTemplates={customTemplates} onSaveAsTemplate={async (p) => { await api.templates.create({ customLabel: p.name, nodes: p.nodes, edges: p.edges, isCustom: true }); refreshTemplates(); }} onUpgrade={() => { setUpgradeModalContext({ reason: 'FEATURE_LOCKED', featureName: 'Compartilhamento de Link' }); setShowUpgradeModal(true); }} />}
+          {appPage === 'MARKETPLACE' && <MarketplaceDashboard userPlan={user?.plan || 'FREE'} onDownload={async (t) => { await createProject(t.id, t.customLabel); showNotification("Template baixado!"); }} isDark={isDark} t={t} userId={user?.id} onUpgrade={() => { setUpgradeModalContext({ reason: 'FEATURE_LOCKED', featureName: 'Acesso ao Marketplace' }); setShowUpgradeModal(true); }} />}
+          {appPage === 'TEAM' && <TeamDashboard members={teamMembers} onInviteMember={handleInviteMember} onUpdateRole={handleUpdateMemberRole} onRemoveMember={handleRemoveMember} onResendInvite={handleResendInvite} onUpgrade={() => { setUpgradeModalContext({ reason: 'FEATURE_LOCKED', featureName: 'Gestão de Equipe' }); setShowUpgradeModal(true); }} plan={user?.plan || 'FREE'} maxMembers={plans.find(p => p.id === user?.plan)?.teamLimit ?? (user?.plan === 'PREMIUM' ? 10 : 0)} isDark={isDark} t={t} />}
           {appPage === 'MASTER_ADMIN' && <MasterAdminDashboard
             onBack={() => setAppPage('PROJECTS')}
             onReplyFeedback={async (id, text) => { await api.feedbacks.addComment(id, text); setFeedbacks(await api.feedbacks.list()); }}
@@ -822,7 +893,7 @@ const App = () => {
             userPlan={isInvitedMode ? 'CONVIDADO' : (user?.plan || 'FREE')}
             maxNodes={isInvitedMode ? 999999 : (plans.find(p => p.id === (user?.plan || 'FREE'))?.nodeLimit || 20)}
             plans={plans} showAIAssistant={showAIAssistant} onToggleAIAssistant={() => setShowAIAssistant(!showAIAssistant)} onSaveTemplate={async (nodes, edges, name) => { if (!user) return; try { await api.templates.create({ customLabel: name, nodes, edges, isCustom: true, owner_id: user.id }); showNotification("Modelo salvo com sucesso!"); setCustomTemplates(await api.templates.list()); } catch (e) { showNotification("Erro ao salvar modelo", 'error'); } }} onShareToMarketplace={async (name, desc) => { if (!user) return; const p = projects.find(p => p.id === currentProjectId); if (p) { await api.templates.submitToMarketplace({ customLabel: name, customDescription: desc, nodes: p.nodes, edges: p.edges, authorName: user.name }); showNotification("Enviado para análise com sucesso!"); } }} /> : <div className="flex flex-col items-center justify-center h-full text-slate-400"><Folder size={64} className="mb-4 opacity-50" /><p>{t('noProjectSelected')}</p></div>)}
-          {appPage === 'SETTINGS' && user && <SettingsDashboard isInvited={isInvitedMode} user={user} onUpdateUser={async (updated) => { await api.auth.updateProfile(user.id, updated); setUser({ ...user, ...updated }); showNotification("Perfil atualizado!"); }} isDark={isDark} toggleTheme={() => setIsDark(!isDark)} lang={lang} setLang={setLang} t={t} projectsCount={projects.filter(p => p.ownerId === user.id).length} onUpgrade={() => setShowUpgradeModal(true)} />}
+          {appPage === 'SETTINGS' && user && <SettingsDashboard isInvited={isInvitedMode} user={user} onUpdateUser={async (updated) => { await api.auth.updateProfile(user.id, updated); setUser({ ...user, ...updated }); showNotification("Perfil atualizado!"); }} isDark={isDark} toggleTheme={() => setIsDark(!isDark)} lang={lang} setLang={setLang} t={t} projectsCount={projects.filter(p => p.ownerId === user.id).length} onUpgrade={() => { setUpgradeModalContext({ reason: 'FEATURE_LOCKED', featureName: 'Assinatura Premium' }); setShowUpgradeModal(true); }} />}
         </div>
       </main>
     </div>

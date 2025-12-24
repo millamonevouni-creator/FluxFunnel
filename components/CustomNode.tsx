@@ -446,10 +446,10 @@ const CustomNode = ({ id, data, selected }: NodeProps<FunnelNodeData>) => {
         // CHANGED: Increased size to w-4 h-4 (16px) for better visibility
         const VisualDot = () => (
             <div className={`
-            w-4 h-4 bg-cyan-500 rounded-full border-2 border-white shadow-sm transition-all duration-200 pointer-events-none
+            w-3.5 h-3.5 bg-white rounded-full border-[3px] border-indigo-500 shadow-sm transition-all duration-200 pointer-events-none
             ${isPresentation ? 'opacity-0' : 'opacity-0 group-hover:opacity-100'}
-            ${selected ? '!opacity-100 bg-cyan-600 scale-110' : ''}
-            group-hover:scale-125
+            ${selected ? '!opacity-100 scale-110 border-indigo-600' : ''}
+            hover:scale-125
         `}></div>
         );
 

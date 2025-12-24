@@ -23,6 +23,20 @@ serve(async (req: Request) => {
     }
 
     try {
+        // 1. Verify User (Auth Header)
+        const authHeader = req.headers.get('Authorization')
+        if (!authHeader) throw new Error('Missing Authorization header')
+
+        const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''))
+        if (authError || !user) throw new Error('Invalid Token')
+
+        // 2. Verify Admin Status (Security Critical)
+        const { data: profile } = await supabase.from('profiles').select('is_system_admin').eq('id', user.id).single()
+        if (!profile || !profile.is_system_admin) {
+            console.error(`Unauthorized Plan Management Attempt by ${user.email}`)
+            return new Response(JSON.stringify({ error: 'Unauthorized: Admin Access Required' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+        }
+
         const { plan, operation } = await req.json()
 
         // Basic validation

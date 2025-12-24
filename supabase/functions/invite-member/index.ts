@@ -25,6 +25,13 @@ serve(async (req: Request) => {
             }
         )
 
+        // 1. Verify Caller (Auth Header) - Prevent unauthorized invites
+        const authHeader = req.headers.get('Authorization')
+        if (!authHeader) throw new Error('Missing Authorization header')
+
+        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(authHeader.replace('Bearer ', ''))
+        if (authError || !user) throw new Error('Unauthorized: Invalid Token')
+
         // Parse request body
         const { email, role, name, planId, redirectTo } = await req.json()
 

@@ -41,6 +41,9 @@ serve(async (req: Request) => {
 
     console.log(`Received event: ${event.type}`)
 
+    // 1. Log Event (Idempotent)
+    await logPaymentEvent(event, supabase, 'received');
+
     try {
         switch (event.type) {
             case "checkout.session.completed":
@@ -52,6 +55,12 @@ serve(async (req: Request) => {
             case "customer.subscription.deleted":
                 await handleSubscriptionDeleted(event.data.object, supabase)
                 break
+            case "invoice.payment_succeeded":
+                await handleInvoicePaymentSucceeded(event.data.object, supabase)
+                break
+            case "invoice.payment_failed":
+                await handleInvoicePaymentFailed(event.data.object, supabase)
+                break
         }
     } catch (error: any) {
         console.error(`Error processing event: ${error.message}`)
@@ -62,6 +71,26 @@ serve(async (req: Request) => {
         headers: { "Content-Type": "application/json" },
     })
 })
+
+// Helper: Log Payment Event (Idempotent Audit)
+async function logPaymentEvent(event: any, supabase: any, status: string, error?: string) {
+    const object = event.data.object;
+    try {
+        await supabase.from('payment_logs').upsert({
+            event_id: event.id,
+            event_type: event.type,
+            stripe_customer_id: object.customer,
+            amount: object.amount_paid || object.amount || 0,
+            currency: object.currency || 'brl',
+            status: status,
+            payload: object,
+            error_message: error,
+            created_at: new Date(event.created * 1000).toISOString()
+        }, { onConflict: 'event_id' }); // Ensure Idempotency
+    } catch (e) {
+        console.error("Failed to log payment event:", e);
+    }
+}
 
 async function handleCheckoutCompleted(session: any, supabase: any) {
     const customerId = session.customer
@@ -98,7 +127,7 @@ async function handleSubscriptionUpdated(subscription: any, supabase: any) {
             user_id: profiles.id,
             status: status,
             price_id: priceId,
-            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            current_period_end: subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString() : null,
         })
 
         if (['active', 'trialing'].includes(status)) {
@@ -144,5 +173,57 @@ async function handleSubscriptionDeleted(subscription: any, supabase: any) {
     if (profiles) {
         await supabase.from("subscriptions").update({ status: 'canceled' }).eq("id", subscription.id)
         await supabase.from("profiles").update({ plan: 'FREE' }).eq("id", profiles.id)
+    }
+}
+
+async function handleInvoicePaymentSucceeded(invoice: any, supabase: any) {
+    const customerId = invoice.customer;
+    if (!customerId) return;
+
+    const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("stripe_customer_id", customerId)
+        .single();
+
+    if (profile) {
+        // Upsert Invoice (Idempotent)
+        await supabase.from("invoices").upsert({
+            id: invoice.id,
+            user_id: profile.id,
+            subscription_id: invoice.subscription,
+            amount_paid: invoice.amount_paid, // Cents
+            currency: invoice.currency,
+            status: invoice.status,
+            invoice_pdf: invoice.hosted_invoice_url,
+            created_at: new Date(invoice.created * 1000).toISOString()
+        });
+    }
+}
+
+async function handleInvoicePaymentFailed(invoice: any, supabase: any) {
+    const customerId = invoice.customer;
+    if (!customerId) return;
+
+    const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("stripe_customer_id", customerId)
+        .single();
+
+    if (profile) {
+        // Upsert Invoice as FAILED
+        await supabase.from("invoices").upsert({
+            id: invoice.id,
+            user_id: profile.id,
+            subscription_id: invoice.subscription,
+            amount_paid: 0,
+            currency: invoice.currency,
+            status: 'failed', // Override status
+            invoice_pdf: invoice.hosted_invoice_url,
+            created_at: new Date(invoice.created * 1000).toISOString()
+        });
+
+        // Optional: Notify user or update subscription status if critical
     }
 }
