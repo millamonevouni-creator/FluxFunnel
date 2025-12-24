@@ -126,7 +126,8 @@ serve(async (req: Request) => {
             order: plan.order,
             stripe_product_id: stripeProductId,
             stripe_price_id_monthly: stripePriceIdMonthly,
-            stripe_price_id_yearly: stripePriceIdYearly
+            stripe_price_id_yearly: stripePriceIdYearly,
+            is_hidden: plan.is_hidden
         };
 
         const { data, error } = await supabase

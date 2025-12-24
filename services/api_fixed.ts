@@ -381,25 +381,98 @@ export const api = {
                 order: p.order,
                 stripe_product_id: p.stripe_product_id,
                 stripe_price_id_monthly: p.stripe_price_id_monthly,
-                stripe_price_id_yearly: p.stripe_price_id_yearly
+                stripe_price_id_yearly: p.stripe_price_id_yearly,
+                isHidden: p.is_hidden
             }));
         },
         update: async (id: string, p: any) => {
-            if (isOffline) { await supabase.from('plans').update(p).eq('id', id); return; }
-            // Invoke Edge Function to handle Sync
-            const { data, error } = await supabase.functions.invoke('manage-plan', {
-                body: { plan: { ...p, id }, operation: 'UPDATE' }
-            });
-            if (error) throw error;
-            return data;
+            // Map camelCase to snake_case for DB
+            const dbPlan = {
+                label: p.label,
+                price_monthly: p.priceMonthly,
+                price_yearly: p.priceYearly,
+                project_limit: p.projectLimit,
+                node_limit: p.nodeLimit,
+                team_limit: p.teamLimit,
+                features: p.features,
+                is_popular: p.isPopular,
+                is_hidden: p.isHidden,
+                order: p.order,
+                stripe_product_id: p.stripe_product_id,
+                stripe_price_id_monthly: p.stripe_price_id_monthly,
+                stripe_price_id_yearly: p.stripe_price_id_yearly
+            };
+
+            // STRATEGY: Direct DB Update FIRST (Ensures data is saved even if Edge Function is outdated/fails)
+            const { error: dbError } = await supabase.from('plans').update(dbPlan).eq('id', id);
+            if (dbError) throw dbError;
+
+            // Sync with Stripe (Best Effort - requires deployed Edge Function)
+            if (!isOffline) {
+                try {
+                    await supabase.functions.invoke('manage-plan', {
+                        body: { plan: { ...dbPlan, id }, operation: 'UPDATE' }
+                    });
+                } catch (err) {
+                    console.warn("Stripe Sync Warning:", err);
+                    // We do not throw here to allow local save success
+                }
+            }
+            return dbPlan;
         },
         create: async (p: any) => {
-            if (isOffline) { await supabase.from('plans').insert(p); return; }
-            const { data, error } = await supabase.functions.invoke('manage-plan', {
-                body: { plan: p, operation: 'CREATE' }
-            });
-            if (error) throw error;
-            return data;
+            // Map camelCase to snake_case for DB
+            const dbPlan = {
+                label: p.label,
+                price_monthly: p.priceMonthly,
+                price_yearly: p.priceYearly,
+                project_limit: p.projectLimit,
+                node_limit: p.nodeLimit,
+                team_limit: p.teamLimit,
+                features: p.features,
+                is_popular: p.isPopular,
+                is_hidden: p.isHidden,
+                order: p.order,
+                stripe_product_id: p.stripe_product_id,
+                stripe_price_id_monthly: p.stripe_price_id_monthly,
+                stripe_price_id_yearly: p.stripe_price_id_yearly,
+                // ID GENERATION: DB lacks default value for ID, so we must generate one.
+                // If ID is missing or temporary (NEW_), generate a proper UUID.
+                id: (p.id && !p.id.startsWith('NEW_')) ? p.id : crypto.randomUUID()
+            };
+
+            // Direct DB Insert FIRST
+            if (isOffline) { await supabase.from('plans').insert(dbPlan); return; }
+
+            const { data: dbData, error: dbError } = await supabase.from('plans').insert(dbPlan).select().single();
+            if (dbError) throw dbError;
+
+            // Sync with Stripe (Best Effort)
+            try {
+                await supabase.functions.invoke('manage-plan', {
+                    body: { plan: dbPlan, operation: 'CREATE' }
+                });
+            } catch (err) {
+                console.warn("Stripe Create Sync Warning:", err);
+            }
+
+            // MAP BACK TO APP format (CamelCase)
+            return {
+                id: dbData.id,
+                label: dbData.label,
+                priceMonthly: dbData.price_monthly,
+                priceYearly: dbData.price_yearly,
+                projectLimit: dbData.project_limit,
+                nodeLimit: dbData.node_limit,
+                teamLimit: dbData.team_limit,
+                features: dbData.features || [],
+                isPopular: dbData.is_popular,
+                order: dbData.order,
+                stripe_product_id: dbData.stripe_product_id,
+                stripe_price_id_monthly: dbData.stripe_price_id_monthly,
+                stripe_price_id_yearly: dbData.stripe_price_id_yearly,
+                isHidden: dbData.is_hidden
+            };
         },
         delete: async (id: string) => {
             if (!isOffline) {

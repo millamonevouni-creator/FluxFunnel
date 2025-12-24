@@ -559,7 +559,11 @@ const App = () => {
         plans={plans}
         onUpdatePlan={async (p) => { await api.plans.update(p.id, p); setPlans(prev => prev.map(old => old.id === p.id ? p : old)); showNotification("Plano atualizado!"); }}
         onDeletePlan={async (id) => { await api.plans.delete(id); setPlans(prev => prev.filter(p => p.id !== id)); showNotification("Plano removido."); }}
-        onCreatePlan={async (p) => { await api.plans.create(p); setPlans(prev => [...prev, p]); showNotification("Novo plano criado!"); }}
+        onCreatePlan={async (p) => {
+          const newPlan = await api.plans.create(p);
+          setPlans(prev => [...prev, newPlan]);
+          showNotification("Novo plano criado!");
+        }}
         systemConfig={systemConfig}
         onUpdateSystemConfig={(c) => api.system.update(c)}
         t={t}

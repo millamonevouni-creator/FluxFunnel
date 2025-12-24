@@ -224,12 +224,12 @@ const MasterAdminDashboard = ({
                     await onUpdatePlan(editingPlan);
                 }
                 setEditingPlan(null);
-            } catch (error) {
-                console.error("Failed to save plan:", error);
-                alert("Erro ao salvar o plano. Verifique o console para mais detalhes.");
+            } catch (error: any) {
+                console.error('Erro ao salvar plano:', error);
+                alert(`Erro ao salvar o plano: ${error.message || JSON.stringify(error)}`);
             }
         }
-    };
+    }
 
     const getStatusConfig = (status: FeedbackStatus) => {
         switch (status) {
