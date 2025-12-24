@@ -81,7 +81,7 @@ export const api = {
 
             // Timeout wrapper for signInWithPassword
             const loginPromise = supabase.auth.signInWithPassword({ email, password: password || '123456' });
-            const timeoutLogin = new Promise((resolve) => setTimeout(() => resolve({ data: { user: null, session: null }, error: { message: 'Timeout login' } }), 6000));
+            const timeoutLogin = new Promise((resolve) => setTimeout(() => resolve({ data: { user: null, session: null }, error: { message: 'Timeout login' } }), 15000));
 
             const { data, error } = await Promise.race([loginPromise, timeoutLogin]) as any;
 
@@ -441,37 +441,44 @@ export const api = {
                 id: (p.id && !p.id.startsWith('NEW_')) ? p.id : crypto.randomUUID()
             };
 
-            // Direct DB Insert FIRST
-            if (isOffline) { await supabase.from('plans').insert(dbPlan); return; }
+            let finalData = dbPlan; // Default to input (offline fallback)
 
-            const { data: dbData, error: dbError } = await supabase.from('plans').insert(dbPlan).select().single();
-            if (dbError) throw dbError;
+            // Direct DB Insert FIRST
+            if (!isOffline) {
+                const { data: dbData, error: dbError } = await supabase.from('plans').insert(dbPlan).select().single();
+                if (dbError) throw dbError;
+                finalData = dbData;
+            } else {
+                await supabase.from('plans').insert(dbPlan);
+            }
 
             // Sync with Stripe (Best Effort)
             try {
-                await supabase.functions.invoke('manage-plan', {
-                    body: { plan: dbPlan, operation: 'CREATE' }
-                });
+                if (!isOffline) {
+                    await supabase.functions.invoke('manage-plan', {
+                        body: { plan: dbPlan, operation: 'CREATE' }
+                    });
+                }
             } catch (err) {
                 console.warn("Stripe Create Sync Warning:", err);
             }
 
             // MAP BACK TO APP format (CamelCase)
             return {
-                id: dbData.id,
-                label: dbData.label,
-                priceMonthly: dbData.price_monthly,
-                priceYearly: dbData.price_yearly,
-                projectLimit: dbData.project_limit,
-                nodeLimit: dbData.node_limit,
-                teamLimit: dbData.team_limit,
-                features: dbData.features || [],
-                isPopular: dbData.is_popular,
-                order: dbData.order,
-                stripe_product_id: dbData.stripe_product_id,
-                stripe_price_id_monthly: dbData.stripe_price_id_monthly,
-                stripe_price_id_yearly: dbData.stripe_price_id_yearly,
-                isHidden: dbData.is_hidden
+                id: finalData.id || dbPlan.id,
+                label: finalData.label,
+                priceMonthly: finalData.price_monthly,
+                priceYearly: finalData.price_yearly,
+                projectLimit: finalData.project_limit,
+                nodeLimit: finalData.node_limit,
+                teamLimit: finalData.team_limit,
+                features: finalData.features || [],
+                isPopular: finalData.is_popular,
+                order: finalData.order,
+                stripe_product_id: finalData.stripe_product_id,
+                stripe_price_id_monthly: finalData.stripe_price_id_monthly,
+                stripe_price_id_yearly: finalData.stripe_price_id_yearly,
+                isHidden: finalData.is_hidden
             };
         },
         delete: async (id: string) => {

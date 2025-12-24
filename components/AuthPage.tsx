@@ -125,7 +125,8 @@ const AuthPage = ({ onAuthSuccess, onBack, t, lang, customSubtitle, initialView 
                 // If we are in SET_PASSWORD mode (onboarding), we want to go straight to APP
                 if (currentView === 'SET_PASSWORD') {
                     // Force a clean redirect to root to clear all query params and triggers session check in App.tsx
-                    window.location.href = window.location.origin;
+                    // Using reload ensures fresh state from Supabase
+                    window.location.href = '/';
                     return;
                 }
 

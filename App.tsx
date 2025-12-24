@@ -68,6 +68,7 @@ const App = () => {
         { id: 'FREE', label: 'Plano Gratuito', priceMonthly: 0, priceYearly: 0, projectLimit: 1, nodeLimit: 20, features: [t('pricingFreeFeat1'), t('pricingFreeFeat2'), t('pricingFreeFeat3'), t('pricingFreeFeat4'), t('pricingFreeFeat5'), t('pricingFreeFeat6')], isPopular: false, teamLimit: 0, order: 0 },
         { id: 'PRO', label: 'Plano Pro', priceMonthly: 69.90, priceYearly: 712.98, projectLimit: 5, nodeLimit: 100, features: [t('pricingProFeat1'), t('pricingProFeat2'), t('pricingProFeat3'), t('pricingProFeat4'), t('pricingProFeat5'), t('pricingProFeat6')], isPopular: false, teamLimit: 0, order: 1 },
         { id: 'PREMIUM', label: 'Plano Premium', priceMonthly: 97.90, priceYearly: 881.10, projectLimit: 9999, nodeLimit: 9999, features: [t('pricingPremiumFeat1'), t('pricingPremiumFeat2'), t('pricingPremiumFeat3'), t('pricingPremiumFeat4'), t('pricingPremiumFeat5'), t('pricingPremiumFeat6')], isPopular: true, teamLimit: 10, order: 2 },
+        { id: 'CONVIDADO', label: 'Convidado', priceMonthly: 0, priceYearly: 0, projectLimit: 9999, nodeLimit: 9999, features: ['Acesso a Projetos da Equipe', 'Edição Colaborativa', 'Sem Gestão Financeira'], isPopular: false, teamLimit: 0, order: 99, isHidden: true },
       ];
       setPlans(generatedPlans);
       plansInitializedRef.current = true;
@@ -85,8 +86,20 @@ const App = () => {
           setTeamMembers(await api.team.list());
           setCustomTemplates(await api.templates.list());
           const membership = await api.team.checkMembership(loggedUser.id);
-          if (membership && loggedUser.plan === 'FREE') {
-            setIsInvitedMode(true);
+          if (membership) {
+            // ENFORCE GUEST PLAN PERSISTENCE:
+            // If user is a team member but still on FREE plan, officially update them to CONVIDADO plan in DB
+            if (loggedUser.plan === 'FREE') {
+              console.log("Team Member detected on FREE plan. Upgrading to CONVIDADO...");
+              await api.auth.updateProfile(loggedUser.id, { plan: 'CONVIDADO' });
+              loggedUser.plan = 'CONVIDADO';
+              setUser(prev => prev ? ({ ...prev, plan: 'CONVIDADO' }) : prev);
+            }
+
+            // Set Invited Mode if they are explicitly CONVIDADO (or still FREE/Member just in case update failed)
+            if (loggedUser.plan === 'CONVIDADO' || loggedUser.plan === 'FREE') {
+              setIsInvitedMode(true);
+            }
           }
         }
         setIsDark(safeGet<string>('theme', 'light') === 'dark');
