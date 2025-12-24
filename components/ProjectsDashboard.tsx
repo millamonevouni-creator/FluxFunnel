@@ -18,12 +18,13 @@ interface ProjectsDashboardProps {
     onRenameProject?: (id: string, newName: string) => Promise<void>;
     onRefreshTemplates?: () => Promise<void>;
     showNotification?: (msg: string, type?: 'success' | 'error') => void;
+    projectsLimit?: number;
 }
 
 const ProjectsDashboard = ({
     projects, onCreateProject, onOpenProject, onDeleteProject, isDark, t,
     userPlan = 'FREE', customTemplates = [], onSaveAsTemplate, onRenameProject, onRefreshTemplates,
-    showNotification
+    showNotification, projectsLimit = 3
 }: ProjectsDashboardProps) => {
     const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
     const [creationStep, setCreationStep] = useState<'SELECT' | 'NAME'>('SELECT');
@@ -33,6 +34,8 @@ const ProjectsDashboard = ({
     const [renamingProject, setRenamingProject] = useState<{ id: string, name: string } | null>(null);
     const [templateTab, setTemplateTab] = useState<'SYSTEM' | 'CUSTOM'>('SYSTEM');
     const [editingSubmission, setEditingSubmission] = useState<{ id: string, name: string, desc: string } | null>(null);
+    const [deletingItem, setDeletingItem] = useState<{ type: 'PROJECT' | 'TEMPLATE' | 'PUBLICATION', id: string, name: string } | null>(null);
+    const [sharingItem, setSharingItem] = useState<Project | null>(null);
 
     // New Dashboard Tabs
     const [dashboardTab, setDashboardTab] = useState<'PROJECTS' | 'TEMPLATES' | 'MARKETPLACE'>('PROJECTS');
@@ -41,35 +44,23 @@ const ProjectsDashboard = ({
     const textTitle = isDark ? 'text-white' : 'text-slate-900';
     const textSub = isDark ? 'text-slate-400' : 'text-slate-500';
 
-    const handleShareToMarketplace = async (project: Project) => {
-        if (userPlan !== 'PREMIUM') {
-            alert(t('premiumOnly'));
+    const handleCreateClick = () => {
+        if (projects.length >= projectsLimit) {
+            showNotification?.(t('maxProjectsReached') || 'Limite de projetos atingido', 'error');
             return;
         }
-
-        const confirmMsg = "Sua estratégia passará por uma auditoria antes de ficar disponível publicamente no Marketplace. Durante esse tempo, apenas você verá o status PENDENTE. Continuar?";
-        if (window.confirm(confirmMsg)) {
-            try {
-                await api.templates.submitToMarketplace({
-                    customLabel: project.name,
-                    customDescription: `Arquitetura estratégica compartilhada por um membro Premium da comunidade FluxFunnel.`,
-                    nodes: project.nodes,
-                    edges: project.edges,
-                    authorName: 'Usuário Premium'
-                });
-                alert(t('publishSuccess'));
-                onRefreshTemplates?.();
-            } catch (e) {
-                alert("Erro ao enviar para o Marketplace.");
-            }
-        }
-    };
-
-    const handleCreateClick = () => {
         setNewProjectName('');
         setCreationStep('SELECT');
         setSelectedTemplateId(null);
         setIsTemplateModalOpen(true);
+    };
+
+    const handleShareToMarketplace = (project: Project) => {
+        if (userPlan !== 'PREMIUM') {
+            showNotification?.(t('premiumOnly'), 'error');
+            return;
+        }
+        setSharingItem(project);
     };
 
     const handleTemplateSelect = (templateId: string) => {
@@ -200,7 +191,7 @@ const ProjectsDashboard = ({
                                             </button>
                                         )}
                                         <button
-                                            onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }}
+                                            onClick={(e) => { e.stopPropagation(); setDeletingItem({ type: 'PROJECT', id: project.id, name: project.name }); }}
                                             className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                                             title={t('deleteBtn')}
                                         >
@@ -254,12 +245,9 @@ const ProjectsDashboard = ({
                                     </div>
                                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button
-                                            onClick={async (e) => {
+                                            onClick={(e) => {
                                                 e.stopPropagation();
-                                                if (window.confirm('Excluir modelo?')) {
-                                                    await api.templates.delete(tpl.id);
-                                                    onRefreshTemplates?.();
-                                                }
+                                                setDeletingItem({ type: 'TEMPLATE', id: tpl.id, name: tpl.customLabel || 'Modelo' });
                                             }}
                                             className="p-2 text-slate-400 hover:text-red-500 rounded-lg"
                                             title="Excluir"
@@ -335,17 +323,9 @@ const ProjectsDashboard = ({
                                         {(!sub.status || sub.status === 'PENDING') && (
                                             <div className="flex gap-1">
                                                 <button onClick={(e) => { e.stopPropagation(); setEditingSubmission({ id: sub.id, name: sub.customLabel || '', desc: sub.customDescription || '' }); }} className="p-1.5 text-slate-400 hover:text-indigo-500 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Editar"><Edit size={16} /></button>
-                                                <button onClick={async (e) => {
+                                                <button onClick={(e) => {
                                                     e.stopPropagation();
-                                                    if (window.confirm("Cancelar envio e excluir?")) {
-                                                        try {
-                                                            await api.templates.delete(sub.id);
-                                                            onRefreshTemplates?.();
-                                                        } catch (err) {
-                                                            console.error(err);
-                                                            alert("Erro ao excluir.");
-                                                        }
-                                                    }
+                                                    setDeletingItem({ type: 'PUBLICATION', id: sub.id, name: sub.customLabel || 'Publicação' });
                                                 }} className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Excluir"><Trash2 size={16} /></button>
                                             </div>
                                         )}
@@ -482,6 +462,100 @@ const ProjectsDashboard = ({
                     </div>
                 )
             }
+            {deletingItem && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in-up">
+                    <div className={`w-full max-w-md p-6 rounded-2xl shadow-2xl relative overflow-hidden ${isDark ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}`}>
+                        <div className="flex flex-col items-center text-center">
+                            <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center text-red-600 dark:text-red-400 mb-4">
+                                <Trash2 size={32} />
+                            </div>
+                            <h3 className="text-xl font-bold mb-2">Excluir {deletingItem.type === 'PROJECT' ? 'Projeto' : deletingItem.type === 'TEMPLATE' ? 'Modelo' : 'Publicação'}?</h3>
+                            <p className={`mb-6 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                                Você está prestes a excluir <strong>"{deletingItem.name}"</strong>. Esta ação não pode ser desfeita.
+                            </p>
+                            <div className="flex gap-3 w-full">
+                                <button
+                                    onClick={() => setDeletingItem(null)}
+                                    className={`flex-1 py-3 font-bold rounded-xl border-2 transition-all ${isDark ? 'border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-white' : 'border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        try {
+                                            if (deletingItem.type === 'PROJECT') {
+                                                await onDeleteProject(deletingItem.id);
+                                            } else if (deletingItem.type === 'TEMPLATE') {
+                                                await api.templates.delete(deletingItem.id);
+                                                showNotification?.("Modelo excluído!", 'success');
+                                                onRefreshTemplates?.();
+                                            } else if (deletingItem.type === 'PUBLICATION') {
+                                                await api.templates.delete(deletingItem.id);
+                                                showNotification?.("Publicação excluída!", 'success');
+                                                onRefreshTemplates?.();
+                                            }
+                                            setDeletingItem(null);
+                                        } catch (error) {
+                                            console.error(error);
+                                            showNotification?.("Erro ao excluir item. Verifique permissões.", 'error');
+                                        }
+                                    }}
+                                    className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold shadow-lg shadow-red-500/25 transition-all"
+                                >
+                                    Excluir Agora
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {sharingItem && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in-up">
+                    <div className={`w-full max-w-md p-6 rounded-2xl shadow-2xl relative overflow-hidden ${isDark ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}`}>
+                        <div className="flex flex-col items-center text-center">
+                            <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-4">
+                                <Send size={32} />
+                            </div>
+                            <h3 className="text-xl font-bold mb-2">Publicar no Marketplace?</h3>
+                            <p className={`mb-6 text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                                Sua estratégia <strong>"{sharingItem.name}"</strong> passará por uma auditoria antes de ficar pública.
+                                <br /><br />
+                                Enquanto isso, ela ficará com status <span className="font-bold text-amber-500">PENDENTE</span>.
+                            </p>
+                            <div className="flex gap-3 w-full">
+                                <button
+                                    onClick={() => setSharingItem(null)}
+                                    className={`flex-1 py-3 font-bold rounded-xl border-2 transition-all ${isDark ? 'border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-white' : 'border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        try {
+                                            await api.templates.submitToMarketplace({
+                                                customLabel: sharingItem.name,
+                                                customDescription: `Arquitetura estratégica compartilhada por um membro Premium da comunidade FluxFunnel.`,
+                                                nodes: sharingItem.nodes,
+                                                edges: sharingItem.edges,
+                                                authorName: 'Usuário Premium'
+                                            });
+                                            showNotification?.(t('publishSuccess'), 'success');
+                                            onRefreshTemplates?.();
+                                            setSharingItem(null);
+                                        } catch (e) {
+                                            console.error(e);
+                                            showNotification?.("Erro ao enviar para o Marketplace.", 'error');
+                                        }
+                                    }}
+                                    className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/25 transition-all"
+                                >
+                                    Enviar Agora
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 };

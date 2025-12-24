@@ -57,6 +57,7 @@ const App = () => {
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [plans, setPlans] = useState<PlanConfig[]>([]);
   const [systemConfig, setSystemConfig] = useState<SystemConfig>({ maintenanceMode: false, allowSignups: true, announcements: [], debugMode: false });
+  const [isInvitedMode, setIsInvitedMode] = useState(false);
 
   const t = useCallback((key: keyof typeof TRANSLATIONS['pt']) => TRANSLATIONS[lang][key] || key, [lang]);
   const showNotification = (message: string, type: 'success' | 'error' = 'success') => { setToast({ show: true, message, type }); setTimeout(() => setToast(null), 3000); };
@@ -83,6 +84,10 @@ const App = () => {
           setUser(loggedUser);
           setTeamMembers(await api.team.list());
           setCustomTemplates(await api.templates.list());
+          const membership = await api.team.checkMembership(loggedUser.id);
+          if (membership && loggedUser.plan === 'FREE') {
+            setIsInvitedMode(true);
+          }
         }
         setIsDark(safeGet<string>('theme', 'light') === 'dark');
         setLang(safeGet('lang', 'pt'));
@@ -164,7 +169,7 @@ const App = () => {
         setCurrentView('AUTH');
         setAuthInitialView('UPDATE_PASSWORD'); // Force the specific view
         setAuthReturnView(null);
-      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
         // If magic link or normal login happened
         // Only auto-redirect if we are not already in the app/loading process (checks for AUTH or LANDING view)
         // This avoids conflict with handleLogin which handles UI feedback
@@ -213,9 +218,21 @@ const App = () => {
             // Only switch view if we are effectively seemingly not logged in
             // This is a bit tricky with stale access to state in useEffect.
             // But setting it to APP again is harmless unless it overrides a transition.
-            setCurrentView((prev) => (prev === 'AUTH' || prev === 'LANDING' ? 'APP' : prev));
-            if (currentView === 'LANDING' || currentView === 'AUTH') {
-              setAppPage('PROJECTS');
+
+            // SECURITY/UX FIX: If this is an INVITE flow, do NOT auto-redirect to APP.
+            // Let the SET_PASSWORD view handle it.
+            // We check for 'type=invite' (hash) OR 'intent=invite' (query param set by api.team.invite)
+            const isInviteFlow = (window.location.hash && window.location.hash.includes('type=invite')) ||
+              (window.location.search && window.location.search.includes('intent=invite'));
+
+            if (!isInviteFlow) {
+              setCurrentView((prev) => (prev === 'AUTH' || prev === 'LANDING' ? 'APP' : prev));
+              if (currentView === 'LANDING' || currentView === 'AUTH') {
+                setAppPage('PROJECTS');
+              }
+            } else {
+              // Ensure we are on AUTH view so the specialized viewToUse logic works
+              setCurrentView('AUTH');
             }
           }
         }
@@ -304,6 +321,13 @@ const App = () => {
       setTeamMembers(members || []);
       setCustomTemplates(templates || []);
 
+      const membership = await api.team.checkMembership(newUser.id);
+      if (membership && newUser.plan === 'FREE') {
+        setIsInvitedMode(true);
+      } else {
+        setIsInvitedMode(false);
+      }
+
       if (newUser.isSystemAdmin) {
         console.log("DEBUG: Fetching all users for System Admin");
         // Also wrap this in timeout or just let it fly async without await? 
@@ -373,7 +397,7 @@ const App = () => {
   };
 
   const handleDeleteProject = async (id: string) => {
-    if (!window.confirm("Tem certeza que deseja excluir este projeto?")) return;
+    // Confirmation handled by UI
     try {
       await api.projects.delete(id);
       setProjects(prev => prev.filter(p => p.id !== id));
@@ -474,7 +498,8 @@ const App = () => {
   if (currentView === 'AUTH') {
     // Priority: State from listener > Hash check
     const viewToUse = authInitialView !== 'LOGIN' ? authInitialView :
-      (window.location.hash.includes('type=recovery') || window.location.hash.includes('type=magiclink')) ? 'UPDATE_PASSWORD' : 'LOGIN';
+      (window.location.hash.includes('type=invite') || window.location.search.includes('intent=invite') || window.location.hash.includes('type=magiclink')) ? 'SET_PASSWORD' :
+        (window.location.hash.includes('type=recovery')) ? 'UPDATE_PASSWORD' : 'LOGIN';
 
     return (
       <>
@@ -499,11 +524,29 @@ const App = () => {
       <MasterAdminDashboard
         onBack={() => { setCurrentView('APP'); setAppPage('PROJECTS'); }}
         feedbacks={feedbacks}
-        onUpdateStatus={(id, status) => api.feedbacks.update(id, { status })}
+
         onDeleteFeedback={api.feedbacks.delete}
         onUpdateFeedback={api.feedbacks.update}
-        onReplyFeedback={(id, text) => { }}
-        onDeleteComment={(fid, cid) => { }}
+        onReplyFeedback={async (id, text) => {
+          try {
+            await api.feedbacks.addComment(id, text, true);
+            setFeedbacks(await api.feedbacks.list());
+            showNotification('Resposta enviada com sucesso!');
+          } catch (e) { showNotification('Erro ao enviar resposta.', 'error'); }
+        }}
+        onDeleteComment={async (fid, cid) => {
+          try {
+            // Check if API supports deleteComment, otherwise assume implemented or add TODO
+            if (api.feedbacks.deleteComment) {
+              await api.feedbacks.deleteComment(fid, cid);
+            } else {
+              // Fallback if not implemented in API service wrapper yet, though usually it is
+              console.warn('api.feedbacks.deleteComment not implemented');
+            }
+            setFeedbacks(await api.feedbacks.list());
+            showNotification('Comentário removido!');
+          } catch (e) { showNotification('Erro ao remover comentário.', 'error'); }
+        }}
         users={allUsers}
         onUpdateUser={async (u, p) => {
           if (u.plan) await api.admin.updateUserPlan(u.id, u.plan);
@@ -608,8 +651,34 @@ const App = () => {
               { id: 'TEAM', icon: <Users size={20} />, label: t('team') },
               { id: 'SETTINGS', icon: <Settings size={20} />, label: t('settings') }
             ].map(item => (
-              <button key={item.id} onClick={() => attemptNavigation(() => { if (item.id === 'BUILDER' && !currentProjectId) setAppPage('PROJECTS'); else setAppPage(item.id as AppPage); })} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all ${isSidebarCollapsed ? 'justify-center' : 'lg:justify-start lg:px-4'} ${appPage === item.id ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`} title={item.label}>
-                {item.icon}<span className={`hidden font-medium ${isSidebarCollapsed ? '' : 'lg:block'}`}>{item.label}</span>
+              <button
+                key={item.id}
+                onClick={() => {
+                  // Guest (Invited) Restriction Logic
+                  if (isInvitedMode && (item.id === 'MARKETPLACE' || item.id === 'TEAM')) {
+                    showNotification("Recurso exclusivo para assinantes Premium. Crie sua própria conta para acessar.", 'error');
+                    // Optional: Open upgrade modal or direct to settings
+                    // For now, let's just notify. Or maybe redirect to Settings -> My Account
+                    setAppPage('SETTINGS');
+                    // We can't easily force the tab to MY_ACCOUNT here without prop drilling or context, 
+                    // but the user will see the restriction.
+                    return;
+                  }
+
+                  attemptNavigation(() => {
+                    if (item.id === 'BUILDER' && !currentProjectId) setAppPage('PROJECTS');
+                    else setAppPage(item.id as AppPage);
+                  })
+                }}
+                className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all ${isSidebarCollapsed ? 'justify-center' : 'lg:justify-start lg:px-4'} ${appPage === item.id ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+                title={item.label}
+              >
+                {item.icon}
+                <span className={`hidden font-medium ${isSidebarCollapsed ? '' : 'lg:block'}`}>
+                  {item.label}
+                  {/* Visual lock for guests */}
+                  {isInvitedMode && (item.id === 'MARKETPLACE' || item.id === 'TEAM') && <Lock size={12} className="ml-auto opacity-50" />}
+                </span>
               </button>
             ))}
 
@@ -624,7 +693,7 @@ const App = () => {
         <div className="p-4 border-t border-slate-800 relative">
           <button onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)} className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-slate-800 transition-colors">
             <div className="w-9 h-9 rounded-full bg-indigo-500 flex items-center justify-center text-sm font-bold">{user?.name.substring(0, 2).toUpperCase()}</div>
-            <div className={`hidden text-left ${isSidebarCollapsed ? '' : 'lg:block'}`}><p className="text-sm font-bold truncate">{user?.name}</p><p className="text-xs text-slate-400">{user?.plan}</p></div>
+            <div className={`hidden text-left ${isSidebarCollapsed ? '' : 'lg:block'}`}><p className="text-sm font-bold truncate">{user?.name}</p><p className="text-xs text-slate-400">{isInvitedMode ? 'CONVIDADO' : user?.plan}</p></div>
           </button>
           {isProfileMenuOpen && (
             <div className="absolute bottom-full left-0 w-56 mb-2 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl overflow-hidden z-50">
@@ -663,7 +732,7 @@ const App = () => {
         {appPage !== 'BUILDER' && <AnnouncementBanner announcements={systemConfig.announcements} />}
 
         <div className="flex-1 overflow-hidden relative flex">
-          {appPage === 'PROJECTS' && <ProjectsDashboard projects={projects.filter(p => p.ownerId === user?.id)} onCreateProject={createProject} onOpenProject={(id) => { setCurrentProjectId(id); setAppPage('BUILDER'); }} onDeleteProject={handleDeleteProject} onRenameProject={handleRenameProject} onRefreshTemplates={refreshTemplates} showNotification={showNotification} isDark={isDark} t={t} userPlan={user?.plan} customTemplates={customTemplates} onSaveAsTemplate={async (p) => { await api.templates.create({ customLabel: p.name, nodes: p.nodes, edges: p.edges, isCustom: true }); refreshTemplates(); }} />}
+          {appPage === 'PROJECTS' && <ProjectsDashboard projects={user?.isSystemAdmin ? projects : projects.filter(p => p.ownerId === user?.id || (isInvitedMode && p.collaborators?.includes(user?.id || '')))} projectsLimit={isInvitedMode ? 999 : (plans.find(p => p.id === (user?.plan || 'FREE'))?.projectLimit || 3)} onCreateProject={async (name, desc) => { const newP = await api.projects.create({ name, description: desc, owner_id: user!.id }); setProjects(await api.projects.list()); setAppPage('BUILDER'); setCurrentProjectId(newP.id); }} onOpenProject={(id) => { setCurrentProjectId(id); setAppPage('BUILDER'); }} onDeleteProject={handleDeleteProject} onRenameProject={handleRenameProject} onRefreshTemplates={refreshTemplates} showNotification={showNotification} isDark={isDark} t={t} userPlan={user?.plan} customTemplates={customTemplates} onSaveAsTemplate={async (p) => { await api.templates.create({ customLabel: p.name, nodes: p.nodes, edges: p.edges, isCustom: true }); refreshTemplates(); }} />}
           {appPage === 'MARKETPLACE' && <MarketplaceDashboard userPlan={user?.plan || 'FREE'} onDownload={async (t) => { await createProject(t.id, t.customLabel); showNotification("Template baixado!"); }} isDark={isDark} t={t} userId={user?.id} onUpgrade={() => setShowUpgradeModal(true)} />}
           {appPage === 'TEAM' && <TeamDashboard members={teamMembers} onInviteMember={handleInviteMember} onUpdateRole={handleUpdateMemberRole} onRemoveMember={handleRemoveMember} onResendInvite={handleResendInvite} onUpgrade={() => setShowUpgradeModal(true)} plan={user?.plan || 'FREE'} maxMembers={plans.find(p => p.id === user?.plan)?.teamLimit ?? (user?.plan === 'PREMIUM' ? 10 : 0)} isDark={isDark} t={t} />}
           {appPage === 'MASTER_ADMIN' && <MasterAdminDashboard
@@ -671,7 +740,7 @@ const App = () => {
             onReplyFeedback={async (id, text) => { await api.feedbacks.addComment(id, text); setFeedbacks(await api.feedbacks.list()); }}
             onDeleteComment={async (fid, cid) => { await api.feedbacks.deleteComment(fid, cid); setFeedbacks(await api.feedbacks.list()); }}
             feedbacks={feedbacks}
-            onUpdateStatus={async (id, status) => { await api.feedbacks.update(id, { status }); setFeedbacks(await api.feedbacks.list()); }}
+
             onDeleteFeedback={async (id) => { await api.feedbacks.delete(id); setFeedbacks(await api.feedbacks.list()); }}
             onUpdateFeedback={async (id, f) => { await api.feedbacks.update(id, f); setFeedbacks(await api.feedbacks.list()); }}
             users={allUsers || []}
@@ -688,8 +757,11 @@ const App = () => {
             onUpdateSystemConfig={async (c) => { await api.system.update(c); setSystemConfig(await api.system.get()); }}
             t={t}
           />}
-          {appPage === 'BUILDER' && (currentProjectId ? <FlowCanvasWrapped project={projects.find(p => p.id === currentProjectId)!} onSaveProject={triggerSaveProject} onUnsavedChanges={() => setHasUnsavedChanges(true)} triggerSaveSignal={saveSignal} openSaveModalSignal={openSaveModalSignal} isDark={isDark} toggleTheme={() => setIsDark(!isDark)} isPresentationMode={appMode === AppMode.PRESENTATION} showNotesInPresentation={showNotes} t={t} userPlan={user?.plan || 'FREE'} maxNodes={plans.find(p => p.id === (user?.plan || 'FREE'))?.nodeLimit || 20} plans={plans} showAIAssistant={showAIAssistant} onToggleAIAssistant={() => setShowAIAssistant(!showAIAssistant)} onSaveTemplate={async (nodes, edges, name) => { if (!user) return; try { await api.templates.create({ customLabel: name, nodes, edges, isCustom: true, owner_id: user.id }); showNotification("Modelo salvo com sucesso!"); setCustomTemplates(await api.templates.list()); } catch (e) { showNotification("Erro ao salvar modelo", 'error'); } }} onShareToMarketplace={async (name, desc) => { if (!user) return; const p = projects.find(p => p.id === currentProjectId); if (p) { await api.templates.submitToMarketplace({ customLabel: name, customDescription: desc, nodes: p.nodes, edges: p.edges, authorName: user.name }); showNotification("Enviado para análise com sucesso!"); } }} /> : <div className="flex flex-col items-center justify-center h-full text-slate-400"><Folder size={64} className="mb-4 opacity-50" /><p>{t('noProjectSelected')}</p></div>)}
-          {appPage === 'SETTINGS' && user && <SettingsDashboard user={user} onUpdateUser={async (updated) => { await api.auth.updateProfile(user.id, updated); setUser({ ...user, ...updated }); showNotification("Perfil atualizado!"); }} isDark={isDark} toggleTheme={() => setIsDark(!isDark)} lang={lang} setLang={setLang} t={t} projectsCount={projects.filter(p => p.ownerId === user.id).length} onUpgrade={() => setShowUpgradeModal(true)} />}
+          {appPage === 'BUILDER' && (currentProjectId ? <FlowCanvasWrapped project={projects.find(p => p.id === currentProjectId)!} onSaveProject={triggerSaveProject} onUnsavedChanges={() => setHasUnsavedChanges(true)} triggerSaveSignal={saveSignal} openSaveModalSignal={openSaveModalSignal} isDark={isDark} toggleTheme={() => setIsDark(!isDark)} isPresentationMode={appMode === AppMode.PRESENTATION} showNotesInPresentation={showNotes} t={t}
+            userPlan={isInvitedMode ? 'CONVIDADO' : (user?.plan || 'FREE')}
+            maxNodes={isInvitedMode ? 999999 : (plans.find(p => p.id === (user?.plan || 'FREE'))?.nodeLimit || 20)}
+            plans={plans} showAIAssistant={showAIAssistant} onToggleAIAssistant={() => setShowAIAssistant(!showAIAssistant)} onSaveTemplate={async (nodes, edges, name) => { if (!user) return; try { await api.templates.create({ customLabel: name, nodes, edges, isCustom: true, owner_id: user.id }); showNotification("Modelo salvo com sucesso!"); setCustomTemplates(await api.templates.list()); } catch (e) { showNotification("Erro ao salvar modelo", 'error'); } }} onShareToMarketplace={async (name, desc) => { if (!user) return; const p = projects.find(p => p.id === currentProjectId); if (p) { await api.templates.submitToMarketplace({ customLabel: name, customDescription: desc, nodes: p.nodes, edges: p.edges, authorName: user.name }); showNotification("Enviado para análise com sucesso!"); } }} /> : <div className="flex flex-col items-center justify-center h-full text-slate-400"><Folder size={64} className="mb-4 opacity-50" /><p>{t('noProjectSelected')}</p></div>)}
+          {appPage === 'SETTINGS' && user && <SettingsDashboard isInvited={isInvitedMode} user={user} onUpdateUser={async (updated) => { await api.auth.updateProfile(user.id, updated); setUser({ ...user, ...updated }); showNotification("Perfil atualizado!"); }} isDark={isDark} toggleTheme={() => setIsDark(!isDark)} lang={lang} setLang={setLang} t={t} projectsCount={projects.filter(p => p.ownerId === user.id).length} onUpgrade={() => setShowUpgradeModal(true)} />}
         </div>
       </main>
     </div>

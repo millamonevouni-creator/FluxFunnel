@@ -48,11 +48,16 @@ const RoadmapPage = ({ onBack, feedbacks, onSubmitFeedback, onVote, onAddComment
         if (!newTitle.trim() || !newDesc.trim()) return;
 
         try {
+            // Enhanced Author Name with Email if available
+            const enhancedAuthorName = currentUser
+                ? `${currentUser.name} (${currentUser.email})`
+                : (authorName || 'Anônimo');
+
             await onSubmitFeedback({
                 title: newTitle,
                 description: newDesc,
                 type: newType,
-                authorName: authorName || 'Anônimo'
+                authorName: enhancedAuthorName
             });
 
             // Reset
@@ -268,6 +273,57 @@ const RoadmapPage = ({ onBack, feedbacks, onSubmitFeedback, onVote, onAddComment
                                         </p>
                                     </div>
 
+                                    {/* Card Timeline & Progress (New) */}
+                                    {((item.status === 'IN_PROGRESS' || item.status === 'PLANNED') && (item.startDate || item.estimatedCompletionDate)) && (
+                                        <div className="mb-4 pt-3 border-t border-dashed border-slate-700/50">
+                                            {item.startDate && item.estimatedCompletionDate && item.status === 'IN_PROGRESS' && (
+                                                <div className="mb-2">
+                                                    <div className="flex justify-between text-[10px] uppercase font-bold text-slate-500 mb-1">
+                                                        <span>Progresso Estimado</span>
+                                                        <span>
+                                                            {(() => {
+                                                                const start = new Date(item.startDate).getTime();
+                                                                const end = new Date(item.estimatedCompletionDate).getTime();
+                                                                const now = new Date().getTime();
+                                                                const progress = Math.min(100, Math.max(0, ((now - start) / (end - start)) * 100));
+                                                                return `${Math.round(progress)}%`;
+                                                            })()}
+                                                        </span>
+                                                    </div>
+                                                    <div className="h-2 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden mt-3">
+                                                        {(() => {
+                                                            const start = new Date(item.startDate).getTime();
+                                                            const end = new Date(item.estimatedCompletionDate).getTime();
+                                                            const now = new Date().getTime();
+                                                            const pct = Math.min(100, Math.max(0, ((now - start) / (end - start)) * 100));
+                                                            return (
+                                                                <div
+                                                                    className="h-full bg-indigo-500 rounded-full transition-all duration-1000"
+                                                                    // eslint-disable-next-line
+                                                                    style={{ width: `${pct}%` }}
+                                                                />
+                                                            );
+                                                        })()}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            <div className="flex justify-between items-center text-[10px] font-medium text-slate-400">
+                                                {item.startDate && (
+                                                    <div className="flex items-center gap-1">
+                                                        <span className="text-slate-500">Início:</span>
+                                                        <span className={isDark ? 'text-slate-300' : 'text-slate-600'}>{new Date(item.startDate).toLocaleDateString()}</span>
+                                                    </div>
+                                                )}
+                                                {item.estimatedCompletionDate && (
+                                                    <div className="flex items-center gap-1">
+                                                        <span className="text-slate-500">Prev.:</span>
+                                                        <span className={isDark ? 'text-emerald-400' : 'text-emerald-600'}>{new Date(item.estimatedCompletionDate).toLocaleDateString()}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {/* Card Footer: Vote & Meta */}
                                     <div className={`pt-4 mt-auto border-t flex items-center justify-between ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
                                         <button
@@ -334,7 +390,67 @@ const RoadmapPage = ({ onBack, feedbacks, onSubmitFeedback, onVote, onAddComment
                         <div className={`flex-1 overflow-y-auto p-8 scrollbar-thin ${isDark ? 'scrollbar-thumb-slate-700' : 'scrollbar-thumb-slate-300'}`}>
                             {/* Description Box */}
                             <div className={`p-6 rounded-xl border mb-8 leading-relaxed text-sm ${isDark ? 'bg-slate-800/50 border-slate-700 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'}`}>
-                                <p className="whitespace-pre-wrap">{activeFeedback.description}</p>
+                                <p className="whitespace-pre-wrap mb-6">{activeFeedback.description}</p>
+
+                                {/* Modal Timeline & Progress */}
+                                {((activeFeedback.status === 'IN_PROGRESS' || activeFeedback.status === 'PLANNED') && (activeFeedback.startDate || activeFeedback.estimatedCompletionDate)) && (
+                                    <div className={`mt-6 pt-6 border-t border-dashed ${isDark ? 'border-slate-700' : 'border-slate-300'}`}>
+                                        <h4 className={`text-xs font-bold uppercase tracking-wider mb-4 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Cronograma Estimado</h4>
+
+                                        {activeFeedback.startDate && activeFeedback.estimatedCompletionDate && activeFeedback.status === 'IN_PROGRESS' && (
+                                            <div className="mb-6">
+                                                <div className="flex justify-between text-xs font-bold mb-2">
+                                                    <span className={isDark ? 'text-slate-400' : 'text-slate-600'}>Progresso</span>
+                                                    <span className="text-indigo-500">
+                                                        {(() => {
+                                                            const start = new Date(activeFeedback.startDate).getTime();
+                                                            const end = new Date(activeFeedback.estimatedCompletionDate).getTime();
+                                                            const now = new Date().getTime();
+                                                            const progress = Math.min(100, Math.max(0, ((now - start) / (end - start)) * 100));
+                                                            return `${Math.round(progress)}%`;
+                                                        })()}
+                                                    </span>
+                                                </div>
+                                                <div className={`h-2.5 w-full rounded-full overflow-hidden ${isDark ? 'bg-slate-900' : 'bg-slate-200'}`}>
+                                                    {(() => {
+                                                        const start = new Date(activeFeedback.startDate).getTime();
+                                                        const end = new Date(activeFeedback.estimatedCompletionDate).getTime();
+                                                        const now = new Date().getTime();
+                                                        const pct = Math.min(100, Math.max(0, ((now - start) / (end - start)) * 100));
+                                                        return (
+                                                            <div
+                                                                className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-1000 shadow-lg shadow-indigo-500/20"
+                                                                // eslint-disable-next-line
+                                                                style={{ width: `${pct}%` }}
+                                                            />
+                                                        );
+                                                    })()}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            {activeFeedback.startDate && (
+                                                <div className={`p-3 rounded-lg border ${isDark ? 'bg-slate-900/50 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+                                                    <span className="block text-[10px] uppercase font-bold text-slate-500 mb-1">Data de Início</span>
+                                                    <div className={`flex items-center gap-2 font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
+                                                        <CornerDownRight size={14} className="text-indigo-500" />
+                                                        {new Date(activeFeedback.startDate).toLocaleDateString()}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {activeFeedback.estimatedCompletionDate && (
+                                                <div className={`p-3 rounded-lg border ${isDark ? 'bg-slate-900/50 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+                                                    <span className="block text-[10px] uppercase font-bold text-slate-500 mb-1">Previsão de Entrega</span>
+                                                    <div className={`flex items-center gap-2 font-bold ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                                                        <CheckCircle size={14} />
+                                                        {new Date(activeFeedback.estimatedCompletionDate).toLocaleDateString()}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Vote Action Area */}

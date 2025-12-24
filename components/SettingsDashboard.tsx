@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { User as UserIcon, Lock, CreditCard, Bell, Moon, Sun, Globe, Save, CheckCircle, Shield, Camera, Briefcase, Building, Laptop, ToggleLeft, ToggleRight, AlertTriangle, ChevronDown, Mail, Rocket } from 'lucide-react';
+import { User as UserIcon, Lock, CreditCard, Bell, Moon, Sun, Globe, Save, CheckCircle, Shield, Camera, Briefcase, Building, Laptop, ToggleLeft, ToggleRight, AlertTriangle, ChevronDown, Mail, Rocket, Crown } from 'lucide-react';
 import { User, Language, UserPlan } from '../types';
 import { api } from '../services/api_fixed';
 
@@ -13,10 +13,11 @@ interface SettingsDashboardProps {
     t: (key: any) => string;
     projectsCount?: number;
     onUpgrade: () => void;
+    isInvited?: boolean;
 }
 
-const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setLang, t, projectsCount = 0, onUpgrade }: SettingsDashboardProps) => {
-    const [activeTab, setActiveTab] = useState<'PROFILE' | 'PLAN' | 'PREFERENCES' | 'SECURITY' | 'NOTIFICATIONS'>('PROFILE');
+const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setLang, t, projectsCount = 0, onUpgrade, isInvited = false }: SettingsDashboardProps) => {
+    const [activeTab, setActiveTab] = useState<'PROFILE' | 'PLAN' | 'PREFERENCES' | 'SECURITY' | 'NOTIFICATIONS' | 'MY_ACCOUNT'>('PROFILE');
     const [name, setName] = useState(user.name);
     const [email, setEmail] = useState(user.email);
     const [company, setCompany] = useState(user.company_name || '');
@@ -43,13 +44,21 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
         }
     };
 
-    const tabs = [
+    let tabs = [
         { id: 'PROFILE', label: t('tabProfile'), icon: <UserIcon size={18} /> },
         { id: 'PREFERENCES', label: t('tabPreferences'), icon: <Globe size={18} /> },
-        { id: 'PLAN', label: t('tabPlan'), icon: <CreditCard size={18} /> },
-        { id: 'NOTIFICATIONS', label: t('tabNotifications'), icon: <Bell size={18} /> },
         { id: 'SECURITY', label: t('tabSecurity'), icon: <Lock size={18} /> },
     ];
+
+    if (!isInvited) {
+        tabs = [
+            ...tabs,
+            { id: 'PLAN', label: t('tabPlan'), icon: <CreditCard size={18} /> },
+            { id: 'NOTIFICATIONS', label: t('tabNotifications'), icon: <Bell size={18} /> },
+        ];
+    } else {
+        tabs.push({ id: 'MY_ACCOUNT', label: 'Minha Conta Admin', icon: <Crown size={18} /> });
+    }
 
     // Helper styles
     const cardClass = isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200';
@@ -560,6 +569,32 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
                                     <button className="px-5 py-2.5 border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl text-sm font-bold transition-colors" title={t('deleteAccount')} aria-label={t('deleteAccount')}>
                                         {t('deleteAccount')}
                                     </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* MY ACCOUNT TAB (For Invited Users) */}
+                        {activeTab === 'MY_ACCOUNT' && isInvited && (
+                            <div className="space-y-6">
+                                <div className={`p-8 rounded-2xl border relative overflow-hidden bg-gradient-to-br from-indigo-600 to-purple-700 text-white shadow-xl`}>
+                                    <div className="absolute top-0 right-0 p-32 bg-white opacity-5 rounded-full blur-3xl transform translate-x-10 -translate-y-10"></div>
+                                    <div className="relative z-10">
+                                        <h3 className="text-2xl font-bold mb-4">Minha Conta Admin</h3>
+                                        <p className="opacity-90 max-w-lg mb-6">
+                                            Você está visualizando a conta da equipe. Clique abaixo para gerenciar sua própria assinatura e projetos pessoais.
+                                        </p>
+                                        <div className="flex items-center gap-4">
+                                            <div className="p-4 bg-white/10 rounded-xl backdrop-blur-sm">
+                                                <p className="text-sm text-indigo-200 mb-1">Seu Plano</p>
+                                                <p className="text-xl font-bold">{user.plan}</p>
+                                            </div>
+                                        </div>
+                                        <div className="mt-8">
+                                            <button onClick={onUpgrade} className="bg-white text-indigo-600 px-6 py-3 rounded-xl font-bold hover:bg-indigo-50 transition-colors shadow-lg">
+                                                {user.plan === 'FREE' ? 'Fazer Upgrade para Premium' : 'Gerenciar Minha Assinatura'}
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )}

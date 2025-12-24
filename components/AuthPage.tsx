@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { GitGraph, Mail, Lock, User, ArrowRight, Loader2, CheckCircle, AlertCircle, Key, ArrowLeft } from 'lucide-react';
+import { GitGraph, Mail, Lock, User, ArrowRight, Loader2, CheckCircle, AlertCircle, Key, ArrowLeft, Sparkles } from 'lucide-react';
 import { Language } from '../types';
 
 interface AuthPageProps {
@@ -25,7 +25,7 @@ const GoogleIcon = () => (
     </svg>
 );
 
-type AuthView = 'LOGIN' | 'FORGOT_PASSWORD' | 'RESET_SENT' | 'UPDATE_PASSWORD' | 'SIGNUP_SUCCESS';
+type AuthView = 'LOGIN' | 'FORGOT_PASSWORD' | 'RESET_SENT' | 'UPDATE_PASSWORD' | 'SIGNUP_SUCCESS' | 'SET_PASSWORD';
 
 const AuthPage = ({ onAuthSuccess, onBack, t, lang, customSubtitle, initialView = 'LOGIN', onUpdatePassword, onResetPassword, onGoogleLogin }: AuthPageProps) => {
     const [currentView, setCurrentView] = useState<AuthView>(initialView);
@@ -121,6 +121,14 @@ const AuthPage = ({ onAuthSuccess, onBack, t, lang, customSubtitle, initialView 
         try {
             if (onUpdatePassword) {
                 await onUpdatePassword(password);
+
+                // If we are in SET_PASSWORD mode (onboarding), we want to go straight to APP
+                if (currentView === 'SET_PASSWORD') {
+                    // Force a clean redirect to root to clear all query params and triggers session check in App.tsx
+                    window.location.href = window.location.origin;
+                    return;
+                }
+
                 setCurrentView('LOGIN');
                 // Show success message or auto-login? For now just go to login.
                 alert('Senha atualizada com sucesso! Por favor, faça login.');
@@ -214,6 +222,72 @@ const AuthPage = ({ onAuthSuccess, onBack, t, lang, customSubtitle, initialView 
                         >
                             Tentar outro e-mail
                         </button>
+                    </div>
+                )}
+
+                {/* --- VIEW: SET PASSWORD (FIRST ACCESS) --- */}
+                {currentView === 'SET_PASSWORD' && (
+                    <div className="animate-fade-in-up">
+                        <div className="text-center mb-8">
+                            <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce-slow">
+                                <Sparkles className="text-indigo-600" size={32} />
+                            </div>
+                            <h2 className="text-2xl font-bold text-slate-900">Bem-vindo(a)!</h2>
+                            <p className="text-slate-500 text-sm mt-2">Você foi convidado(a) para colaborar. Defina sua senha para acessar.</p>
+                        </div>
+
+                        {error && (
+                            <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-sm text-red-600">
+                                <AlertCircle size={16} />
+                                {error}
+                            </div>
+                        )}
+
+                        <form onSubmit={handleUpdatePasswordSubmit} className="space-y-4">
+                            <div className="space-y-1">
+                                <label className="text-xs font-semibold text-slate-600 ml-1">Crie sua Senha</label>
+                                <div className="relative">
+                                    <Lock className="absolute left-3 top-3 text-slate-400" size={18} />
+                                    <input
+                                        type="password"
+                                        required
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        placeholder="No mínimo 6 caracteres"
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-10 pr-4 text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all placeholder:text-slate-400"
+                                        autoFocus
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="text-xs font-semibold text-slate-600 ml-1">Confirme a Senha</label>
+                                <div className="relative">
+                                    <Lock className="absolute left-3 top-3 text-slate-400" size={18} />
+                                    <input
+                                        type="password"
+                                        required
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        placeholder="Repita a senha"
+                                        className={`w-full bg-slate-50 border rounded-xl py-2.5 pl-10 pr-4 text-slate-900 focus:ring-2 outline-none transition-all placeholder:text-slate-400
+                                    ${confirmPassword && confirmPassword !== password ? 'border-red-300 focus:ring-red-200' : 'border-slate-200 focus:ring-indigo-500 focus:bg-white'}
+                                `}
+                                    />
+                                    {confirmPassword && confirmPassword === password && (
+                                        <CheckCircle className="absolute right-3 top-3 text-green-500" size={18} />
+                                    )}
+                                </div>
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 mt-6 shadow-md shadow-indigo-500/20 active:scale-95"
+                            >
+                                Acessar Plataforma <ArrowRight size={18} />
+                            </button>
+                        </form>
                     </div>
                 )}
 

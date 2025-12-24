@@ -285,7 +285,7 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                     </div>
 
                     <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto items-start">
-                        {[...plans].sort((a, b) => (a.order || 0) - (b.order || 0)).map((plan) => {
+                        {[...plans].filter(p => !p.isHidden).sort((a, b) => (a.order || 0) - (b.order || 0)).map((plan) => {
                             const price = billingCycle === 'monthly' ? plan.priceMonthly : plan.priceYearly;
                             const period = billingCycle === 'monthly' ? '/mês' : '/ano';
 

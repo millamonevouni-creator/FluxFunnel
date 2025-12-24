@@ -31,7 +31,7 @@ const TeamDashboard = ({ members = [], onInviteMember, onUpdateRole, onRemoveMem
     // Modal State
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [inviteEmail, setInviteEmail] = useState('');
-    const [inviteRole, setInviteRole] = useState<'ADMIN' | 'EDITOR' | 'VIEWER'>('VIEWER');
+    const [inviteRole, setInviteRole] = useState<'ADMIN' | 'EDITOR' | 'VIEWER'>('EDITOR');
     const [isInviteLoading, setIsInviteLoading] = useState(false);
     const progressRef = useRef<HTMLDivElement>(null);
 
@@ -268,27 +268,17 @@ const TeamDashboard = ({ members = [], onInviteMember, onUpdateRole, onRemoveMem
 
                             <div>
                                 <label className={`block text-sm font-bold mb-1 ${textSub}`}>Permissão de Acesso</label>
-                                <div className="grid grid-cols-3 gap-2">
-                                    {['VIEWER', 'EDITOR', 'ADMIN'].map((role) => (
-                                        <button
-                                            key={role}
-                                            type="button"
-                                            onClick={() => setInviteRole(role as any)}
-                                            className={`py-2 px-1 rounded-lg text-xs font-bold border transition-all ${inviteRole === role
-                                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
-                                                : `${isDark ? 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}`
-                                                }`}
-                                            title={`Selecionar função ${role}`}
-                                            aria-label={`Selecionar função ${role}`}
-                                        >
-                                            {role}
-                                        </button>
-                                    ))}
+                                <div className="grid grid-cols-1 gap-2">
+                                    <button
+                                        type="button"
+                                        className="py-2 px-1 rounded-lg text-xs font-bold border transition-all bg-indigo-600 text-white border-indigo-600 shadow-md cursor-default"
+                                        title="Função Editor"
+                                    >
+                                        EDITOR
+                                    </button>
                                 </div>
                                 <p className="text-xs text-slate-500 mt-2">
-                                    {inviteRole === 'VIEWER' && 'Pode apenas visualizar os projetos. Não pode editar.'}
-                                    {inviteRole === 'EDITOR' && 'Pode editar fluxos e configurações do projeto.'}
-                                    {inviteRole === 'ADMIN' && 'Controle total sobre a equipe e cobranças.'}
+                                    Pode editar fluxos e configurações do projeto.
                                 </p>
                                 <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-2 font-medium flex items-center gap-1">
                                     <AlertCircle size={10} /> O convite é enviado via e-mail. Peça para o membro verificar a pasta de spam.

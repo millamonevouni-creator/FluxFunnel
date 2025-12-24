@@ -18,14 +18,14 @@ import ReactFlow, { Background, Controls } from 'reactflow';
 import 'reactflow/dist/style.css';
 import CustomNode from './CustomNode';
 import CustomEdge from './CustomEdge';
+import RoadmapBoard from './RoadmapBoard';
 import { api } from '../services/api_fixed';
 
 interface MasterAdminDashboardProps {
     onBack: () => void;
     feedbacks: FeedbackItem[];
-    onUpdateStatus: (id: string, status: FeedbackStatus) => void;
-    onDeleteFeedback: (id: string) => void;
     onUpdateFeedback: (id: string, data: Partial<FeedbackItem>) => void;
+    onDeleteFeedback: (id: string) => void;
     onReplyFeedback: (id: string, text: string) => void;
     onDeleteComment: (feedbackId: string, commentId: string) => void;
     users: User[];
@@ -44,8 +44,8 @@ interface MasterAdminDashboardProps {
 }
 
 const MasterAdminDashboard = ({
-    onBack, feedbacks, onUpdateStatus, onDeleteFeedback, onUpdateFeedback,
-    onReplyFeedback, onDeleteComment, users, onUpdateUser, onDeleteUser, onBanUser,
+    onBack, feedbacks, onDeleteFeedback, onUpdateFeedback, onReplyFeedback, onDeleteComment,
+    users, onUpdateUser, onDeleteUser, onBanUser,
     onCreateUser, onImpersonate, plans, onUpdatePlan, onDeletePlan,
     onCreatePlan, systemConfig, onUpdateSystemConfig, t
 }: MasterAdminDashboardProps) => {
@@ -69,6 +69,7 @@ const MasterAdminDashboard = ({
     const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
     const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
     const [editingPlan, setEditingPlan] = useState<PlanConfig | null>(null);
+    const [planToDelete, setPlanToDelete] = useState<PlanConfig | null>(null);
     const [editingUser, setEditingUser] = useState<User | null>(null);
 
     // User Module State
@@ -112,16 +113,16 @@ const MasterAdminDashboard = ({
         setLocalFeedbacks(feedbacks);
     }, [feedbacks]);
 
-    const handleUpdateStatusOptimistic = (id: string, status: FeedbackStatus) => {
+    const handleUpdateFeedbackOptimistic = (id: string, updates: Partial<FeedbackItem>) => {
         // Optimistic update
-        setLocalFeedbacks(prev => prev.map(f => f.id === id ? { ...f, status } : f));
+        setLocalFeedbacks(prev => prev.map(f => f.id === id ? { ...f, ...updates } : f));
 
         // Call parent/server
-        onUpdateStatus(id, status);
+        onUpdateFeedback(id, updates);
 
         // Also update selectedFb if it's the one being modified
         if (selectedFb && selectedFb.id === id) {
-            setSelectedFb(prev => prev ? { ...prev, status } : null);
+            setSelectedFb(prev => prev ? { ...prev, ...updates } : null);
         }
     };
 
@@ -449,6 +450,27 @@ const MasterAdminDashboard = ({
                                 </button>
                             </div>
 
+                            <div className="flex items-center justify-between p-8 bg-[#020617]/50 border border-slate-800/60 rounded-[2.5rem] group hover:border-indigo-500/30 transition-all">
+                                <div className="flex items-center gap-5">
+                                    <div className={`p-5 rounded-2xl transition-all ${editingPlan.isHidden ? 'bg-slate-700 text-slate-300' : 'bg-slate-900 text-slate-600'}`}>
+                                        <Eye size={24} />
+                                    </div>
+                                    <div>
+                                        <p className="font-black text-xs uppercase tracking-[0.2em] text-slate-200">Oculto na Landing Page</p>
+                                        <p className="text-[10px] text-slate-500 font-bold uppercase mt-1">NÃO MOSTRAR NOS PREÇOS PÚBLICOS</p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setEditingPlan({ ...editingPlan, isHidden: !editingPlan.isHidden })}
+                                    className={`w-16 h-9 rounded-full relative transition-all duration-500 ${editingPlan.isHidden ? 'bg-indigo-600 shadow-[0_0_20px_rgba(79,70,229,0.3)]' : 'bg-slate-800'}`}
+                                    title={editingPlan.isHidden ? "Tornar visível" : "Ocultar"}
+                                    aria-label={editingPlan.isHidden ? "Tornar visível" : "Ocultar"}
+                                >
+                                    <div className={`absolute top-1.5 w-6 h-6 bg-white rounded-full shadow-sm transition-all duration-300 ${editingPlan.isHidden ? 'right-1.5' : 'left-1.5'}`}></div>
+                                </button>
+                            </div>
+
                             <div className="space-y-4">
                                 <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Nome Comercial do Plano</label>
                                 <input type="text" value={editingPlan.label} onChange={e => setEditingPlan({ ...editingPlan, label: e.target.value })} className="w-full p-6 bg-[#020617] border border-slate-800 rounded-2xl outline-none focus:border-indigo-500 transition-all text-sm font-black placeholder:text-slate-700" placeholder="Ex: Plano Elite / Business" />
@@ -508,7 +530,7 @@ const MasterAdminDashboard = ({
                             </div>
 
                             <div className="pt-6 flex gap-6">
-                                <button type="button" onClick={() => { if (window.confirm("Ação irreversível. Excluir este modelo de plano?")) { onDeletePlan(editingPlan.id); setEditingPlan(null); } }} className="p-8 bg-red-600/10 text-red-500 border border-red-600/20 rounded-3xl font-black shadow-xl hover:bg-red-600 hover:text-white transition-all active:scale-90" title="Excluir Plano" aria-label="Excluir Plano">
+                                <button type="button" onClick={() => setPlanToDelete(editingPlan)} className="p-8 bg-red-600/10 text-red-500 border border-red-600/20 rounded-3xl font-black shadow-xl hover:bg-red-600 hover:text-white transition-all active:scale-90" title="Excluir Plano" aria-label="Excluir Plano">
                                     <Trash2 size={28} aria-hidden="true" />
                                 </button>
                                 <button type="submit" className="flex-1 py-8 bg-indigo-600 hover:bg-indigo-500 text-white rounded-[2.5rem] font-black uppercase tracking-[0.4em] text-[11px] shadow-2xl shadow-indigo-500/30 transition-all active:scale-95" title="Publicar Alterações Globais" aria-label="Publicar Alterações Globais">
@@ -516,6 +538,39 @@ const MasterAdminDashboard = ({
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO DE PLANO */}
+            {planToDelete && (
+                <div className="fixed inset-0 z-[250] flex items-center justify-center p-8 bg-black/95 backdrop-blur-md animate-fade-in-up">
+                    <div className="w-full max-w-md bg-[#0f172a] rounded-3xl border border-red-900/50 overflow-hidden shadow-2xl flex flex-col items-center text-center p-8">
+                        <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mb-6">
+                            <ShieldAlert size={40} className="text-red-500" />
+                        </div>
+                        <h3 className="text-2xl font-black uppercase tracking-tight text-white mb-2">Excluir Plano?</h3>
+                        <p className="text-slate-400 text-sm mb-8">
+                            Tem certeza que deseja excluir o plano <strong className="text-white">{planToDelete.label}</strong>? Essa ação não pode ser desfeita e pode afetar usuários ativos.
+                        </p>
+                        <div className="flex gap-4 w-full">
+                            <button
+                                onClick={() => setPlanToDelete(null)}
+                                className="flex-1 py-4 rounded-xl font-bold bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white transition-all"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={() => {
+                                    onDeletePlan(planToDelete.id);
+                                    setPlanToDelete(null);
+                                    setEditingPlan(null); // Close the edit modal too
+                                }}
+                                className="flex-1 py-4 rounded-xl font-bold bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-500/20 transition-all"
+                            >
+                                Confirmar Exclusão
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
@@ -796,258 +851,14 @@ const MasterAdminDashboard = ({
             {
                 activeTab === 'FEEDBACK' && (
                     <div className="animate-fade-in-up h-[calc(100vh-200px)] relative flex flex-col">
-                        {/* Toolbar */}
-                        <div className="flex justify-between items-center mb-4 px-2 shrink-0">
-                            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Roadmap Pipeline</h3>
-                            <div className="flex gap-2">
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
-                                    <input
-                                        type="text"
-                                        value={fbSearch}
-                                        onChange={e => setFbSearch(e.target.value)}
-                                        className="pl-9 pr-4 py-1.5 bg-slate-900/50 border border-slate-800 rounded-lg text-xs text-slate-300 outline-none focus:border-indigo-500 w-48 transition-all"
-                                        placeholder="Buscar..."
-                                    />
-                                </div>
-                                <select value={fbTypeFilter} onChange={e => setFbTypeFilter(e.target.value as any)} className="bg-slate-900/50 border border-slate-800 rounded-lg text-xs font-bold text-slate-400 px-3 py-1.5 uppercase outline-none focus:border-indigo-500" title="Filtrar por tipo" aria-label="Filtrar por tipo">
-                                    <option value="ALL">Todos os Tipos</option>
-                                    <option value="FEATURE">Feature</option>
-                                    <option value="BUG">Bug</option>
-                                    <option value="IMPROVEMENT">Melhoria</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        {/* Kanban Board */}
-                        <div className="flex-1 flex gap-4 overflow-x-auto pb-4 px-2 scrollbar-thin scrollbar-thumb-indigo-500/20 scrollbar-track-transparent">
-                            {([
-                                { id: 'ENTRY', label: 'Nova Sugestão', color: 'border-slate-700/50 bg-slate-800/10' },
-                                { id: 'PENDING', label: 'Pendente', color: 'border-yellow-500/20 bg-yellow-500/5 shadow-[0_0_15px_-5px_rgba(234,179,8,0.1)]' },
-                                { id: 'PLANNED', label: 'Planejado', color: 'border-blue-500/20 bg-blue-500/5 shadow-[0_0_15px_-5px_rgba(59,130,246,0.1)]' },
-                                { id: 'IN_PROGRESS', label: 'Em Andamento', color: 'border-purple-500/20 bg-purple-500/5 shadow-[0_0_15px_-5px_rgba(168,85,247,0.1)]' },
-                                { id: 'COMPLETED', label: 'Concluído', color: 'border-green-500/20 bg-green-500/5 shadow-[0_0_15px_-5px_rgba(34,197,94,0.1)]' },
-                                { id: 'REJECTED', label: 'Arquivado', color: 'border-red-500/20 bg-red-500/5 shadow-[0_0_15px_-5px_rgba(239,68,68,0.1)]' }
-                            ] as const).map(column => {
-                                const columnItems = filteredFeedbacks.filter(f => f.status === column.id);
-                                return (
-                                    <div
-                                        key={column.id}
-                                        className={`flex-shrink-0 w-80 flex flex-col bg-[#0f172a]/60 border ${column.color} rounded-2xl overflow-hidden backdrop-blur-sm transition-colors`}
-                                        onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-white/5'); }}
-                                        onDragLeave={(e) => { e.currentTarget.classList.remove('bg-white/5'); }}
-                                        onDrop={(e) => {
-                                            e.preventDefault();
-                                            e.currentTarget.classList.remove('bg-white/5');
-                                            const cardId = e.dataTransfer.getData('cardId');
-                                            if (cardId && column.id !== 'ENTRY') handleUpdateStatusOptimistic(cardId, column.id);
-                                        }}
-                                    >
-                                        <div className="p-3 border-b border-white/5 flex justify-between items-center bg-[#0f172a]/40">
-                                            <div className="flex items-center gap-2">
-                                                <div className={`w-2 h-2 rounded-full ${column.id === 'PENDING' ? 'bg-yellow-500' : column.id === 'PLANNED' ? 'bg-blue-500' : column.id === 'IN_PROGRESS' ? 'bg-purple-500' : column.id === 'COMPLETED' ? 'bg-green-500' : column.id === 'REJECTED' ? 'bg-red-500' : 'bg-slate-500'}`} />
-                                                <span className="text-[10px] font-black uppercase tracking-wider text-slate-300">{column.label}</span>
-                                            </div>
-                                            {column.id !== 'ENTRY' && (
-                                                <span className="px-2 py-0.5 rounded-full bg-white/5 text-[9px] font-mono font-bold text-slate-500 border border-white/5">
-                                                    {columnItems.length}
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        <div className="flex-1 overflow-y-auto p-2 space-y-2 scrollbar-thin scrollbar-thumb-white/10 hover:scrollbar-thumb-white/20">
-                                            {column.id === 'ENTRY' ? (
-                                                /* INLINE FORM FOR ENTRY COLUMN */
-                                                <div className="bg-[#1e293b]/30 border border-dashed border-slate-700/60 p-4 rounded-xl flex flex-col gap-3">
-                                                    <h4 className="text-xs font-bold text-slate-400 mb-1">Nova Sugestão</h4>
-                                                    <input
-                                                        type="text"
-                                                        value={newTitle}
-                                                        onChange={e => setNewTitle(e.target.value)}
-                                                        placeholder="Título"
-                                                        className="w-full px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-xs text-slate-200 outline-none focus:border-indigo-500 transition-colors"
-                                                    />
-                                                    <textarea
-                                                        value={newDesc}
-                                                        onChange={e => setNewDesc(e.target.value)}
-                                                        placeholder="Descrição..."
-                                                        className="w-full px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-xs text-slate-200 outline-none focus:border-indigo-500 h-24 resize-none transition-colors scrollbar-thin"
-                                                    />
-                                                    <select
-                                                        value={newType}
-                                                        onChange={e => setNewType(e.target.value as any)}
-                                                        className="w-full px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-xs text-slate-200 outline-none focus:border-indigo-500"
-                                                        aria-label="Tipo de feedback"
-                                                    >
-                                                        <option value="FEATURE">Feature</option>
-                                                        <option value="BUG">Bug</option>
-                                                        <option value="IMPROVEMENT">Melhoria</option>
-                                                    </select>
-                                                    <button
-                                                        onClick={() => {
-                                                            if (!newTitle.trim() || !newDesc.trim()) return;
-                                                            onSubmitFeedback({
-                                                                title: newTitle,
-                                                                description: newDesc,
-                                                                type: newType,
-                                                                authorName: 'Admin'
-                                                            }).then(() => {
-                                                                setNewTitle('');
-                                                                setNewDesc('');
-                                                                setNewType('FEATURE');
-                                                                // Implicitly it goes to PENDING, updating the list automatically
-                                                            });
-                                                        }}
-                                                        disabled={!newTitle.trim() || !newDesc.trim()}
-                                                        className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:hover:bg-indigo-600 text-white rounded-lg text-xs font-bold uppercase tracking-wider transition-all shadow-lg flex items-center justify-center gap-2"
-                                                    >
-                                                        <Plus size={14} /> Adicionar
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                /* EXISTING CARDS RENDERING */
-                                                columnItems.map(card => (
-                                                    <div
-                                                        key={card.id}
-                                                        draggable
-                                                        onDragStart={(e) => {
-                                                            e.dataTransfer.setData('cardId', card.id);
-                                                            e.dataTransfer.effectAllowed = 'move';
-                                                        }}
-                                                        onClick={() => setSelectedFb(card)}
-                                                        className="bg-[#1e293b]/50 border border-slate-700/60 p-3 rounded-xl cursor-grab active:cursor-grabbing hover:border-indigo-500/50 hover:bg-[#1e293b] hover:shadow-lg hover:-translate-y-0.5 transition-all group relative select-none"
-                                                    >
-                                                        <div className="flex justify-between items-start mb-2">
-                                                            <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider ${getTypeConfig(card.type).color} bg-black/40 border border-white/5`}>
-                                                                {card.type}
-                                                            </span>
-                                                            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                <div className="bg-white/10 p-1 rounded hover:bg-white/20 text-slate-300">
-                                                                    <MessageSquare size={10} />
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <h4 className="text-xs font-bold text-slate-200 mb-1 leading-snug">{card.title}</h4>
-                                                        <p className="text-[10px] text-slate-500 line-clamp-2 mb-2 font-medium">{card.description}</p>
-
-                                                        <div className="flex justify-between items-center pt-2 border-t border-white/5">
-                                                            <div className="flex items-center gap-1.5">
-                                                                <div className="w-4 h-4 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-[8px] font-bold border border-indigo-500/30">
-                                                                    {card.authorName.charAt(0)}
-                                                                </div>
-                                                                <span className="text-[9px] font-bold text-slate-500 truncate max-w-[80px]">{card.authorName.split(' ')[0]}</span>
-                                                            </div>
-                                                            <div className="flex items-center gap-2 text-[9px] font-bold text-slate-500">
-                                                                <span className="flex items-center gap-1 bg-white/5 px-1.5 py-0.5 rounded-md"><ThumbsUp size={8} /> {card.votes}</span>
-                                                                {card.comments && card.comments.length > 0 && (
-                                                                    <span className="flex items-center gap-1 bg-white/5 px-1.5 py-0.5 rounded-md"><MessageCircle size={8} /> {card.comments.length}</span>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-
-                        {/* Detail Modal */}
-                        {selectedFb && (
-                            <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in" onClick={() => setSelectedFb(null)}>
-                                <div className="bg-[#0f172a] border border-slate-700 w-full max-w-3xl max-h-[85vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-scale-in" onClick={e => e.stopPropagation()}>
-                                    <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-[#0f172a] shrink-0">
-                                        <div className="flex items-center gap-2">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Detalhes do Feedback</span>
-                                        </div>
-                                        <button onClick={() => setSelectedFb(null)} className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors" title="Fechar detalhes" aria-label="Fechar detalhes">
-                                            <X size={16} />
-                                        </button>
-                                    </div>
-
-                                    <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-slate-700">
-                                        <div className="flex justify-between items-start mb-6">
-                                            <div>
-                                                <div className="flex items-center gap-3 mb-2">
-                                                    <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest ${getTypeConfig(selectedFb.type).color} bg-slate-900 border border-white/10`}>{selectedFb.type}</span>
-                                                    <span className="text-slate-600 text-[10px] font-mono flex items-center gap-1.5"><Clock size={10} /> {new Date(selectedFb.createdAt).toLocaleDateString()}</span>
-                                                </div>
-                                                <h2 className="text-2xl font-black text-white mb-2 leading-tight">{selectedFb.title}</h2>
-                                                <div className="flex items-center gap-3">
-                                                    <div className="flex items-center gap-2 px-2 py-1 bg-indigo-600/20 text-indigo-400 rounded-lg text-[10px] font-bold border border-indigo-500/30">
-                                                        <ThumbsUp size={12} /> {selectedFb.votes} Votos
-                                                    </div>
-                                                    <div className="flex items-center gap-2 px-2 py-1 bg-slate-800 text-slate-400 rounded-lg text-[10px] font-bold border border-slate-700">
-                                                        <UserIcon size={12} /> {selectedFb.authorName}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <select
-                                                    value={selectedFb.status}
-                                                    onChange={(e) => { handleUpdateStatusOptimistic(selectedFb.id, e.target.value as any); }}
-                                                    className="bg-slate-900 border border-slate-700 text-slate-300 text-[10px] font-bold uppercase rounded-lg px-3 py-2 outline-none focus:border-indigo-500 hover:border-slate-600 transition-colors"
-                                                    title="Alterar status do feedback"
-                                                    aria-label="Alterar status do feedback"
-                                                >
-                                                    <option value="PENDING">Pendente</option>
-                                                    <option value="PLANNED">Planejado</option>
-                                                    <option value="IN_PROGRESS">Em Andamento</option>
-                                                    <option value="COMPLETED">Concluído</option>
-                                                    <option value="REJECTED">Arquivar</option>
-                                                </select>
-                                                <button onClick={() => { if (window.confirm('Apagar feedback?')) { onDeleteFeedback(selectedFb.id); setSelectedFb(null); } }} className="p-2 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white rounded-lg transition-colors border border-red-600/20" title="Apagar feedback" aria-label="Apagar feedback">
-                                                    <Trash2 size={14} />
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-800 mb-8">
-                                            <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{selectedFb.description}</p>
-                                        </div>
-
-                                        <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4 flex items-center gap-2">
-                                            Histórico de Respostas <div className="h-px flex-1 bg-slate-800"></div>
-                                        </h4>
-                                        <div className="space-y-4 mb-4">
-                                            {(selectedFb.comments || []).map(comment => (
-                                                <div key={comment.id} className={`flex gap-3 ${comment.isAdmin ? 'flex-row-reverse' : ''}`}>
-                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 border-2 ${comment.isAdmin ? 'bg-indigo-600 text-white border-indigo-400' : 'bg-slate-700 text-slate-300 border-slate-600'}`}>
-                                                        {comment.authorName.substring(0, 1)}
-                                                    </div>
-                                                    <div className={`p-4 rounded-2xl max-w-[85%] shadow-sm ${comment.isAdmin ? 'bg-indigo-600/10 border border-indigo-500/20 text-indigo-100 rounded-tr-none' : 'bg-slate-800 border border-slate-700 text-slate-300 rounded-tl-none'}`}>
-                                                        <div className="flex justify-between items-center mb-1 gap-3">
-                                                            <span className="text-[9px] font-black uppercase tracking-wider opacity-70">{comment.authorName} {comment.isAdmin && '(Staff)'}</span>
-                                                            {comment.isAdmin && <button onClick={() => onDeleteComment(selectedFb.id, comment.id)} className="text-slate-500 hover:text-red-400" title="Excluir"><X size={10} /></button>}
-                                                        </div>
-                                                        <p className="text-xs leading-relaxed">{comment.text}</p>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                            {(!selectedFb.comments || selectedFb.comments.length === 0) && <div className="text-center py-8 text-slate-600 text-xs italic bg-slate-900/30 rounded-xl border border-dashed border-slate-800">Nenhuma resposta ainda. Seja o primeiro a responder!</div>}
-                                        </div>
-                                    </div>
-
-                                    <div className="p-4 border-t border-slate-800 bg-[#0f172a] shrink-0">
-                                        <form onSubmit={handleSendReply} className="relative">
-                                            <input
-                                                type="text"
-                                                value={replyText}
-                                                onChange={e => setReplyText(e.target.value)}
-                                                placeholder="Escreva uma resposta oficial..."
-                                                className="w-full pl-5 pr-12 py-3 bg-slate-900 border border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-slate-200 transition-all font-medium text-xs focus:bg-slate-800"
-                                            />
-                                            <button type="submit" disabled={!replyText.trim()} className="absolute right-2 top-2 p-1.5 bg-indigo-600 disabled:opacity-50 text-white rounded-lg shadow-lg hover:scale-105 active:scale-95 transition-all" title="Enviar resposta" aria-label="Enviar resposta">
-                                                <Send size={14} />
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+                        <RoadmapBoard
+                            feedbacks={localFeedbacks}
+                            onUpdateFeedback={handleUpdateFeedbackOptimistic}
+                            onDeleteFeedback={onDeleteFeedback}
+                            onSubmitFeedback={onSubmitFeedback}
+                            onReplyFeedback={onReplyFeedback}
+                            onDeleteComment={onDeleteComment}
+                        />
                     </div>
                 )
             }

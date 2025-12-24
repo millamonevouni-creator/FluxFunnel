@@ -89,6 +89,7 @@ export interface Project {
   edges: Edge[];
   updatedAt: Date;
   ownerId?: string;
+  collaborators?: string[];
 }
 
 export type TemplateStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
@@ -154,6 +155,7 @@ export interface PlanConfig {
   isPopular?: boolean;
   teamLimit?: number;
   order?: number;
+  isHidden?: boolean;
   stripe_product_id?: string;
   stripe_price_id_monthly?: string;
   stripe_price_id_yearly?: string;
@@ -213,4 +215,6 @@ export interface FeedbackItem {
   authorName: string;
   createdAt: Date;
   comments: FeedbackComment[];
+  startDate?: string;
+  estimatedCompletionDate?: string;
 }

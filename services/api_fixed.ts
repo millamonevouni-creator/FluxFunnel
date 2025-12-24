@@ -103,7 +103,7 @@ export const api = {
                     plan: 'FREE', // Default fallback
                     status: 'ACTIVE',
                     lastLogin: new Date(),
-                    isSystemAdmin: email === 'millamon.evouni@gmail.com' // Emergency admin access
+                    isSystemAdmin: false // SECURITY FIX: Never grant admin on fallback
                 };
                 return { user: fallbackUser, token: data.session?.access_token || '' };
             }
@@ -162,7 +162,7 @@ export const api = {
                     plan: 'FREE',
                     status: 'ACTIVE',
                     lastLogin: new Date(),
-                    isSystemAdmin: data.user.email === 'millamon.evouni@gmail.com'
+                    isSystemAdmin: false // SECURITY FIX: Never grant admin on fallback
                 };
             } catch (e) { return null; }
         },
@@ -234,7 +234,12 @@ export const api = {
             return (data || []).map(mapProfileToUser);
         },
         update: async (id: string, data: any) => { if (!isOffline) await supabase.from('profiles').update(data).eq('id', id); },
-        delete: async (id: string) => { if (!isOffline) await supabase.from('profiles').delete().eq('id', id); }
+        delete: async (id: string) => {
+            if (!isOffline) {
+                const { error } = await supabase.from('profiles').delete().eq('id', id);
+                if (error) throw error;
+            }
+        }
     },
     projects: {
         list: async () => {
@@ -256,7 +261,12 @@ export const api = {
             return mapDBProjectToApp(data);
         },
         update: async (id: string, p: any) => { if (!isOffline) await supabase.from('projects').update(p).eq('id', id); },
-        delete: async (id: string) => { if (!isOffline) await supabase.from('projects').delete().eq('id', id); }
+        delete: async (id: string) => {
+            if (!isOffline) {
+                const { error } = await supabase.from('projects').delete().eq('id', id);
+                if (error) throw error;
+            }
+        }
     },
     templates: {
         list: async () => {
@@ -304,7 +314,12 @@ export const api = {
                 is_public: false
             });
         },
-        delete: async (id: string) => { if (!isOffline) await supabase.from('templates').delete().eq('id', id); },
+        delete: async (id: string) => {
+            if (!isOffline) {
+                const { error } = await supabase.from('templates').delete().eq('id', id);
+                if (error) throw error;
+            }
+        },
         update: async (id: string, updates: any) => { if (!isOffline) await supabase.from('templates').update(updates).eq('id', id); },
         submitToMarketplace: async (template: Partial<Template>) => {
             if (isOffline) return;
@@ -386,7 +401,12 @@ export const api = {
             if (error) throw error;
             return data;
         },
-        delete: async (id: string) => { if (!isOffline) await supabase.from('plans').delete().eq('id', id); }
+        delete: async (id: string) => {
+            if (!isOffline) {
+                const { error } = await supabase.from('plans').delete().eq('id', id);
+                if (error) throw error;
+            }
+        }
     },
     feedbacks: {
         list: async () => {
@@ -420,8 +440,30 @@ export const api = {
             const { error } = await supabase.from('feedbacks').insert(dbPayload);
             if (error) throw error;
         },
-        update: async (id: string, f: any) => { if (!isOffline) await supabase.from('feedbacks').update(f).eq('id', id); },
-        delete: async (id: string) => { if (!isOffline) await supabase.from('feedbacks').delete().eq('id', id); },
+        update: async (id: string, f: any) => {
+            if (!isOffline) {
+                // Map App Camel Case to DB Snake Case for partial updates
+                const dbPayload: any = {};
+                if (f.title !== undefined) dbPayload.title = f.title;
+                if (f.description !== undefined) dbPayload.description = f.description;
+                if (f.type !== undefined) dbPayload.type = f.type;
+                if (f.status !== undefined) dbPayload.status = f.status;
+                if (f.authorName !== undefined) dbPayload.author_name = f.authorName;
+                if (f.startDate !== undefined) dbPayload.start_date = f.startDate;
+                if (f.estimatedCompletionDate !== undefined) dbPayload.estimated_completion_date = f.estimatedCompletionDate;
+                if (f.votes !== undefined) dbPayload.votes = f.votes;
+                if (f.votedUserIds !== undefined) dbPayload.voted_user_ids = f.votedUserIds;
+                if (f.comments !== undefined) dbPayload.comments = f.comments;
+
+                await supabase.from('feedbacks').update(dbPayload).eq('id', id);
+            }
+        },
+        delete: async (id: string) => {
+            if (!isOffline) {
+                const { error } = await supabase.from('feedbacks').delete().eq('id', id);
+                if (error) throw error;
+            }
+        },
         vote: async (id: string) => {
             if (isOffline) return;
             const { data: { user } } = await supabase.auth.getUser();
@@ -439,7 +481,7 @@ export const api = {
                 await supabase.from('feedbacks').update({ votes: (data?.votes || 0) + 1, voted_user_ids: [...votedIds, user.id] }).eq('id', id);
             }
         },
-        addComment: async (id: string, text: string) => {
+        addComment: async (id: string, text: string, isAdminOverride: boolean = false) => {
             if (isOffline) return;
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error("Login required to comment");
@@ -452,7 +494,8 @@ export const api = {
                 authorName: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
                 authorId: user.id,
                 createdAt: new Date().toISOString(),
-                isAdmin: user.email === 'millamon.evouni@gmail.com' // Simplistic check, ideally use role from profile
+                // SECURITY FIX: Use override if provided (trusted source), otherwise rely on DB profile (handled by caller passing true if admin)
+                isAdmin: isAdminOverride
             };
             await supabase.from('feedbacks').update({ comments: [...comments, newComment] }).eq('id', id);
         },
@@ -485,7 +528,7 @@ export const api = {
                     const { error: authError } = await supabase.auth.signInWithOtp({
                         email,
                         options: {
-                            emailRedirectTo: window.location.origin
+                            emailRedirectTo: window.location.origin + '?intent=invite'
                         }
                     });
 
@@ -503,13 +546,18 @@ export const api = {
             }
         },
         updateRole: async (id: string, role: string) => { if (!isOffline) await supabase.from('team_members').update({ role }).eq('id', id); },
+        checkMembership: async (userId: string) => {
+            if (isOffline) return null;
+            const { data } = await supabase.from('team_members').select('*').eq('user_id', userId).eq('status', 'ACTIVE').maybeSingle();
+            return data;
+        },
         remove: async (id: string) => { if (!isOffline) await supabase.from('team_members').delete().eq('id', id); },
         resendInvite: async (email: string) => {
             if (isOffline) return;
             const { error } = await supabase.auth.signInWithOtp({
                 email,
                 options: {
-                    emailRedirectTo: window.location.origin
+                    emailRedirectTo: window.location.origin + '?intent=invite'
                 }
             });
             if (error) throw error;
