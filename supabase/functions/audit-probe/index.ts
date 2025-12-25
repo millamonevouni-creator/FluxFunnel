@@ -15,23 +15,27 @@ serve(async (req) => {
             return new Response(JSON.stringify({ error: 'SUPABASE_DB_URL not set' }), { status: 500, headers: corsHeaders })
         }
 
-        const { query } = await req.json()
-
+        const { query, mode } = await req.json()
         const client = new Client(dbUrl)
         await client.connect()
 
         let result;
-        if (query.trim().toUpperCase().startsWith('SELECT')) {
-            const queryResult = await client.queryObject(query)
-            result = queryResult.rows
+        if (mode === 'schema') {
+            const schemaQuery = `
+            SELECT column_name, data_type, is_nullable 
+            FROM information_schema.columns 
+            WHERE table_schema = 'public' AND table_name = 'profiles';
+        `;
+            const q = await client.queryObject(schemaQuery);
+            result = q.rows;
         } else {
-            const queryResult = await client.queryArray(query)
-            result = { message: "Executed", rows: queryResult.rows }
+            // Fallback or generic execution
+            const q = await client.queryObject(query);
+            result = q.rows;
         }
 
         await client.end()
-
-        return new Response(JSON.stringify({ success: true, data: result }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+        return new Response(JSON.stringify({ success: true, columns: result }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 
     } catch (error: any) {
         return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: corsHeaders })

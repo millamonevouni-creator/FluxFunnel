@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { GitGraph, Mail, Lock, User, ArrowRight, Loader2, CheckCircle, AlertCircle, Key, ArrowLeft, Sparkles } from 'lucide-react';
+import PasswordInput from './PasswordInput';
 import { Language } from '../types';
 
 interface AuthPageProps {
@@ -268,38 +269,32 @@ const AuthPage = ({ onAuthSuccess, onBack, t, lang, customSubtitle, initialView 
                         <form onSubmit={handleUpdatePasswordSubmit} className="space-y-4">
                             <div className="space-y-1">
                                 <label className="text-xs font-semibold text-slate-600 ml-1">Crie sua Senha</label>
-                                <div className="relative">
-                                    <Lock className="absolute left-3 top-3 text-slate-400" size={18} />
-                                    <input
-                                        type="password"
-                                        required
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        placeholder="No mínimo 6 caracteres"
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-10 pr-4 text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all placeholder:text-slate-400"
-                                        autoFocus
-                                    />
-                                </div>
+                                <PasswordInput
+                                    required
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="No mínimo 6 caracteres"
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all placeholder:text-slate-400"
+                                    autoFocus
+                                    icon={Lock}
+                                />
                             </div>
 
                             <div className="space-y-1">
                                 <label className="text-xs font-semibold text-slate-600 ml-1">Confirme a Senha</label>
-                                <div className="relative">
-                                    <Lock className="absolute left-3 top-3 text-slate-400" size={18} />
-                                    <input
-                                        type="password"
-                                        required
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                        placeholder="Repita a senha"
-                                        className={`w-full bg-slate-50 border rounded-xl py-2.5 pl-10 pr-4 text-slate-900 focus:ring-2 outline-none transition-all placeholder:text-slate-400
+                                <PasswordInput
+                                    required
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    placeholder="Repita a senha"
+                                    className={`w-full bg-slate-50 border rounded-xl py-2.5 text-slate-900 focus:ring-2 outline-none transition-all placeholder:text-slate-400
                                     ${confirmPassword && confirmPassword !== password ? 'border-red-300 focus:ring-red-200' : 'border-slate-200 focus:ring-indigo-500 focus:bg-white'}
                                 `}
-                                    />
-                                    {confirmPassword && confirmPassword === password && (
-                                        <CheckCircle className="absolute right-3 top-3 text-green-500" size={18} />
-                                    )}
-                                </div>
+                                    icon={Lock}
+                                    rightElement={confirmPassword && confirmPassword === password ? (
+                                        <CheckCircle className="text-green-500" size={18} />
+                                    ) : undefined}
+                                />
                             </div>
 
                             <button
@@ -334,38 +329,32 @@ const AuthPage = ({ onAuthSuccess, onBack, t, lang, customSubtitle, initialView 
                         <form onSubmit={handleUpdatePasswordSubmit} className="space-y-4">
                             <div className="space-y-1">
                                 <label className="text-xs font-semibold text-slate-600 ml-1">Nova Senha</label>
-                                <div className="relative">
-                                    <Lock className="absolute left-3 top-3 text-slate-400" size={18} />
-                                    <input
-                                        type="password"
-                                        required
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        placeholder="••••••••"
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-10 pr-4 text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all placeholder:text-slate-400"
-                                        autoFocus
-                                    />
-                                </div>
+                                <PasswordInput
+                                    required
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="••••••••"
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all placeholder:text-slate-400"
+                                    autoFocus
+                                    icon={Lock}
+                                />
                             </div>
 
                             <div className="space-y-1">
                                 <label className="text-xs font-semibold text-slate-600 ml-1">Confirmar Nova Senha</label>
-                                <div className="relative">
-                                    <Lock className="absolute left-3 top-3 text-slate-400" size={18} />
-                                    <input
-                                        type="password"
-                                        required
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                        placeholder="••••••••"
-                                        className={`w-full bg-slate-50 border rounded-xl py-2.5 pl-10 pr-4 text-slate-900 focus:ring-2 outline-none transition-all placeholder:text-slate-400
+                                <PasswordInput
+                                    required
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    placeholder="••••••••"
+                                    className={`w-full bg-slate-50 border rounded-xl py-2.5 text-slate-900 focus:ring-2 outline-none transition-all placeholder:text-slate-400
                                     ${confirmPassword && confirmPassword !== password ? 'border-red-300 focus:ring-red-200' : 'border-slate-200 focus:ring-indigo-500 focus:bg-white'}
                                 `}
-                                    />
-                                    {confirmPassword && confirmPassword === password && (
-                                        <CheckCircle className="absolute right-3 top-3 text-green-500" size={18} />
-                                    )}
-                                </div>
+                                    icon={Lock}
+                                    rightElement={confirmPassword && confirmPassword === password ? (
+                                        <CheckCircle className="text-green-500" size={18} />
+                                    ) : undefined}
+                                />
                             </div>
 
                             <button
@@ -494,14 +483,13 @@ const AuthPage = ({ onAuthSuccess, onBack, t, lang, customSubtitle, initialView 
                                     )}
                                 </div>
                                 <div className="relative">
-                                    <Lock className="absolute left-3 top-3 text-slate-400" size={18} />
-                                    <input
-                                        type="password"
+                                    <PasswordInput
                                         required
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         placeholder="••••••••"
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-10 pr-4 text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all placeholder:text-slate-400"
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all placeholder:text-slate-400"
+                                        icon={Lock}
                                     />
                                 </div>
                             </div>
@@ -510,20 +498,19 @@ const AuthPage = ({ onAuthSuccess, onBack, t, lang, customSubtitle, initialView 
                                 <div className="space-y-1">
                                     <label className="text-xs font-semibold text-slate-600 ml-1">{t('confirmPwd')}</label>
                                     <div className="relative">
-                                        <Lock className="absolute left-3 top-3 text-slate-400" size={18} />
-                                        <input
-                                            type="password"
+                                        <PasswordInput
                                             required
                                             value={confirmPassword}
                                             onChange={(e) => setConfirmPassword(e.target.value)}
                                             placeholder="••••••••"
-                                            className={`w-full bg-slate-50 border rounded-xl py-2.5 pl-10 pr-4 text-slate-900 focus:ring-2 outline-none transition-all placeholder:text-slate-400
+                                            className={`w-full bg-slate-50 border rounded-xl py-2.5 text-slate-900 focus:ring-2 outline-none transition-all placeholder:text-slate-400
                                         ${confirmPassword && confirmPassword !== password ? 'border-red-300 focus:ring-red-200' : 'border-slate-200 focus:ring-indigo-500 focus:bg-white'}
                                     `}
+                                            icon={Lock}
+                                            rightElement={confirmPassword && confirmPassword === password ? (
+                                                <CheckCircle className="text-green-500" size={18} />
+                                            ) : undefined}
                                         />
-                                        {confirmPassword && confirmPassword === password && (
-                                            <CheckCircle className="absolute right-3 top-3 text-green-500" size={18} />
-                                        )}
                                     </div>
                                 </div>
                             )}

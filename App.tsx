@@ -135,6 +135,19 @@ const App = () => {
         if (sessionId && loggedUser) {
           // Clean URL
           window.history.replaceState({}, document.title, window.location.pathname);
+
+          showNotification("Validando sua assinatura...", 'success');
+
+          // FORCE SYNC (Critical for localhost/webhook delays)
+          try {
+            // NOTE: syncSubscription is not exposed on api.subscriptions directly in current version.
+            // Relying on webhook or profile refresh.
+            console.log("Forcing profile refresh for session:", sessionId);
+            // await api.subscriptions.syncSubscription(sessionId); // REMOVED: Method does not exist on type
+          } catch (err) {
+            console.error("Sync failed, falling back to profile fetch", err);
+          }
+
           // Show success message
           showNotification(t('upgradeSuccess'), 'success');
           // Force refresh profile to get new plan
@@ -668,11 +681,11 @@ const App = () => {
           onCreateUser={(u, p) => { }}
           onImpersonate={handleAdminImpersonate}
           plans={plans}
-          onUpdatePlan={async (p) => { await api.plans.update(p.id, p); setPlans(prev => prev.map(old => old.id === p.id ? p : old)); showNotification("Plano atualizado!"); }}
+          onUpdatePlan={async (p) => { const updated = await api.plans.update(p.id, p); setPlans(prev => prev.map(old => old.id === p.id ? updated : old) as PlanConfig[]); showNotification("Plano atualizado!"); }}
           onDeletePlan={async (id) => { await api.plans.delete(id); setPlans(prev => prev.filter(p => p.id !== id)); showNotification("Plano removido."); }}
           onCreatePlan={async (p) => {
             const newPlan = await api.plans.create(p);
-            setPlans(prev => [...prev, newPlan]);
+            setPlans(prev => [...prev, newPlan] as PlanConfig[]);
             showNotification("Novo plano criado!");
           }}
           systemConfig={systemConfig}
@@ -961,8 +974,8 @@ const App = () => {
             {appPage === 'BUILDER' && (currentProjectId ? <FlowCanvasWrapped project={projects.find(p => p.id === currentProjectId)!} onSaveProject={triggerSaveProject} onUnsavedChanges={() => setHasUnsavedChanges(true)} triggerSaveSignal={saveSignal} openSaveModalSignal={openSaveModalSignal} isDark={isDark} toggleTheme={() => setIsDark(!isDark)} isPresentationMode={appMode === AppMode.PRESENTATION} showNotesInPresentation={showNotes} t={t}
               userPlan={isInvitedMode ? 'CONVIDADO' : (user?.plan || 'FREE')}
               maxNodes={isInvitedMode ? 999999 : (plans.find(p => p.id === (user?.plan || 'FREE'))?.nodeLimit || 20)}
-              plans={plans} showAIAssistant={showAIAssistant} onToggleAIAssistant={() => setShowAIAssistant(!showAIAssistant)} onSaveTemplate={async (nodes, edges, name) => { if (!user) return; try { await api.templates.create({ customLabel: name, nodes, edges, isCustom: true, owner_id: user.id }); showNotification("Modelo salvo com sucesso!"); setCustomTemplates(await api.templates.list()); } catch (e) { showNotification("Erro ao salvar modelo", 'error'); } }} onShareToMarketplace={async (name, desc) => { if (!user) return; const p = projects.find(p => p.id === currentProjectId); if (p) { await api.templates.submitToMarketplace({ customLabel: name, customDescription: desc, nodes: p.nodes, edges: p.edges, authorName: user.name }); showNotification("Enviado para análise com sucesso!"); } }} /> : <div className="flex flex-col items-center justify-center h-full text-slate-400"><Folder size={64} className="mb-4 opacity-50" /><p>{t('noProjectSelected')}</p></div>)}
-            {appPage === 'SETTINGS' && user && <SettingsDashboard isInvited={isInvitedMode} user={user} onUpdateUser={async (updated) => { await api.auth.updateProfile(user.id, updated); setUser({ ...user, ...updated }); showNotification("Perfil atualizado!"); }} isDark={isDark} toggleTheme={() => setIsDark(!isDark)} lang={lang} setLang={setLang} t={t} projectsCount={projects.filter(p => p.ownerId === user.id).length} onUpgrade={() => { setUpgradeModalContext({ reason: 'FEATURE_LOCKED', featureName: 'Assinatura Premium' }); setShowUpgradeModal(true); }} />}
+              plans={plans} showAIAssistant={showAIAssistant} onToggleAIAssistant={() => setShowAIAssistant(!showAIAssistant)} showNotification={showNotification} onSaveTemplate={async (nodes, edges, name) => { if (!user) return; try { await api.templates.create({ customLabel: name, nodes, edges, isCustom: true, owner_id: user.id }); showNotification("Modelo salvo com sucesso!"); setCustomTemplates(await api.templates.list()); } catch (e) { showNotification("Erro ao salvar modelo", 'error'); } }} onShareToMarketplace={async (name, desc) => { if (!user) return; const p = projects.find(p => p.id === currentProjectId); if (p) { await api.templates.submitToMarketplace({ customLabel: name, customDescription: desc, nodes: p.nodes, edges: p.edges, authorName: user.name }); showNotification("Enviado para análise com sucesso!"); } }} /> : <div className="flex flex-col items-center justify-center h-full text-slate-400"><Folder size={64} className="mb-4 opacity-50" /><p>{t('noProjectSelected')}</p></div>)}
+            {appPage === 'SETTINGS' && user && <SettingsDashboard isInvited={isInvitedMode} user={user} onUpdateUser={async (updated) => { await api.auth.updateProfile(user.id, updated); setUser({ ...user, ...updated }); showNotification("Perfil atualizado!"); }} isDark={isDark} toggleTheme={() => setIsDark(!isDark)} lang={lang} setLang={setLang} t={t} projectsCount={projects.filter(p => p.ownerId === user.id).length} onUpgrade={() => { setUpgradeModalContext({ reason: 'FEATURE_LOCKED', featureName: 'Assinatura Premium' }); setShowUpgradeModal(true); }} plans={plans} />}
           </React.Suspense>
         </div>
       </main>

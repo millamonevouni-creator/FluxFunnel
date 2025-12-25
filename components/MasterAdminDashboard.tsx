@@ -73,6 +73,7 @@ const MasterAdminDashboard = ({
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const [templateToDelete, setTemplateToDelete] = useState<Template | null>(null);
     const [userToDelete, setUserToDelete] = useState<User | null>(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     // Stats State
     const [realStats, setRealStats] = useState({ mrr: 0, totalUsers: 0, activeUsers: 0, health: 100 });
@@ -273,6 +274,9 @@ const MasterAdminDashboard = ({
                     await onUpdatePlan(cleanedPlan);
                 }
                 setEditingPlan(null);
+                setShowSuccessModal(true);
+                // Auto-close after 3 seconds
+                setTimeout(() => setShowSuccessModal(false), 3000);
             } catch (error: any) {
                 console.error('Erro ao salvar plano:', error);
                 alert(`Erro ao salvar o plano: ${error.message || JSON.stringify(error)}`);
@@ -630,6 +634,39 @@ const MasterAdminDashboard = ({
                                     Confirmar Exclusão
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* MODAL DE SUCESSO DE PUBLICAÇÃO GLOBAL */}
+            {
+                showSuccessModal && (
+                    <div className="fixed inset-0 z-[300] flex items-center justify-center p-8 bg-black/95 backdrop-blur-md animate-fade-in-up">
+                        <div className="w-full max-w-md bg-[#0f172a] rounded-[2.5rem] border border-emerald-500/30 overflow-hidden shadow-[0_0_50px_rgba(16,185,129,0.2)] flex flex-col items-center text-center p-10 relative">
+                            <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/10 to-transparent pointer-events-none"></div>
+
+                            <div className="w-24 h-24 bg-emerald-500/20 rounded-full flex items-center justify-center mb-6 ring-4 ring-emerald-500/10 animate-pulse-slow relative z-10">
+                                <CheckCircle size={48} className="text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.5)]" />
+                            </div>
+
+                            <h3 className="text-2xl font-black uppercase tracking-tight text-white mb-2 relative z-10">Alterações Publicadas!</h3>
+
+                            <div className="space-y-4 mb-8 relative z-10">
+                                <p className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.2em] bg-emerald-500/10 py-1 px-3 rounded-full inline-block">
+                                    Sincronização Concluída
+                                </p>
+                                <p className="text-slate-400 text-sm font-medium leading-relaxed">
+                                    O banco de dados global e as configurações do Stripe foram atualizados com sucesso.
+                                </p>
+                            </div>
+
+                            <button
+                                onClick={() => setShowSuccessModal(false)}
+                                className="w-full py-4 rounded-2xl font-bold bg-emerald-500 hover:bg-emerald-400 text-white shadow-lg shadow-emerald-500/20 transition-all transform hover:scale-[1.02] active:scale-95 uppercase tracking-widest text-xs relative z-10"
+                            >
+                                Continuar
+                            </button>
                         </div>
                     </div>
                 )

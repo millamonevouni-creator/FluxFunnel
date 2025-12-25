@@ -75,6 +75,12 @@ serve(async (req: Request) => {
             success_url: successUrl,
             cancel_url: cancelUrl,
             client_reference_id: user.id,
+            metadata: {
+                supabase_user_id: user.id,
+                user_email: user.email!,
+                plan_price_id: priceId,
+                environment: Deno.env.get('ENVIRONMENT') || 'production'
+            }
         })
 
         return new Response(

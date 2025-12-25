@@ -54,6 +54,7 @@ export interface FlowCanvasProps {
   openSaveModalSignal?: number;
   maxNodes?: number;
   plans?: PlanConfig[];
+  showNotification?: (message: string, type?: 'success' | 'error') => void;
 }
 
 
@@ -100,7 +101,7 @@ const FlowCanvas = ({
   project, onSaveProject, onSaveTemplate, onUnsavedChanges, triggerSaveSignal,
   isDark, toggleTheme, isPresentationMode, showNotesInPresentation,
   t, userPlan, showAIAssistant, onToggleAIAssistant, isSharedView, onShareToMarketplace,
-  openSaveModalSignal, maxNodes = 20, plans
+  openSaveModalSignal, maxNodes = 20, plans, showNotification
 }: FlowCanvasProps) => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition, getNodes, getEdges } = useReactFlow();
@@ -225,7 +226,7 @@ const FlowCanvas = ({
   const handleSwapType = useCallback((nodeId: string, newType: NodeType) => {
     if (isPresentationMode) return;
     if (userPlan === 'FREE' && NODE_CONFIG[newType].isPro) {
-      alert("Disponível nos planos Pro e Premium.");
+      showNotification?.("Disponível nos planos Pro e Premium.", 'error');
       return;
     }
     takeSnapshot();
@@ -343,7 +344,7 @@ const FlowCanvas = ({
     <div className="flex h-full w-full relative">
       {!isPresentationMode && <Sidebar isDark={isDark} t={t} userPlan={userPlan} />}
 
-      {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} onUpgrade={() => { alert("Redirecionando..."); setShowUpgradeModal(false); }} isDark={isDark} plans={plans} limitType={upgradeModalContext.limitType} reason={upgradeModalContext.reason} featureName={upgradeModalContext.featureName} userPlan={userPlan} />}
+      {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} onUpgrade={() => { showNotification?.("Redirecionando...", 'success'); setShowUpgradeModal(false); }} isDark={isDark} plans={plans} limitType={upgradeModalContext.limitType} reason={upgradeModalContext.reason} featureName={upgradeModalContext.featureName} userPlan={userPlan} />}
 
       {showShareModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in-up">
@@ -362,7 +363,7 @@ const FlowCanvas = ({
               <button onClick={() => setShowSaveOptions(false)} className="absolute top-4 right-4 p-2 text-slate-400" title="Fechar"><X size={20} /></button>
               {saveStep === 'OPTIONS' ? (
                 <div className="grid grid-cols-2 gap-4">
-                  <button onClick={() => { onSaveProject(nodes, edges); setShowSaveOptions(false); alert("Salvo!"); }} className="flex flex-col items-center p-4 rounded-xl border-2 hover:border-indigo-500 transition-all"><FileText size={28} className="mb-2 text-indigo-600" /> <span className="font-bold text-sm">Projeto</span></button>
+                  <button onClick={() => { onSaveProject(nodes, edges); setShowSaveOptions(false); showNotification?.("Projeto salvo com sucesso!", "success"); }} className="flex flex-col items-center p-4 rounded-xl border-2 hover:border-indigo-500 transition-all"><FileText size={28} className="mb-2 text-indigo-600" /> <span className="font-bold text-sm">Projeto</span></button>
                   <button onClick={() => { if (userPlan === 'FREE') { setUpgradeModalContext({ reason: 'FEATURE_LOCKED', featureName: 'Modelos Personalizados' }); setShowUpgradeModal(true); } else { setTemplateNameInput(''); setSaveStep('TEMPLATE_NAME'); } }} className="flex flex-col items-center p-4 rounded-xl border-2 hover:border-purple-500 transition-all"><Layout size={28} className="mb-2 text-purple-600" /> <span className="font-bold text-sm">Modelo</span></button>
                 </div>
               ) : (

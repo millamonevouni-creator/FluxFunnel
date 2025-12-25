@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { User as UserIcon, Lock, CreditCard, Bell, Moon, Sun, Globe, Save, CheckCircle, Shield, Camera, Briefcase, Building, Laptop, ToggleLeft, ToggleRight, AlertTriangle, ChevronDown, Mail, Rocket, Crown } from 'lucide-react';
-import { User, Language, UserPlan } from '../types';
+import PasswordInput from './PasswordInput';
+import { User, Language, UserPlan, PlanConfig } from '../types';
 import { api } from '../services/api_fixed';
 
 interface SettingsDashboardProps {
@@ -14,9 +15,10 @@ interface SettingsDashboardProps {
     projectsCount?: number;
     onUpgrade: () => void;
     isInvited?: boolean;
+    plans?: PlanConfig[];
 }
 
-const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setLang, t, projectsCount = 0, onUpgrade, isInvited = false }: SettingsDashboardProps) => {
+const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setLang, t, projectsCount = 0, onUpgrade, isInvited = false, plans = [] }: SettingsDashboardProps) => {
     const [activeTab, setActiveTab] = useState<'PROFILE' | 'PLAN' | 'PREFERENCES' | 'SECURITY' | 'NOTIFICATIONS' | 'MY_ACCOUNT' | 'SUBSCRIPTION'>('PROFILE');
     const [name, setName] = useState(user.name);
     const [email, setEmail] = useState(user.email);
@@ -381,7 +383,11 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
                                         </div>
                                         <div className="text-left md:text-right">
                                             <span className="text-3xl font-bold block">
-                                                {user.plan === 'FREE' ? t('starter') : (user.plan === 'PRO' ? 'R$ 49,90' : 'R$ 79,90')}
+                                                {(() => {
+                                                    const planConfig = plans.find(p => p.id === user.plan);
+                                                    if (user.plan === 'FREE' || !planConfig) return t('starter');
+                                                    return `R$ ${planConfig.priceMonthly.toFixed(2).replace('.', ',')}`;
+                                                })()}
                                             </span>
                                             <span className="text-sm opacity-80">{user.plan !== 'FREE' ? t('month') : t('forever')}</span>
                                         </div>
@@ -465,7 +471,12 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
                                                     <tr className="border-b border-slate-100 dark:border-slate-800">
                                                         <td className="px-4 py-3">15 Nov, 2024</td>
                                                         <td className="px-4 py-3">UniFunnel {user.plan}</td>
-                                                        <td className="px-4 py-3 font-medium">{user.plan === 'PRO' ? 'R$ 49,90' : 'R$ 79,90'}</td>
+                                                        <td className="px-4 py-3 font-medium">
+                                                            {(() => {
+                                                                const planConfig = plans.find(p => p.id === user.plan);
+                                                                return planConfig ? `R$ ${planConfig.priceMonthly.toFixed(2).replace('.', ',')}` : 'R$ 0,00';
+                                                            })()}
+                                                        </td>
                                                         <td className="px-4 py-3"><span className="px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 flex items-center gap-1 w-fit"><CheckCircle size={10} /> {t('paid')}</span></td>
                                                     </tr>
                                                 )}
@@ -513,15 +524,15 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
                                     }}>
                                         <div>
                                             <label className={labelClass}>{t('currentPwd') || 'Senha Atual'}</label>
-                                            <input name="currentPass" type="password" placeholder="••••••••" className={inputClass} required />
+                                            <PasswordInput name="currentPass" placeholder="••••••••" className={inputClass} required />
                                         </div>
                                         <div>
                                             <label className={labelClass}>{t('newPwd')}</label>
-                                            <input name="newPass" type="password" placeholder="••••••••" className={inputClass} required />
+                                            <PasswordInput name="newPass" placeholder="••••••••" className={inputClass} required />
                                         </div>
                                         <div>
                                             <label className={labelClass}>{t('confirmPwd')}</label>
-                                            <input name="confirmPass" type="password" placeholder="••••••••" className={inputClass} required />
+                                            <PasswordInput name="confirmPass" placeholder="••••••••" className={inputClass} required />
                                         </div>
                                         <div className="pt-2">
                                             <button type="submit" disabled={isSaving} className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 text-white rounded-xl font-bold transition-all shadow-md disabled:opacity-50" title={t('updatePwd')} aria-label={t('updatePwd')}>

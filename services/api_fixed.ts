@@ -683,7 +683,15 @@ export const api = {
         }
     },
     team: {
-        list: async () => { if (isOffline) return []; const { data } = await supabase.from('team_members').select('*'); return data || []; },
+        list: async () => {
+            if (isOffline) return [];
+            // Get current user to filter them out (Owner shouldn't be in the list)
+            const { data: { user } } = await supabase.auth.getUser();
+            const { data } = await supabase.from('team_members').select('*');
+
+            // Filter out the owner if they accidentally invited themselves or joined their own team
+            return (data || []).filter((m: any) => m.email !== user?.email);
+        },
         invite: async (email: string, role: string, name?: string, assigned_plan_id?: string) => {
             if (!isOffline) {
                 // Get current user id
@@ -729,7 +737,20 @@ export const api = {
         remove: async (id: string) => { const { error } = await supabase.from('team_members').delete().eq('id', id); if (error) throw error; },
         resendInvite: async (email: string) => {
             if (isOffline) return;
-            // Ideally call edge function resend logic if available, or just ignore for now as invite covers it
+            // Rescue Mission Fix: Re-use invite logic to resend
+            // We assume 'CONVIDADO' role and plan for re-sends or fetch existing?
+            // Safer to just trigger the email edge function.
+            const { error: fnError } = await supabase.functions.invoke('invite-member', {
+                body: {
+                    email,
+                    role: 'CONVIDADO', // Default
+                    name: 'Membro',
+                    planId: 'CONVIDADO',
+                    redirectTo: window.location.origin,
+                    resend: true
+                }
+            });
+            if (fnError) throw fnError;
         }
     },
     system: {

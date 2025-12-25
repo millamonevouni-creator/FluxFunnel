@@ -41,8 +41,14 @@ serve(async (req: Request) => {
 
     console.log(`Received event: ${event.type}`)
 
-    // 1. Log Event (Idempotent)
-    await logPaymentEvent(event, supabase, 'received');
+    // 1. Check Idempotency & Log
+    const isProcessed = await logPaymentEvent(event, supabase, 'received');
+    if (isProcessed) {
+        console.log(`Event ${event.id} already processed. Skipping.`);
+        return new Response(JSON.stringify({ received: true, message: "Already processed" }), {
+            headers: { "Content-Type": "application/json" },
+        })
+    }
 
     try {
         switch (event.type) {
@@ -73,9 +79,17 @@ serve(async (req: Request) => {
 })
 
 // Helper: Log Payment Event (Idempotent Audit)
-async function logPaymentEvent(event: any, supabase: any, status: string, error?: string) {
+// Returns TRUE if event was already present (Duplicate)
+async function logPaymentEvent(event: any, supabase: any, status: string, error?: string): Promise<boolean> {
     const object = event.data.object;
     try {
+        // First check existence to avoid race conditions with upsert if possible, 
+        // but upsert is safe. We check if handled.
+        // For strict idempotency: if we find it, assume processed.
+
+        const { data: existing } = await supabase.from('payment_logs').select('event_id').eq('event_id', event.id).single();
+        if (existing) return true;
+
         await supabase.from('payment_logs').upsert({
             event_id: event.id,
             event_type: event.type,
@@ -86,11 +100,26 @@ async function logPaymentEvent(event: any, supabase: any, status: string, error?
             payload: object,
             error_message: error,
             created_at: new Date(event.created * 1000).toISOString()
-        }, { onConflict: 'event_id' }); // Ensure Idempotency
+        }, { onConflict: 'event_id' });
+
+        return false;
     } catch (e) {
         console.error("Failed to log payment event:", e);
+        // If log fails, we process anyway? Safe default is NO block, but we want idempotency.
+        // Let's assume false to ensure processing happens if DB is acting up, or true to block?
+        // False = Process. 
+        return false;
     }
 }
+// ... (rest of file) ...
+// Inside handleSubscriptionUpdated:
+const LEGACY_MAP: Record<string, string> = {
+    'price_1SgskMQXyRm8d3nvfTwRIFcP': 'PRO',
+    'price_1SgskWQXyRm8d3nvmqvpaevX': 'PRO',
+    'price_1SgskMQXyRm8d3nv9j7KeMqh': 'PREMIUM',
+    'price_1SgskZQXyRm8d3nveCCv6TQG': 'PREMIUM',
+    'price_1Sgtq7QXyRm8d3nv22SHxOmY': 'PRO', // FIXED
+};
 
 async function handleCheckoutCompleted(session: any, supabase: any) {
     const customerId = session.customer
