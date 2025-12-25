@@ -760,6 +760,8 @@ export const api = {
             const pageSize = 50; // Safe limit
             const { data: profiles, error: profilesError } = await supabase.rpc('get_admin_profiles', { p_page: page, p_page_size: pageSize });
 
+            console.log(" ADMIN RPC DEBUG RAW:", JSON.stringify({ profilesCount: profiles?.length, profilesError, firstProfile: profiles?.[0] }, null, 2));
+
             if (profilesError) {
                 console.error("RPC Error (get_admin_profiles):", profilesError);
 
@@ -770,8 +772,15 @@ export const api = {
                 throw profilesError;
             }
 
-            const { data: teamMembers } = await supabase.from('team_members').select('email');
-            const invitedEmails = new Set((teamMembers || []).map((tm: any) => tm.email));
+            let invitedEmails = new Set();
+            try {
+                const { data: teamMembers } = await supabase.from('team_members').select('email');
+                invitedEmails = new Set((teamMembers || []).map((tm: any) => tm.email));
+            } catch (err) {
+                console.warn("Checking invited members failed, proceeding without flags:", err);
+            }
+
+            console.log("Users to render:", profiles?.length || 0);
             return (profiles || []).map((p: any) => ({ ...mapProfileToUser(p), isInvitedMember: invitedEmails.has(p.email) }));
         },
         updateUserStatus: async (id: string, status: string) => {
