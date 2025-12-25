@@ -1277,7 +1277,6 @@ const MasterAdminDashboard = ({
                         </div>
                     </div>
                 )
-                )
             }
 
             {/* DELETE USER CONFIRMATION MODAL */}

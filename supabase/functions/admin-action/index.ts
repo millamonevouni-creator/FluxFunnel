@@ -82,6 +82,7 @@ serve(async (req: Request) => {
             case 'DELETE_USER':
                 // Critical: Delete from Auth AND Profiles (Cascade usually handles profiles)
                 // But using admin.deleteUser is cleaner
+                await supabaseAdmin.from('profiles').delete().eq('id', targetId);
                 result = await supabaseAdmin.auth.admin.deleteUser(targetId)
                 break;
 
