@@ -474,6 +474,11 @@ export const api = {
                     plan: planPayload,
                     operation: 'UPDATE'
                 });
+
+                if (updatedPlan && updatedPlan.success === false) {
+                    throw new Error(updatedPlan.error || 'Unknown Error from Server');
+                }
+
                 const mappedUpdatedPlan = {
                     id: updatedPlan.id,
                     label: updatedPlan.label,

@@ -156,11 +156,31 @@ Deno.serve(async (req: Request) => {
                 return new Response(JSON.stringify({ success: false, error: "Plan not found for update" }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
             }
 
+            let stripeProductId = currentPlan.stripe_product_id;
+
+            // Ensure Product Exists if we need to interact with Stripe (Price change detected)
+            const priceChanged = (plan.price_monthly !== currentPlan.price_monthly) || (plan.price_yearly !== currentPlan.price_yearly);
+
+            if (!stripeProductId && priceChanged) {
+                console.log("Plan has no Stripe Product ID but price changed. Creating one...");
+                try {
+                    const product = await stripe.products.create({
+                        name: plan.label,
+                        description: `Subscription for ${plan.label}`,
+                        metadata: { plan_id: plan.id }
+                    });
+                    stripeProductId = product.id;
+                } catch (e) {
+                    console.error("Failed to create Stripe Product:", e);
+                    throw new Error("Failed to generate Stripe Product for this plan.");
+                }
+            }
+
             // Update Stripe Product Name if changed
-            if (currentPlan.stripe_product_id) {
+            if (stripeProductId) {
                 try {
                     if (plan.label !== currentPlan.label) {
-                        await stripe.products.update(currentPlan.stripe_product_id, { name: plan.label });
+                        await stripe.products.update(stripeProductId, { name: plan.label });
                     }
                 } catch (e) {
                     console.warn("Stripe Product Update Warning:", e);
@@ -176,7 +196,7 @@ Deno.serve(async (req: Request) => {
             if (plan.price_monthly !== currentPlan.price_monthly) {
                 console.log(`Monthly price changed: ${currentPlan.price_monthly} -> ${plan.price_monthly}. Creating new Stripe Price.`);
                 const price = await stripe.prices.create({
-                    product: currentPlan.stripe_product_id,
+                    product: stripeProductId,
                     unit_amount: Math.round(plan.price_monthly * 100),
                     currency: 'brl',
                     recurring: { interval: 'month' },
@@ -189,7 +209,7 @@ Deno.serve(async (req: Request) => {
             if (plan.price_yearly !== currentPlan.price_yearly) {
                 console.log(`Yearly price changed: ${currentPlan.price_yearly} -> ${plan.price_yearly}. Creating new Stripe Price.`);
                 const price = await stripe.prices.create({
-                    product: currentPlan.stripe_product_id,
+                    product: stripeProductId,
                     unit_amount: Math.round(plan.price_yearly * 100),
                     currency: 'brl',
                     recurring: { interval: 'year' },
@@ -201,6 +221,7 @@ Deno.serve(async (req: Request) => {
             // 3. Update Supabase
             const dbPayload = {
                 ...plan,
+                stripe_product_id: stripeProductId,
                 stripe_price_id_monthly: newPriceIdMonthly,
                 stripe_price_id_yearly: newPriceIdYearly,
                 updated_at: new Date()
