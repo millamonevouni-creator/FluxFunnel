@@ -203,8 +203,12 @@ const MasterAdminDashboard = ({
 
     const handleToggleFeatured = async (id: string, isFeatured: boolean) => {
         try {
+            await api.templates.update(id, { is_featured: isFeatured });
             setTemplates(prev => prev.map(t => t.id === id ? { ...t, isFeatured } : t));
-        } catch (e) { console.error(e); }
+        } catch (e) {
+            console.error(e);
+            alert("Erro ao atualizar status de destaque.");
+        }
     };
 
     const handleRemoveTemplate = (id: string) => {
