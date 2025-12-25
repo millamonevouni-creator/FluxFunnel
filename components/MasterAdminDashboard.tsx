@@ -705,7 +705,10 @@ const MasterAdminDashboard = ({
                                                 <Cell key="cell-3" fill="#06b6d4" />
                                             </Pie>
                                             <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '11px' }} />
-                                            <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderRadius: '12px', border: '1px solid #1e293b', fontSize: '12px' }} />
+                                            <Tooltip
+                                                contentStyle={{ backgroundColor: '#0f172a', borderRadius: '12px', border: '1px solid #1e293b', fontSize: '12px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)' }}
+                                                itemStyle={{ color: '#fff', fontWeight: 'bold' }}
+                                            />
                                         </PieChart>
                                     </ResponsiveContainer>
                                 </div>

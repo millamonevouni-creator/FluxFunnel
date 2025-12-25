@@ -406,7 +406,7 @@ const App = () => {
     if (user) setCustomTemplates(await api.templates.list());
   };
 
-  const createProject = async (templateId?: string, customName?: string) => {
+  const createProject = async (templateId?: string, customName?: string, autoSwitchToBuilder: boolean = true) => {
     if (!user) return;
     const myProjects = projects.filter(p => p.ownerId === user.id);
     const userPlanConfig = plans.find(p => p.id === user.plan) || { projectLimit: user.plan === 'PREMIUM' ? 9999 : (user.plan === 'PRO' ? 5 : 1) };
@@ -423,8 +423,12 @@ const App = () => {
       setProjects(prev => [...prev, created]);
       setCurrentProjectId(created.id);
       setOpenSaveModalSignal(0); // Reset save signal to prevent modal from opening on new project
-      setAppPage('BUILDER');
-      showNotification("Projeto criado!");
+      if (autoSwitchToBuilder) {
+        setAppPage('BUILDER');
+      } else {
+        showNotification("Projeto salvo em 'Meus Projetos'!", "success");
+      }
+      if (autoSwitchToBuilder) showNotification("Projeto criado!");
     } catch (e) { showNotification("Erro ao criar projeto.", 'error'); }
   };
 
@@ -915,7 +919,7 @@ const App = () => {
         <div className="flex-1 overflow-hidden relative flex">
           <React.Suspense fallback={<LoadingScreen />}>
             {appPage === 'PROJECTS' && <ProjectsDashboard projects={projects} projectsLimit={isInvitedMode ? 999 : (plans.find(p => p.id === (user?.plan || 'FREE'))?.projectLimit || 3)} onCreateProject={createProject} onOpenProject={(id) => { setCurrentProjectId(id); setOpenSaveModalSignal(0); setAppPage('BUILDER'); }} onDeleteProject={handleDeleteProject} onRenameProject={handleRenameProject} onRefreshTemplates={refreshTemplates} showNotification={showNotification} isDark={isDark} t={t} userPlan={user?.plan} customTemplates={customTemplates} onSaveAsTemplate={async (p) => { await api.templates.create({ customLabel: p.name, nodes: p.nodes, edges: p.edges, isCustom: true }); refreshTemplates(); }} onUpgrade={() => { setUpgradeModalContext({ reason: 'FEATURE_LOCKED', featureName: 'Compartilhamento de Link' }); setShowUpgradeModal(true); }} />}
-            {appPage === 'MARKETPLACE' && <MarketplaceDashboard userPlan={user?.plan || 'FREE'} onDownload={async (t) => { await createProject(t.id, t.customLabel); showNotification("Template baixado!"); }} isDark={isDark} t={t} userId={user?.id} onUpgrade={() => { setUpgradeModalContext({ reason: 'FEATURE_LOCKED', featureName: 'Acesso ao Marketplace' }); setShowUpgradeModal(true); }} />}
+            {appPage === 'MARKETPLACE' && <MarketplaceDashboard userPlan={user?.plan || 'FREE'} onDownload={async (t) => { await createProject(t.id, t.customLabel, false); }} isDark={isDark} t={t} userId={user?.id} onUpgrade={() => { setUpgradeModalContext({ reason: 'FEATURE_LOCKED', featureName: 'Acesso ao Marketplace' }); setShowUpgradeModal(true); }} />}
             {appPage === 'TEAM' && <TeamDashboard members={teamMembers} onInviteMember={handleInviteMember} onUpdateRole={handleUpdateMemberRole} onRemoveMember={handleRemoveMember} onResendInvite={handleResendInvite} onUpgrade={() => { setUpgradeModalContext({ reason: 'FEATURE_LOCKED', featureName: 'Gestão de Equipe' }); setShowUpgradeModal(true); }} plan={user?.plan || 'FREE'} maxMembers={plans.find(p => p.id === user?.plan)?.teamLimit ?? (user?.plan === 'PREMIUM' ? 10 : 0)} isDark={isDark} t={t} />}
             {appPage === 'MASTER_ADMIN' && <MasterAdminDashboard
               onBack={() => setAppPage('PROJECTS')}

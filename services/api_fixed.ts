@@ -319,6 +319,7 @@ export const api = {
             };
             const { data, error } = await supabase.from('projects').insert(dbProject).select().single();
             if (error) throw error;
+            if (!data) throw new Error("Falha ao criar projeto: Dados não retornados.");
             return mapDBProjectToApp(data);
         },
         get: async (id: string) => {

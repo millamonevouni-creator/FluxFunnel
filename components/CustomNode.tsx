@@ -433,51 +433,60 @@ const CustomNode = ({ id, data, selected }: NodeProps<FunnelNodeData>) => {
     };
 
 
-    // --- Helper to Render 4 Handles with MASSIVE Hit Area for easy dragging ---
+    // --- Helper to Render 4 Handles ---
     const renderHandles = () => {
         const interact = isPresentation ? "pointer-events-none" : "cursor-crosshair";
-        // Hit Area INCREASED to w-16 h-16 (64px) for MAXIMUM grabbing precision
-        // Z-Index increased to ensure handles are always on top
-        const baseClasses = `absolute w-16 h-16 !bg-transparent !border-none z-[110] flex items-center justify-center ${interact}`;
+        // Standardized Hit Area: w-6 h-6 (24px) - enough for easy clicking but not overlapping
+        const baseClasses = `absolute w-6 h-6 !bg-transparent !border-none flex items-center justify-center ${interact} pointer-events-auto`;
 
         // Hide handles if swap menu is open
         if (showSwapMenu) return null;
 
-        // The visual dot is inside the handle, preventing it from blocking the click
         const VisualDot = () => (
             <div className={`
-            w-3.5 h-3.5 bg-white rounded-full border-[3px] border-indigo-500 shadow-md transition-all duration-300 pointer-events-none
-            ${isPresentation ? 'opacity-0' : 'opacity-0 group-hover:opacity-40'}
-            ${selected ? '!opacity-80 scale-110 border-indigo-600' : ''}
+            w-3.5 h-3.5 bg-white rounded-full border-[3px] border-indigo-500 shadow-sm transition-all duration-200 pointer-events-none
+            ${isPresentation ? 'opacity-0' : 'opacity-0 group-hover:opacity-100'}
+            ${selected ? '!opacity-100 scale-110 border-indigo-600' : ''}
+            group-hover:scale-125
         `}></div>
         );
 
+        // Positioned TIGHT to the border (standard React Flow behavior)
         const positions = [
-            { pos: Position.Top, id: 'top', class: '-top-8 left-1/2 -translate-x-1/2' },
-            { pos: Position.Right, id: 'right', class: '-right-8 top-1/2 -translate-y-1/2' },
-            { pos: Position.Bottom, id: 'bottom', class: '-bottom-8 left-1/2 -translate-x-1/2' },
-            { pos: Position.Left, id: 'left', class: '-left-8 top-1/2 -translate-y-1/2' }
+            { pos: Position.Top, id: 'top', class: '-top-3 left-1/2 -translate-x-1/2' },
+            { pos: Position.Right, id: 'right', class: '-right-3 top-1/2 -translate-y-1/2' },
+            { pos: Position.Bottom, id: 'bottom', class: '-bottom-3 left-1/2 -translate-x-1/2' },
+            { pos: Position.Left, id: 'left', class: '-left-3 top-1/2 -translate-y-1/2' }
         ];
 
         return (
             <>
                 {positions.map(({ pos, id: hid, class: cls }) => (
                     <React.Fragment key={hid}>
-                        {/* Target handle - allows incoming connections */}
                         <Handle
                             type="target"
                             position={pos}
                             id={`${hid}-target`}
-                            className={`${baseClasses} ${cls} opacity-0 hover:opacity-10`} // Invisible but functional target
-                            style={{ zIndex: 111 }}
+                            className={`${baseClasses} ${cls} opacity-0`}
+                            style={{ zIndex: 50 }}
+                            isConnectable={true}
+                            isConnectableStart={false}
                         />
-                        {/* Source handle - allows outgoing connections (drag start) */}
                         <Handle
                             type="source"
                             position={pos}
                             id={`${hid}-source`}
-                            className={`${baseClasses} ${cls} [&>div]:hover:scale-150 [&>div]:hover:!opacity-100 [&>div]:hover:shadow-indigo-500/50 [&>div]:hover:border-indigo-400 [&>div]:hover:shadow-[0_0_15px_rgba(99,102,241,0.6)]`}
-                            style={{ zIndex: 112 }}
+                            className={`${baseClasses} ${cls} 
+                                [&>div]:hover:scale-150 
+                                [&>div]:hover:!opacity-100 
+                                [&>div]:hover:bg-indigo-500 
+                                [&>div]:hover:border-white 
+                                [&>div]:hover:shadow-lg
+                                active:scale-90 transition-all
+                            `}
+                            style={{ zIndex: 51 }} // Source slightly above target
+                            isConnectable={true}
+                            isConnectableStart={true}
                         >
                             <VisualDot />
                         </Handle>
@@ -914,25 +923,25 @@ const CustomNode = ({ id, data, selected }: NodeProps<FunnelNodeData>) => {
                         {data.type === NodeType.AB_TEST && <Split size={20} />}
                     </div>
 
-                    {/* Handles for Diamond are separate to match shape slightly better */}
+                    {/* Handles for Diamond */}
                     {(() => {
                         const interact = isPresentation ? "pointer-events-none" : "cursor-crosshair";
-                        const base = `absolute w-8 h-8 !bg-transparent !border-none z-[100] flex items-center justify-center ${interact}`;
+                        const base = `absolute w-6 h-6 !bg-transparent !border-none flex items-center justify-center ${interact} pointer-events-auto`;
 
                         const VisualDot = () => (
                             <div className={`
-                            w-3 h-3 bg-cyan-500 rounded-full border-2 border-white shadow-sm transition-all duration-200 pointer-events-none
+                            w-3.5 h-3.5 bg-white rounded-full border-2 border-cyan-500 shadow-sm transition-all duration-200 pointer-events-none
                             ${isPresentation ? 'opacity-0' : 'opacity-0 group-hover:opacity-100'}
-                            ${selected ? '!opacity-100 bg-cyan-600 scale-110' : ''}
+                            ${selected ? '!opacity-100 scale-110' : ''}
                             group-hover:scale-125
                         `}></div>
                         );
 
                         const positions = [
-                            { pos: Position.Top, id: 'top', class: '-top-8 left-1/2 -translate-x-1/2' },
-                            { pos: Position.Right, id: 'right', class: '-right-8 top-1/2 -translate-y-1/2' },
-                            { pos: Position.Bottom, id: 'bottom', class: '-bottom-8 left-1/2 -translate-x-1/2' },
-                            { pos: Position.Left, id: 'left', class: '-left-8 top-1/2 -translate-y-1/2' }
+                            { pos: Position.Top, id: 'top', class: '-top-3 left-1/2 -translate-x-1/2' },
+                            { pos: Position.Right, id: 'right', class: '-right-3 top-1/2 -translate-y-1/2' },
+                            { pos: Position.Bottom, id: 'bottom', class: '-bottom-3 left-1/2 -translate-x-1/2' },
+                            { pos: Position.Left, id: 'left', class: '-left-3 top-1/2 -translate-y-1/2' }
                         ];
 
                         return (
@@ -943,15 +952,22 @@ const CustomNode = ({ id, data, selected }: NodeProps<FunnelNodeData>) => {
                                             type="target"
                                             position={pos}
                                             id={`${hid}-target`}
-                                            className={`${base} ${cls} opacity-0 hover:opacity-10`}
-                                            style={{ zIndex: 111 }}
+                                            className={`${base} ${cls} opacity-0`}
+                                            style={{ zIndex: 50 }}
                                         />
                                         <Handle
                                             type="source"
                                             position={pos}
                                             id={`${hid}-source`}
-                                            className={`${base} ${cls} [&>div]:hover:scale-150 [&>div]:hover:!opacity-100 [&>div]:hover:shadow-cyan-500/50 [&>div]:hover:bg-cyan-400 [&>div]:hover:shadow-[0_0_15px_rgba(6,182,212,0.6)]`}
-                                            style={{ zIndex: 112 }}
+                                            className={`${base} ${cls} 
+                                                [&>div]:hover:scale-150 
+                                                [&>div]:hover:!opacity-100 
+                                                [&>div]:hover:bg-cyan-500 
+                                                [&>div]:hover:border-white 
+                                                [&>div]:hover:shadow-lg
+                                                active:scale-90 transition-all
+                                            `}
+                                            style={{ zIndex: 51 }}
                                         >
                                             <VisualDot />
                                         </Handle>
