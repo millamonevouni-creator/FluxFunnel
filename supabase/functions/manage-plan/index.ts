@@ -158,11 +158,9 @@ Deno.serve(async (req: Request) => {
 
             let stripeProductId = currentPlan.stripe_product_id;
 
-            // Ensure Product Exists if we need to interact with Stripe (Price change detected)
-            const priceChanged = (plan.price_monthly !== currentPlan.price_monthly) || (plan.price_yearly !== currentPlan.price_yearly);
-
-            if (!stripeProductId && priceChanged) {
-                console.log("Plan has no Stripe Product ID but price changed. Creating one...");
+            // Ensure Product Exists (Always, to fix legacy plans)
+            if (!stripeProductId) {
+                console.log("Plan has no Stripe Product ID. Creating one...");
                 try {
                     const product = await stripe.products.create({
                         name: plan.label,
@@ -177,11 +175,9 @@ Deno.serve(async (req: Request) => {
             }
 
             // Update Stripe Product Name if changed
-            if (stripeProductId) {
+            if (stripeProductId && plan.label !== currentPlan.label) {
                 try {
-                    if (plan.label !== currentPlan.label) {
-                        await stripe.products.update(stripeProductId, { name: plan.label });
-                    }
+                    await stripe.products.update(stripeProductId, { name: plan.label });
                 } catch (e) {
                     console.warn("Stripe Product Update Warning:", e);
                 }
@@ -194,28 +190,36 @@ Deno.serve(async (req: Request) => {
 
             // Checks if Monthly Price Changed
             if (plan.price_monthly !== currentPlan.price_monthly) {
-                console.log(`Monthly price changed: ${currentPlan.price_monthly} -> ${plan.price_monthly}. Creating new Stripe Price.`);
-                const price = await stripe.prices.create({
-                    product: stripeProductId,
-                    unit_amount: Math.round(plan.price_monthly * 100),
-                    currency: 'brl',
-                    recurring: { interval: 'month' },
-                    metadata: { type: 'MONTHLY', plan_id: plan.id }
-                });
-                newPriceIdMonthly = price.id;
+                console.log(`Monthly price changed: ${currentPlan.price_monthly} -> ${plan.price_monthly}.`);
+                if (plan.price_monthly > 0) {
+                    const price = await stripe.prices.create({
+                        product: stripeProductId,
+                        unit_amount: Math.round(plan.price_monthly * 100),
+                        currency: 'brl',
+                        recurring: { interval: 'month' },
+                        metadata: { type: 'MONTHLY', plan_id: plan.id }
+                    });
+                    newPriceIdMonthly = price.id;
+                } else {
+                    newPriceIdMonthly = null; // Free plan has no stripe price ID
+                }
             }
 
             // Checks if Yearly Price Changed
             if (plan.price_yearly !== currentPlan.price_yearly) {
-                console.log(`Yearly price changed: ${currentPlan.price_yearly} -> ${plan.price_yearly}. Creating new Stripe Price.`);
-                const price = await stripe.prices.create({
-                    product: stripeProductId,
-                    unit_amount: Math.round(plan.price_yearly * 100),
-                    currency: 'brl',
-                    recurring: { interval: 'year' },
-                    metadata: { type: 'YEARLY', plan_id: plan.id }
-                });
-                newPriceIdYearly = price.id;
+                console.log(`Yearly price changed: ${currentPlan.price_yearly} -> ${plan.price_yearly}.`);
+                if (plan.price_yearly > 0) {
+                    const price = await stripe.prices.create({
+                        product: stripeProductId,
+                        unit_amount: Math.round(plan.price_yearly * 100),
+                        currency: 'brl',
+                        recurring: { interval: 'year' },
+                        metadata: { type: 'YEARLY', plan_id: plan.id }
+                    });
+                    newPriceIdYearly = price.id;
+                } else {
+                    newPriceIdYearly = null;
+                }
             }
 
             // 3. Update Supabase

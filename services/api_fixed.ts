@@ -497,9 +497,10 @@ export const api = {
                     stripe_price_id_yearly: updatedPlan.stripe_price_id_yearly || updatedPlan.stripePriceIdYearly
                 };
                 return mappedUpdatedPlan;
-            } catch (err) {
+            } catch (err: any) {
                 console.error("Stripe Sync Error (Plan Update Failed):", err);
-                throw new Error("Falha ao atualizar plano: Erro de sincronização com o Stripe.");
+                const errorMessage = err.message || "Erro desconhecido";
+                throw new Error(`Falha ao atualizar plano: ${errorMessage}`);
             }
         },
         create: async (p: any) => {
