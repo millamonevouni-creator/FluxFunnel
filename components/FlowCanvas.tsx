@@ -28,7 +28,7 @@ import UpgradeModal from './UpgradeModal';
 import AIAssistant from './AIAssistant';
 import { NODE_CONFIG, NODE_CATEGORY } from '../constants';
 import { NodeType, Project, UserPlan } from '../types';
-import { Save, Moon, Sun, Link as LinkIcon, BookmarkPlus, Undo, Redo, X, Layout, FileText, Lock, Type, Share2, Copy, Check, ShoppingBag } from 'lucide-react';
+import { Save, Moon, Sun, Link as LinkIcon, BookmarkPlus, Undo, Redo, X, Layout, FileText, Type, Share2, Copy, Check, ShoppingBag } from 'lucide-react';
 
 let id = 1000;
 const getId = () => `${id++} `;
@@ -407,22 +407,6 @@ const FlowCanvas = ({
               <div className={`w-2 h-2 rounded-full ${nodes.length >= MAX_NODES ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></div>
               {nodes.length} / {MAX_NODES >= 9999 ? '∞' : MAX_NODES}
             </div>
-            <button
-              onClick={() => {
-                if (userPlan !== 'PREMIUM') {
-                  setUpgradeModalContext({ reason: 'FEATURE_LOCKED', featureName: 'Compartilhar Link' });
-                  setShowUpgradeModal(true);
-                  return;
-                }
-                const url = `${window.location.origin}/?share=${project.id}`;
-                navigator.clipboard.writeText(url);
-                alert("Link de apresentação copiado!");
-              }}
-              className={`p-2 rounded-lg bg-white dark:bg-slate-800 border transition-colors ${userPlan === 'PREMIUM' ? 'text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20' : 'text-slate-400 hover:text-amber-500 hover:bg-slate-100'}`}
-              title={userPlan === 'PREMIUM' ? "Compartilhar Link" : "Recurso Premium (Bloqueado)"}
-            >
-              {userPlan === 'PREMIUM' ? <Share2 size={20} /> : <Lock size={20} />}
-            </button>
             <button onClick={toggleTheme} className="p-2 rounded-lg bg-white dark:bg-slate-800 border">{isDark ? <Sun size={20} /> : <Moon size={20} />}</button>
           </Panel>
         </ReactFlow>

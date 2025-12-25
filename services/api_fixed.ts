@@ -370,17 +370,17 @@ export const api = {
         },
         listPublic: async (userId?: string): Promise<Template[]> => {
             if (isOffline) return [];
-            let query = supabase.from('templates').select('*').or(`status.eq.APPROVED,and(owner_id.eq.${userId || 'null'},status.eq.PENDING)`);
-
-            // If checking public only without user context, fallback to just approved
+            let query;
+            // STRICT PRIVACY FIX: Only fetch items that are explicitly set to is_public=true.
+            // This prevents private "Meus Modelos" (is_public=false) from leaking into the Marketplace view,
+            // even if the user owns them.
             if (!userId) {
-                query = supabase.from('templates').select('*').eq('status', 'APPROVED');
+                query = supabase.from('templates').select('*').eq('is_public', true).eq('status', 'APPROVED');
             } else {
-                // Supabase OR syntax is tricky, let's simplify: fetch matches where (status=APPROVED) OR (owner_id=userId)
-                // Then we filter in memory or trust the improved OR query if configured properly.
-                // safe approach for simple RLS/query: use the .or() simple syntax
-                // "status.eq.APPROVED,owner_id.eq.userId" means OR
-                query = supabase.from('templates').select('*').or(`status.eq.APPROVED,owner_id.eq.${userId}`);
+                // Fetch: (Public AND Approved) OR (Public AND Owned by me - e.g. Pending)
+                // We use explicit OR syntax combined with the is_public filter.
+                // Using .or() with filters directly in the string is safer for complex AND/OR logic in Supabase JS v2
+                query = supabase.from('templates').select('*').eq('is_public', true).or(`status.eq.APPROVED,owner_id.eq.${userId}`);
             }
 
             const { data } = await query;

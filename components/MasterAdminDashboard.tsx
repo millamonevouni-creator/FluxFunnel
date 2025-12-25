@@ -71,6 +71,7 @@ const MasterAdminDashboard = ({
     const [editingPlan, setEditingPlan] = useState<PlanConfig | null>(null);
     const [planToDelete, setPlanToDelete] = useState<PlanConfig | null>(null);
     const [editingUser, setEditingUser] = useState<User | null>(null);
+    const [templateToDelete, setTemplateToDelete] = useState<Template | null>(null);
 
     // Stats State
     const [realStats, setRealStats] = useState({ mrr: 0, totalUsers: 0, activeUsers: 0, health: 100 });
@@ -204,12 +205,19 @@ const MasterAdminDashboard = ({
         } catch (e) { console.error(e); }
     };
 
-    const handleRemoveTemplate = async (id: string) => {
-        if (window.confirm("Remover permanentemente este template?")) {
-            try {
-                await api.templates.delete(id);
-                setTemplates(prev => prev.filter(t => t.id !== id));
-            } catch (e) { alert("Erro ao remover."); }
+    const handleRemoveTemplate = (id: string) => {
+        const tpl = templates.find(t => t.id === id);
+        if (tpl) setTemplateToDelete(tpl);
+    };
+
+    const confirmDeleteTemplate = async () => {
+        if (!templateToDelete) return;
+        try {
+            await api.templates.delete(templateToDelete.id);
+            setTemplates(prev => prev.filter(t => t.id !== templateToDelete.id));
+            setTemplateToDelete(null);
+        } catch (e) {
+            alert("Erro ao remover.");
         }
     };
 
@@ -1221,6 +1229,49 @@ const MasterAdminDashboard = ({
                                 <button onClick={() => setQuickLookTemplate(null)} className="px-8 py-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl font-bold transition-all">
                                     Fechar Visualização
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* DELETE TEMPLATE CONFIRMATION MODAL */}
+            {
+                templateToDelete && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-8 bg-black/95 backdrop-blur-md animate-fade-in-up">
+                        <div className="w-full max-w-md bg-[#0f172a] rounded-[2.5rem] border border-red-500/30 overflow-hidden shadow-2xl flex flex-col relative">
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-500 to-transparent opacity-50"></div>
+
+                            <div className="p-8 flex flex-col items-center text-center space-y-6">
+                                <div className="p-4 bg-red-500/10 rounded-full text-red-500 border border-red-500/20 shadow-[0_0_30px_rgba(239,68,68,0.2)] animate-pulse">
+                                    <Trash2 size={48} />
+                                </div>
+
+                                <div>
+                                    <h3 className="text-2xl font-black text-white uppercase tracking-tight mb-2">Excluir Template?</h3>
+                                    <p className="text-slate-400 text-sm font-medium leading-relaxed">
+                                        Você está prestes a excluir permanentemente <br />
+                                        <span className="text-white font-bold">"{templateToDelete.customLabel || templateToDelete.labelKey || 'Sem nome'}"</span>.
+                                    </p>
+                                    <p className="text-red-400 text-[10px] font-black uppercase tracking-widest mt-4 bg-red-500/5 py-2 px-4 rounded-lg border border-red-500/10">
+                                        Esta ação não pode ser desfeita.
+                                    </p>
+                                </div>
+
+                                <div className="flex gap-3 w-full pt-2">
+                                    <button
+                                        onClick={() => setTemplateToDelete(null)}
+                                        className="flex-1 py-3 bg-slate-900 hover:bg-slate-800 text-slate-400 font-bold rounded-xl border border-slate-800 transition-all uppercase text-[10px] tracking-widest"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={confirmDeleteTemplate}
+                                        className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-black rounded-xl shadow-lg shadow-red-600/20 transition-all uppercase text-[10px] tracking-widest hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
+                                    >
+                                        <Trash2 size={14} /> Excluir
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

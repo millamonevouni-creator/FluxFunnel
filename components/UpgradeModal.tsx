@@ -34,6 +34,7 @@ const UpgradeModal = ({ onClose, onUpgrade, isDark, limitType = 'NODES', plans, 
     const freePlan = plans?.find(p => p.id === 'FREE') || { projectLimit: 1, nodeLimit: 20 };
     const proPlan = plans?.find(p => p.id === 'PRO') || { projectLimit: 5, nodeLimit: 100 };
     const premiumPlan = plans?.find(p => p.id === 'PREMIUM') || { projectLimit: 9999, nodeLimit: 9999 };
+    const currentPlanConfig = plans?.find(p => p.id === selectedPlan);
 
     const handleCheckout = async (planId: 'PRO' | 'PREMIUM', cycle: 'monthly' | 'yearly' = 'monthly') => {
         try {
@@ -128,15 +129,12 @@ const UpgradeModal = ({ onClose, onUpgrade, isDark, limitType = 'NODES', plans, 
                             {isProjectLimit ? <Layout size={28} /> : <Crown size={28} />}
                         </div>
                         <h2 className={`text-2xl font-black mb-4 leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                            {reason === 'FEATURE_LOCKED'
-                                ? (featureName || 'Desbloqueie todo o potencial')
-                                : 'Limite Atingido'
-                            }
+                            Assinatura {currentPlanConfig?.label || (selectedPlan === 'PRO' ? 'Pro' : 'Premium')}
                         </h2>
                         <p className={`text-sm mb-8 font-medium leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
                             {reason === 'FEATURE_LOCKED' ? (
                                 <span>
-                                    Este recurso é exclusivo para assinantes <b>Premium</b>.
+                                    Este recurso é exclusivo para assinantes <b>{currentPlanConfig?.label || (selectedPlan === 'PRO' ? 'Pro' : 'Premium')}</b>.
                                     {userPlan === 'CONVIDADO' && <span className="block mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 rounded-xl border border-amber-100 dark:border-amber-800/50 text-xs">
                                         <b className="block mb-1">Nota para Convidados:</b>
                                         Você tem acesso aos projetos da equipe, mas recursos avançados exigem uma conta própria.
@@ -149,15 +147,11 @@ const UpgradeModal = ({ onClose, onUpgrade, isDark, limitType = 'NODES', plans, 
                             )}
                         </p>
                         <div className="space-y-3">
-                            <div className="flex items-center gap-3 text-sm font-bold text-slate-700 dark:text-slate-300">
-                                <CheckCircle size={16} className="text-green-500" /> Projetos e Elementos Ilimitados
-                            </div>
-                            <div className="flex items-center gap-3 text-sm font-bold text-slate-700 dark:text-slate-300">
-                                <CheckCircle size={16} className="text-green-500" /> Acesso a todos os ícones
-                            </div>
-                            <div className="flex items-center gap-3 text-sm font-bold text-slate-700 dark:text-slate-300">
-                                <CheckCircle size={16} className="text-green-500" /> Suporte Prioritário
-                            </div>
+                            {(currentPlanConfig?.features || (selectedPlan === 'PREMIUM' ? ['Projetos Ilimitados', 'Acesso total a Ícones', 'Suporte Prioritário'] : ['Até 5 Projetos', 'Acesso basico a Ícones', 'Suporte Standard'])).map((feature, i) => (
+                                <div key={i} className="flex items-center gap-3 text-sm font-bold text-slate-700 dark:text-slate-300">
+                                    <CheckCircle size={16} className="text-green-500" /> {feature}
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>
@@ -171,7 +165,7 @@ const UpgradeModal = ({ onClose, onUpgrade, isDark, limitType = 'NODES', plans, 
                         </div>
 
                         {(() => {
-                            const currentPlanConfig = plans?.find(p => p.id === selectedPlan);
+                            // const currentPlanConfig = plans?.find(p => p.id === selectedPlan);
                             const currentPrice = cycle === 'monthly' ? currentPlanConfig?.priceMonthly : currentPlanConfig?.priceYearly;
                             const priceDisplay = currentPrice ? `R$ ${currentPrice.toFixed(2).replace('.', ',')}` : 'Sob consulta';
 

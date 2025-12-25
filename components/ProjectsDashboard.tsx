@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Folder, Clock, Trash2, Edit, Layout, ArrowRight, X, Type, ChevronLeft, Sparkles, Lock, BookmarkPlus, Share2, ShoppingBag, Send, AlertCircle } from 'lucide-react';
+import { Plus, Folder, Clock, Trash2, Edit, Layout, ArrowRight, X, Type, ChevronLeft, Sparkles, Lock, BookmarkPlus, Share2, ShoppingBag, Send, AlertCircle, Check } from 'lucide-react';
 import { Project, Template, UserPlan } from '../types';
 import { PROJECT_TEMPLATES } from '../constants';
 import { api } from '../services/api_fixed';
@@ -36,6 +36,8 @@ const ProjectsDashboard = ({
     const [editingSubmission, setEditingSubmission] = useState<{ id: string, name: string, desc: string } | null>(null);
     const [deletingItem, setDeletingItem] = useState<{ type: 'PROJECT' | 'TEMPLATE' | 'PUBLICATION', id: string, name: string } | null>(null);
     const [sharingItem, setSharingItem] = useState<Project | null>(null);
+    const [presentationShareProject, setPresentationShareProject] = useState<Project | null>(null);
+    const [isCopied, setIsCopied] = useState(false);
 
     // New Dashboard Tabs
     const [dashboardTab, setDashboardTab] = useState<'PROJECTS' | 'TEMPLATES' | 'MARKETPLACE'>('PROJECTS');
@@ -179,9 +181,8 @@ const ProjectsDashboard = ({
                                                     onUpgrade?.();
                                                     return;
                                                 }
-                                                const url = `${window.location.origin}/?share=${project.id}`;
-                                                navigator.clipboard.writeText(url);
-                                                alert("Link de apresentação copiado!");
+                                                setPresentationShareProject(project);
+                                                setIsCopied(false);
                                             }}
                                             className={`p-2 hover:bg-slate-100 dark:hover:bg-indigo-900/20 rounded-lg transition-colors ${userPlan === 'PREMIUM' ? 'text-slate-400 hover:text-indigo-500' : 'text-slate-300 hover:text-amber-500'}`}
                                             title={userPlan === 'PREMIUM' ? "Copiar Link de Apresentação" : "Recurso Premium (Bloqueado)"}
@@ -568,6 +569,46 @@ const ProjectsDashboard = ({
                                     Enviar Agora
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {presentationShareProject && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in-up">
+                    <div className={`w-full max-w-lg p-8 rounded-2xl shadow-2xl relative overflow-hidden ${isDark ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}`}>
+                        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-500 to-teal-500"></div>
+                        <div className="flex flex-col items-center text-center">
+                            <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-6 shadow-lg shadow-emerald-500/20">
+                                <Share2 size={36} />
+                            </div>
+                            <h3 className="text-2xl font-bold mb-2">Compartilhar Apresentação</h3>
+                            <p className={`mb-6 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                                Este link permite que qualquer pessoa visualize seu mapa em <strong>Modo Apresentação</strong>, sem a necessidade de login ou edição.
+                            </p>
+
+                            <div className={`w-full p-4 rounded-xl border-2 mb-6 text-left break-all font-mono text-sm flex items-center justify-between gap-4 ${isDark ? 'bg-slate-950 border-slate-700 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-600'}`}>
+                                <span className="line-clamp-2">{`${window.location.origin}/?share=${presentationShareProject.id}`}</span>
+                            </div>
+
+                            <button
+                                onClick={() => {
+                                    const url = `${window.location.origin}/?share=${presentationShareProject.id}`;
+                                    navigator.clipboard.writeText(url);
+                                    setIsCopied(true);
+                                    showNotification?.("Link copiado para a área de transferência!", 'success');
+                                    setTimeout(() => setIsCopied(false), 3000);
+                                }}
+                                className={`w-full py-4 text-white rounded-xl font-bold shadow-lg transition-all flex items-center justify-center gap-2 mb-4 ${isCopied ? 'bg-emerald-600 hover:bg-emerald-500 scale-95' : 'bg-indigo-600 hover:bg-indigo-500 hover:scale-[1.02] shadow-indigo-500/25'}`}
+                            >
+                                {isCopied ? <><Check size={20} /> Link Copiado!</> : <><Share2 size={20} /> Copiar Link de Visualização</>}
+                            </button>
+
+                            <button
+                                onClick={() => setPresentationShareProject(null)}
+                                className={`text-sm font-bold hover:underline ${isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}
+                            >
+                                Fechar Janela
+                            </button>
                         </div>
                     </div>
                 </div>

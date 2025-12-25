@@ -6,10 +6,12 @@
     .animation-delay-2000 {
         animation-delay: 2s;
     }
+
     .animation-delay-4000 {
         animation-delay: 4s;
     }
 }
+
 @layer components {
     .note-lined-paper {
         background-image: repeating-linear-gradient(transparent, transparent 23px, #e2e8f0 24px);
@@ -20,13 +22,26 @@
 
     /* FORCE VISUAL DOT STYLE */
     .react-flow__handle .bg-indigo-500 {
-        background-color: #6366f1 !important; /* Tailwind indigo-500 */
+        background-color: #6366f1 !important;
+        /* Tailwind indigo-500 */
         border-color: #ffffff !important;
         border-width: 2px !important;
+        border-radius: 50% !important;
+        width: 14px !important;
+        height: 14px !important;
+        min-width: 14px !important;
+        min-height: 14px !important;
     }
+
     .react-flow__handle .bg-cyan-500 {
-        background-color: #06b6d4 !important; /* Tailwind cyan-500 */
+        background-color: #06b6d4 !important;
+        /* Tailwind cyan-500 */
         border-color: #ffffff !important;
         border-width: 2px !important;
+        border-radius: 50% !important;
+        width: 14px !important;
+        height: 14px !important;
+        min-width: 14px !important;
+        min-height: 14px !important;
     }
 }

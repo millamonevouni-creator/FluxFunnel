@@ -436,17 +436,16 @@ const CustomNode = ({ id, data, selected }: NodeProps<FunnelNodeData>) => {
     // --- Helper to Render 4 Handles ---
     const renderHandles = () => {
         const interact = isPresentation ? "pointer-events-none" : "cursor-crosshair";
-        // Standardized Hit Area: w-6 h-6 (24px) - enough for easy clicking but not overlapping
-        const baseClasses = `absolute w-6 h-6 !bg-transparent !border-none flex items-center justify-center ${interact} pointer-events-auto nodrag`;
+        // Standardized Hit Area: w-12 h-12 (48px) - SUPER LARGE for easy clicking
+        const baseClasses = `absolute w-12 h-12 !bg-transparent !border-none flex items-center justify-center ${interact} pointer-events-auto nodrag`;
 
         // Hide handles if swap menu is open
         if (showSwapMenu) return null;
 
         const VisualDot = () => (
             <div className={`
-            w-3 h-3 bg-indigo-500 rounded-full border-2 border-white shadow-sm transition-all duration-200 pointer-events-none
+            w-3.5 h-3.5 min-w-[14px] min-h-[14px] bg-indigo-500 rounded-full border-2 border-white shadow-sm transition-all duration-200 pointer-events-none
             ${isPresentation ? 'opacity-0' : 'opacity-0 group-hover:opacity-100'}
-            ${selected ? '!opacity-100 scale-110 border-white' : ''}
             group-hover:scale-125
         `}></div>
         );
@@ -926,13 +925,12 @@ const CustomNode = ({ id, data, selected }: NodeProps<FunnelNodeData>) => {
                     {/* Handles for Diamond */}
                     {(() => {
                         const interact = isPresentation ? "pointer-events-none" : "cursor-crosshair";
-                        const base = `absolute w-6 h-6 !bg-transparent !border-none flex items-center justify-center ${interact} pointer-events-auto nodrag`;
+                        const base = `absolute w-12 h-12 !bg-transparent !border-none flex items-center justify-center ${interact} pointer-events-auto nodrag`;
 
                         const VisualDot = () => (
                             <div className={`
-                            w-3 h-3 bg-cyan-500 rounded-full border-2 border-white shadow-sm transition-all duration-200 pointer-events-none
+                            w-3.5 h-3.5 min-w-[14px] min-h-[14px] bg-cyan-500 rounded-full border-2 border-white shadow-sm transition-all duration-200 pointer-events-none
                             ${isPresentation ? 'opacity-0' : 'opacity-0 group-hover:opacity-100'}
-                            ${selected ? '!opacity-100 scale-110' : ''}
                             group-hover:scale-125
                         `}></div>
                         );

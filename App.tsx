@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { GitGraph, Plus, Folder, Presentation, PenTool, LogOut, Crown, User as UserIcon, Settings, Globe, LayoutDashboard, Workflow, Users, X, AlertTriangle, Save as SaveIcon, Sparkles, Eye, EyeOff, ChevronLeft, ChevronRight, Pencil, BookmarkPlus, Check, AlertCircle, Wrench, Lock, ShoppingBag, ShieldCheck, Save, Rocket } from 'lucide-react';
+import { GitGraph, Plus, Folder, Presentation, PenTool, LogOut, Crown, User as UserIcon, Settings, Globe, LayoutDashboard, Workflow, Users, X, AlertTriangle, Save as SaveIcon, Sparkles, Eye, EyeOff, ChevronLeft, ChevronRight, Pencil, BookmarkPlus, Check, AlertCircle, Wrench, Lock, ShoppingBag, ShieldCheck, Save, Rocket, Share2 } from 'lucide-react';
 import { LoadingScreen } from './components/LoadingScreen';
 
 // Lazy loading for heavy dashboards
@@ -64,6 +64,8 @@ const App = () => {
   const [plans, setPlans] = useState<PlanConfig[]>([]);
   const [systemConfig, setSystemConfig] = useState<SystemConfig>({ maintenanceMode: false, allowSignups: true, announcements: [], debugMode: false });
   const [isInvitedMode, setIsInvitedMode] = useState(false);
+  const [presentationShareProject, setPresentationShareProject] = useState<Project | null>(null);
+  const [isCopied, setIsCopied] = useState(false);
 
   const t = useCallback((key: keyof typeof TRANSLATIONS['pt']) => TRANSLATIONS[lang][key] || key, [lang]);
   const showNotification = (message: string, type: 'success' | 'error' = 'success') => { setToast({ show: true, message, type }); setTimeout(() => setToast(null), 3000); };
@@ -895,6 +897,19 @@ const App = () => {
               <>
                 {/* {user?.plan === 'PREMIUM' && <button onClick={() => setShowAIAssistant(!showAIAssistant)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold transition-all ${showAIAssistant ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-700'}`}><Sparkles size={16} /> IA Audit</button>} */}
                 <button onClick={() => setAppMode(prev => prev === AppMode.BUILDER ? AppMode.PRESENTATION : AppMode.BUILDER)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold transition-all ${appMode === AppMode.PRESENTATION ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/30' : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'}`} title="Modo Apresentação"><Presentation size={18} /> Modo Apresentação</button>
+                {user?.plan === 'PREMIUM' && (
+                  <button
+                    onClick={() => {
+                      const proj = projects.find(p => p.id === currentProjectId);
+                      if (proj) setPresentationShareProject(proj);
+                      setIsCopied(false);
+                    }}
+                    className="flex items-center gap-2 px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg font-bold transition-all ml-2"
+                    title="Compartilhar Apresentação"
+                  >
+                    <Share2 size={18} />
+                  </button>
+                )}
                 <button onClick={() => setOpenSaveModalSignal(prev => prev + 1)} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold shadow-lg shadow-indigo-500/20 transition-all active:scale-95 ml-2">
                   <Save size={18} /> Salvar
                 </button>
@@ -951,6 +966,46 @@ const App = () => {
           </React.Suspense>
         </div>
       </main>
+      {presentationShareProject && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in-up">
+          <div className={`w-full max-w-lg p-8 rounded-2xl shadow-2xl relative overflow-hidden ${isDark ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}`}>
+            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-500 to-teal-500"></div>
+            <div className="flex flex-col items-center text-center">
+              <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-6 shadow-lg shadow-emerald-500/20">
+                <Share2 size={36} />
+              </div>
+              <h3 className="text-2xl font-bold mb-2">Compartilhar Apresentação</h3>
+              <p className={`mb-6 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                Este link permite que qualquer pessoa visualize seu mapa em <strong>Modo Apresentação</strong>, sem a necessidade de login ou edição.
+              </p>
+
+              <div className={`w-full p-4 rounded-xl border-2 mb-6 text-left break-all font-mono text-sm flex items-center justify-between gap-4 ${isDark ? 'bg-slate-950 border-slate-700 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-600'}`}>
+                <span className="line-clamp-2">{`${window.location.origin}/?share=${presentationShareProject.id}`}</span>
+              </div>
+
+              <button
+                onClick={() => {
+                  const url = `${window.location.origin}/?share=${presentationShareProject.id}`;
+                  navigator.clipboard.writeText(url);
+                  setIsCopied(true);
+                  showNotification("Link copiado para a área de transferência!", 'success');
+                  setTimeout(() => setIsCopied(false), 3000);
+                }}
+                className={`w-full py-4 text-white rounded-xl font-bold shadow-lg transition-all flex items-center justify-center gap-2 mb-4 ${isCopied ? 'bg-emerald-600 hover:bg-emerald-500 scale-95' : 'bg-indigo-600 hover:bg-indigo-500 hover:scale-[1.02] shadow-indigo-500/25'}`}
+              >
+                {isCopied ? <><Check size={20} /> Link Copiado!</> : <><Share2 size={20} /> Copiar Link de Visualização</>}
+              </button>
+
+              <button
+                onClick={() => setPresentationShareProject(null)}
+                className={`text-sm font-bold hover:underline ${isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}
+              >
+                Fechar Janela
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div >
   );
 };
