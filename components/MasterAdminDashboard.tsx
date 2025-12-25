@@ -133,7 +133,32 @@ const MasterAdminDashboard = ({
 
         // Also update selectedFb if it's the one being modified
         if (selectedFb && selectedFb.id === id) {
-            setSelectedFb(prev => prev ? { ...prev, ...updates } : null);
+            React.startTransition(() => {
+                setSelectedFb(prev => prev ? { ...prev, ...updates } : null);
+            });
+        }
+    };
+
+    const handleDeleteFeedback = async (id: string) => {
+        // Keep reference for revert
+        const previousFeedbacks = [...localFeedbacks];
+
+        // Optimistic UI update wrapped in transition to handle potential Suspense
+        React.startTransition(() => {
+            setLocalFeedbacks(prev => prev.filter(f => f.id !== id));
+            if (selectedFb?.id === id) setSelectedFb(null);
+        });
+
+        try {
+            // Call parent/server
+            await onDeleteFeedback(id);
+        } catch (error) {
+            console.error("Failed to delete feedback:", error);
+            // Revert optimistic update
+            React.startTransition(() => {
+                setLocalFeedbacks(previousFeedbacks);
+            });
+            alert("Falha ao excluir o feedback. Verifique o console ou suas permissões.");
         }
     };
 
@@ -891,7 +916,7 @@ const MasterAdminDashboard = ({
                         <RoadmapBoard
                             feedbacks={localFeedbacks}
                             onUpdateFeedback={handleUpdateFeedbackOptimistic}
-                            onDeleteFeedback={onDeleteFeedback}
+                            onDeleteFeedback={handleDeleteFeedback}
                             onSubmitFeedback={onSubmitFeedback}
                             onReplyFeedback={onReplyFeedback}
                             onDeleteComment={onDeleteComment}

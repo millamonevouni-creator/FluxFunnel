@@ -604,8 +604,18 @@ export const api = {
         },
         delete: async (id: string) => {
             if (!isOffline) {
-                const { error } = await supabase.from('feedbacks').delete().eq('id', id);
+                // SECURITY HARDENING: Use select() to ensure row existed and was actually deleted
+                // RLS returns 0 rows modified if permission denied, but no error.
+                // We must check count to detect "Silent Denial".
+                const { error, count, status } = await supabase
+                    .from('feedbacks')
+                    .delete({ count: 'exact' })
+                    .eq('id', id);
+
                 if (error) throw error;
+                if (count === 0 && status !== 204) {
+                    throw new Error("Falha na exclusão: Item não encontrado ou permissão negada.");
+                }
             }
         },
         vote: async (id: string) => {

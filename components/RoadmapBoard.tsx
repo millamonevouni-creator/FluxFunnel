@@ -27,6 +27,7 @@ const RoadmapBoard: React.FC<RoadmapBoardProps> = ({
     const [typeFilter, setTypeFilter] = useState<FeedbackType | 'ALL'>('ALL');
     const [selectedFb, setSelectedFb] = useState<FeedbackItem | null>(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [feedbackToDelete, setFeedbackToDelete] = useState<string | null>(null);
 
     // New Feedback Form State
     const [newTitle, setNewTitle] = useState('');
@@ -206,6 +207,16 @@ const RoadmapBoard: React.FC<RoadmapBoardProps> = ({
                                             onClick={() => setSelectedFb(item)}
                                             className="group relative p-4 bg-[#0f172a] hover:bg-[#1e293b] border border-slate-800 hover:border-indigo-500/30 rounded-2xl cursor-pointer transition-all duration-200 shadow-sm hover:shadow-xl hover:-translate-y-1 active:scale-[0.98]"
                                         >
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setFeedbackToDelete(item.id);
+                                                }}
+                                                className="absolute top-2 right-2 p-2 text-slate-500 hover:text-red-500 hover:bg-slate-800 rounded-full opacity-0 group-hover:opacity-100 transition-all z-10"
+                                                title="Excluir Feedback"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
                                             <div className="flex items-start justify-between mb-3">
                                                 <span className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border ${getTypeConfig(item.type).color}`}>
                                                     {getTypeConfig(item.type).label}
@@ -476,12 +487,7 @@ const RoadmapBoard: React.FC<RoadmapBoardProps> = ({
                                     </select>
                                 </div>
                                 <button
-                                    onClick={() => {
-                                        if (window.confirm('Tem certeza que deseja apagar este feedback permanentemente?')) {
-                                            onDeleteFeedback(selectedFb.id);
-                                            setSelectedFb(null);
-                                        }
-                                    }}
+                                    onClick={() => setFeedbackToDelete(selectedFb.id)}
                                     className="text-slate-500 hover:text-red-500 transition-colors p-2 hover:bg-red-500/10 rounded-lg"
                                     title="Excluir Feedback"
                                     aria-label="Excluir Feedback"
@@ -519,6 +525,43 @@ const RoadmapBoard: React.FC<RoadmapBoardProps> = ({
                                     <Send size={16} />
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {feedbackToDelete && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+                    <div className="w-full max-w-sm bg-[#0f172a] border border-red-500/30 rounded-2xl shadow-2xl overflow-hidden animate-scale-in">
+                        <div className="p-6 text-center space-y-4">
+                            <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-2 text-red-500">
+                                <Trash2 size={24} />
+                            </div>
+                            <h3 className="text-lg font-black text-white">Excluir Feedback?</h3>
+                            <p className="text-slate-400 text-sm leading-relaxed">
+                                Esta ação não pode ser desfeita. O feedback será permanentemente removido do sistema.
+                            </p>
+                        </div>
+                        <div className="p-4 border-t border-slate-800 bg-slate-900/50 flex gap-3">
+                            <button
+                                onClick={() => setFeedbackToDelete(null)}
+                                className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-bold transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (feedbackToDelete) {
+                                        onDeleteFeedback(feedbackToDelete);
+                                        setFeedbackToDelete(null);
+                                        if (selectedFb?.id === feedbackToDelete) setSelectedFb(null);
+                                    }
+                                }}
+                                className="flex-1 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-red-500/20 transition-all"
+                            >
+                                Sim, Excluir
+                            </button>
                         </div>
                     </div>
                 </div>

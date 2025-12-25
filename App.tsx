@@ -179,7 +179,7 @@ const App = () => {
         // Only load user projects if logged in and NOT in shared view (or load in bg)
         if (loggedUser) {
           const apiProjects = await api.projects.list();
-          setProjects(apiProjects.length ? apiProjects : [DEFAULT_PROJECT(t)]);
+          setProjects(apiProjects || []);
         }
       } catch (e) { console.error(e); }
       finally { setIsInitialized(true); setIsLoadingProjects(false); }

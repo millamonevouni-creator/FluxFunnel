@@ -90,7 +90,7 @@ const RoadmapPage = ({ onBack, feedbacks, onSubmitFeedback, onVote, onAddComment
             case 'PLANNED': return { label: 'Planejado', bg: 'bg-blue-100 dark:bg-blue-900/40', text: 'text-blue-700 dark:text-blue-300', border: 'border-blue-200 dark:border-blue-800' };
             case 'IN_PROGRESS': return { label: 'Em Progresso', bg: 'bg-amber-100 dark:bg-amber-900/40', text: 'text-amber-700 dark:text-amber-300', border: 'border-amber-200 dark:border-amber-800' };
             case 'COMPLETED': return { label: 'Concluído', bg: 'bg-emerald-100 dark:bg-emerald-900/40', text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-200 dark:border-emerald-800' };
-            case 'REJECTED': return { label: 'Arquivado', bg: 'bg-red-100 dark:bg-red-900/40', text: 'text-red-700 dark:text-red-300', border: 'border-red-200 dark:border-red-800' };
+
             default: return { label: 'Em Análise', bg: 'bg-slate-100 dark:bg-slate-800', text: 'text-slate-600 dark:text-slate-400', border: 'border-slate-200 dark:border-slate-700' };
         }
     };
@@ -116,6 +116,9 @@ const RoadmapPage = ({ onBack, feedbacks, onSubmitFeedback, onVote, onAddComment
     // Advanced Filtering
     const filteredFeedbacks = feedbacks
         .filter(item => {
+            // Hide REJECTED (Archived) items from public view
+            if (item.status === 'REJECTED') return false;
+
             const matchesStatus = filterStatus === 'ALL' || item.status === filterStatus;
             const matchesType = filterType === 'ALL' || item.type === filterType;
             const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -298,9 +301,9 @@ const RoadmapPage = ({ onBack, feedbacks, onSubmitFeedback, onVote, onAddComment
                                                             const pct = Math.min(100, Math.max(0, ((now - start) / (end - start)) * 100));
                                                             return (
                                                                 <div
-                                                                    className="h-full bg-indigo-500 rounded-full transition-all duration-1000"
+                                                                    className="h-full bg-indigo-500 rounded-full transition-all duration-1000 w-[var(--prog-width)]"
                                                                     // eslint-disable-next-line
-                                                                    style={{ width: `${pct}%` }}
+                                                                    style={{ '--prog-width': `${pct}%` } as React.CSSProperties}
                                                                 />
                                                             );
                                                         })()}
@@ -419,9 +422,9 @@ const RoadmapPage = ({ onBack, feedbacks, onSubmitFeedback, onVote, onAddComment
                                                         const pct = Math.min(100, Math.max(0, ((now - start) / (end - start)) * 100));
                                                         return (
                                                             <div
-                                                                className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-1000 shadow-lg shadow-indigo-500/20"
+                                                                className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-1000 shadow-lg shadow-indigo-500/20 w-[var(--prog-width)]"
                                                                 // eslint-disable-next-line
-                                                                style={{ width: `${pct}%` }}
+                                                                style={{ '--prog-width': `${pct}%` } as React.CSSProperties}
                                                             />
                                                         );
                                                     })()}
