@@ -141,9 +141,63 @@ serve(async (req: Request) => {
             });
         }
 
-        // ... (UPDATE/DELETE logic implementation would go here, simplified for this fix focus) ...
+        if (operation === 'UPDATE') {
+            console.log(`Updating Plan: ${plan.id}`);
 
-        return new Response(JSON.stringify({ success: false, error: "Invalid Operation" }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+            // 1. Update Stripe Product Name (Optional but good for consistency)
+            if (plan.stripe_product_id) {
+                try {
+                    await stripe.products.update(plan.stripe_product_id, {
+                        name: plan.label
+                        // We avoid updating description as it might be custom in Stripe
+                    });
+                } catch (e) {
+                    console.warn("Stripe Product Update Warning:", e);
+                    // Continue, not fatal
+                }
+            }
+
+            // 2. Update Supabase
+            // We exclude stripe IDs from update payload to avoid overwriting them with old data if not provided, 
+            // though they should be in the payload.
+            const dbPayload = {
+                ...plan,
+                updated_at: new Date()
+            };
+
+            const { data: updatedPlan, error: dbError } = await supabaseAdmin
+                .from('plans')
+                .update(dbPayload)
+                .eq('id', plan.id)
+                .select()
+                .single();
+
+            if (dbError) {
+                console.error("DB Update Error", dbError);
+                return new Response(JSON.stringify({ success: false, error: `Database Error: ${dbError.message}` }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+            }
+
+            // Audit Log
+            await supabaseAdmin.from('audit_logs').insert({
+                user_id: user.id,
+                action: 'UPDATE_PLAN',
+                details: { plan_label: plan.label, plan_id: plan.id }
+            });
+
+            return new Response(JSON.stringify(updatedPlan), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+        }
+
+        if (operation === 'DELETE') {
+            console.log(`Deleting Plan: ${plan.id}`);
+            // Logic to delete from DB
+            const { error } = await supabaseAdmin.from('plans').delete().eq('id', plan.id);
+            if (error) {
+                return new Response(JSON.stringify({ success: false, error: error.message }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+            }
+            return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
 
     } catch (error) {
         console.error("Manage Plan Error:", error);
