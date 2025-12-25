@@ -531,12 +531,16 @@ export const api = {
 
             if (isOffline) return planPayload;
 
-            // STRATEGY: Server-Side Authority
             try {
                 const createdPlan = await invokeEdgeFunction('manage-plan', {
                     plan: planPayload,
                     operation: 'CREATE'
                 });
+
+                if (createdPlan && createdPlan.success === false) {
+                    throw new Error(`Edge Error: ${createdPlan.error}`);
+                }
+
                 return createdPlan;
             } catch (err) {
                 console.error("Stripe Sync Error (Plan Creation Failed):", err);
@@ -728,8 +732,20 @@ export const api = {
     admin: {
         getUsers: async () => {
             if (isOffline) return [];
-            const { data: profiles, error: profilesError } = await supabase.from('profiles').select('*');
-            if (profilesError) throw profilesError;
+
+            // USE SECURE RPC to avoid RLS Recursion/Blocking
+            const { data: profiles, error: profilesError } = await supabase.rpc('get_admin_profiles');
+
+            if (profilesError) {
+                console.error("RPC Error (get_admin_profiles):", profilesError);
+
+                // DEBUG: Call Status RPC
+                const { data: debugInfo } = await supabase.rpc('debug_admin_state');
+                console.error("DEBUG ADMIN STATE:", debugInfo);
+
+                throw profilesError;
+            }
+
             const { data: teamMembers } = await supabase.from('team_members').select('email');
             const invitedEmails = new Set((teamMembers || []).map((tm: any) => tm.email));
             return (profiles || []).map((p: any) => ({ ...mapProfileToUser(p), isInvitedMember: invitedEmails.has(p.email) }));
