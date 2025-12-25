@@ -301,9 +301,8 @@ const RoadmapPage = ({ onBack, feedbacks, onSubmitFeedback, onVote, onAddComment
                                                             const pct = Math.min(100, Math.max(0, ((now - start) / (end - start)) * 100));
                                                             return (
                                                                 <div
-                                                                    className="h-full bg-indigo-500 rounded-full transition-all duration-1000 w-[var(--prog-width)]"
-                                                                    // eslint-disable-next-line
-                                                                    style={{ '--prog-width': `${pct}%` } as React.CSSProperties}
+                                                                    className="h-full bg-indigo-500 rounded-full transition-all duration-1000"
+                                                                    style={{ width: `${pct}%` }}
                                                                 />
                                                             );
                                                         })()}
@@ -422,9 +421,8 @@ const RoadmapPage = ({ onBack, feedbacks, onSubmitFeedback, onVote, onAddComment
                                                         const pct = Math.min(100, Math.max(0, ((now - start) / (end - start)) * 100));
                                                         return (
                                                             <div
-                                                                className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-1000 shadow-lg shadow-indigo-500/20 w-[var(--prog-width)]"
-                                                                // eslint-disable-next-line
-                                                                style={{ '--prog-width': `${pct}%` } as React.CSSProperties}
+                                                                className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-1000 shadow-lg shadow-indigo-500/20"
+                                                                style={{ width: `${pct}%` }}
                                                             />
                                                         );
                                                     })()}

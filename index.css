@@ -17,4 +17,16 @@
         padding-top: 2px;
         min-height: 96px;
     }
+
+    /* FORCE VISUAL DOT STYLE */
+    .react-flow__handle .bg-indigo-500 {
+        background-color: #6366f1 !important; /* Tailwind indigo-500 */
+        border-color: #ffffff !important;
+        border-width: 2px !important;
+    }
+    .react-flow__handle .bg-cyan-500 {
+        background-color: #06b6d4 !important; /* Tailwind cyan-500 */
+        border-color: #ffffff !important;
+        border-width: 2px !important;
+    }
 }
