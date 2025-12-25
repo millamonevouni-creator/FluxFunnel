@@ -83,6 +83,35 @@ const App = () => {
     }
   }, [lang, t, plans.length]);
 
+  // FIX: Version Mismatch / Chunk Error Handler
+  useEffect(() => {
+    const handleChunkError = (event: ErrorEvent | PromiseRejectionEvent) => {
+      const errorMsg = (event instanceof ErrorEvent ? event.message : event.reason?.message) || '';
+      if (
+        errorMsg.includes('Unable to preload CSS') ||
+        errorMsg.includes('Loading chunk') ||
+        errorMsg.includes('dynamically imported module')
+      ) {
+        console.warn("Deploy Version Mismatch detected. Reloading...");
+        // Prevent infinite loops using session storage
+        const lastReload = sessionStorage.getItem('flux_chunk_reload');
+        const now = Date.now();
+        if (!lastReload || now - parseInt(lastReload) > 10000) {
+          sessionStorage.setItem('flux_chunk_reload', now.toString());
+          window.location.reload();
+        }
+      }
+    };
+
+    window.addEventListener('error', handleChunkError);
+    window.addEventListener('unhandledrejection', handleChunkError);
+
+    return () => {
+      window.removeEventListener('error', handleChunkError);
+      window.removeEventListener('unhandledrejection', handleChunkError);
+    };
+  }, []);
+
   useEffect(() => {
     const initApp = async () => {
       try {
