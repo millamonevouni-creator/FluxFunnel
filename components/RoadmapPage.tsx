@@ -302,6 +302,7 @@ const RoadmapPage = ({ onBack, feedbacks, onSubmitFeedback, onVote, onAddComment
                                                             return (
                                                                 <div
                                                                     className="h-full bg-indigo-500 rounded-full transition-all duration-1000"
+                                                                    // eslint-disable-next-line
                                                                     style={{ width: `${pct}%` }}
                                                                 />
                                                             );
@@ -422,6 +423,7 @@ const RoadmapPage = ({ onBack, feedbacks, onSubmitFeedback, onVote, onAddComment
                                                         return (
                                                             <div
                                                                 className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-1000 shadow-lg shadow-indigo-500/20"
+                                                                // eslint-disable-next-line
                                                                 style={{ width: `${pct}%` }}
                                                             />
                                                         );
