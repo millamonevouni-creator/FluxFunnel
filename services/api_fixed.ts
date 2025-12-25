@@ -78,19 +78,8 @@ export const api = {
     auth: {
         login: async (email: string, password?: string): Promise<{ user: User, token: string }> => {
             if (isOffline) {
-                const isAdmin = email.includes('admin') || email === 'millamon.evouni@gmail.com';
-                return {
-                    user: {
-                        id: isAdmin ? 'u1' : 'u2',
-                        name: email.split('@')[0],
-                        email,
-                        plan: isAdmin ? 'PREMIUM' : 'PRO',
-                        status: 'ACTIVE',
-                        lastLogin: new Date(),
-                        isSystemAdmin: isAdmin
-                    },
-                    token: 'mock_token'
-                };
+                // SECURITY FIX: Never allow mock login in production build, even if keys are missing.
+                throw new Error("Modo offline detectado. Verifique as variáveis de ambiente (VITE_SUPABASE_URL, VITE_SUPABASE_KEY). Login desativado por segurança.");
             }
 
             // Timeout wrapper for signInWithPassword
