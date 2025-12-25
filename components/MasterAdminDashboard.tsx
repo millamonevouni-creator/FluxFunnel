@@ -236,7 +236,7 @@ const MasterAdminDashboard = ({
     }, [users, plans]);
 
     const filteredUsers = useMemo(() => {
-        return users.filter(u => {
+        return (users || []).filter(u => {
             const matchesSearch = u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
                 u.email.toLowerCase().includes(userSearch.toLowerCase());
             const matchesFilter = userFilter === 'ALL' ||
@@ -249,7 +249,7 @@ const MasterAdminDashboard = ({
     }, [users, userSearch, userFilter]);
 
     const filteredTemplates = useMemo(() => {
-        return templates.filter(t => {
+        return (templates || []).filter(t => {
             const matchesSearch = (t.customLabel || '').toLowerCase().includes(tplSearch.toLowerCase()) ||
                 (t.authorName || '').toLowerCase().includes(tplSearch.toLowerCase());
             const matchesFilter = tplFilter === 'ALL' || t.status === tplFilter;
@@ -376,7 +376,7 @@ const MasterAdminDashboard = ({
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-1">
-                        {[...plans].sort((a, b) => (a.order || 0) - (b.order || 0)).map((plan, index, array) => (
+                        {[...(plans || [])].sort((a, b) => (a.order || 0) - (b.order || 0)).map((plan, index, array) => (
                             <div
                                 key={plan.id}
                                 className={`

@@ -285,7 +285,7 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                     </div>
 
                     <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto items-start">
-                        {[...plans].filter(p => !p.isHidden).sort((a, b) => (a.order || 0) - (b.order || 0)).map((plan) => {
+                        {[...(plans || [])].filter(p => !p.isHidden).sort((a, b) => (a.order || 0) - (b.order || 0)).map((plan) => {
                             const price = billingCycle === 'monthly' ? plan.priceMonthly : plan.priceYearly;
                             const period = billingCycle === 'monthly' ? '/mês' : '/ano';
 
@@ -332,7 +332,7 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                                                     <div className="p-1 rounded-full bg-indigo-100 text-indigo-600"><CheckCircle size={12} strokeWidth={4} /></div>
                                                     {plan.nodeLimit >= 9999 ? 'Elementos Ilimitados' : `${plan.nodeLimit} Elementos/Fluxo`}
                                                 </li>
-                                                {plan.features.map((feature, i) => (
+                                                {(plan.features || []).map((feature, i) => (
                                                     <li key={i} className="flex items-start gap-3 text-slate-600 text-sm font-medium leading-tight">
                                                         <div className="p-1 mt-0.5 rounded-full bg-slate-100 text-slate-400"><CheckCircle size={12} strokeWidth={4} /></div>
                                                         {feature}
