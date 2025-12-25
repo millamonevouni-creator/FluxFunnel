@@ -46,9 +46,9 @@ const invokeEdgeFunction = async (functionName: string, body: any) => {
     };
 
     // Local development fallback or production URL
-    // Note: Supabase JS client has functions.invoke but manually fetching is sometimes more reliable for debugging specific URLs
+    // Note: Manually stringifying body ensures consistent behavior across client versions
     const { data, error } = await supabase.functions.invoke(functionName, {
-        body: body,
+        body: JSON.stringify(body),
         headers: headers
     });
 
@@ -57,25 +57,7 @@ const invokeEdgeFunction = async (functionName: string, body: any) => {
 }
 
 // Helper for Audit Logging (Graceful Failure)
-const logAdminAction = async (action: string, targetResource: string, targetId: string, details?: any) => {
-    if (isOffline) return;
-    try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
 
-        await supabase.from('audit_logs').insert({
-            actor_id: user.id,
-            action,
-            target_resource: targetResource,
-            target_id: targetId,
-            details,
-            ip_address: 'client-side' // Real IP requires Edge Function
-        });
-    } catch (e) {
-        // Silent fail if table doesn't exist yet
-        console.warn("Audit Log failed (table might be missing):", e);
-    }
-};
 
 export const api = {
     subscriptions: {
@@ -503,7 +485,24 @@ export const api = {
                     plan: planPayload,
                     operation: 'UPDATE'
                 });
-                return updatedPlan;
+                const mappedUpdatedPlan = {
+                    id: updatedPlan.id,
+                    label: updatedPlan.label,
+                    description: updatedPlan.description,
+                    priceMonthly: updatedPlan.price_monthly,
+                    priceYearly: updatedPlan.price_yearly,
+                    projectLimit: updatedPlan.project_limit,
+                    nodeLimit: updatedPlan.node_limit,
+                    teamLimit: updatedPlan.team_limit,
+                    features: updatedPlan.features,
+                    isPopular: updatedPlan.is_popular,
+                    isHidden: updatedPlan.is_hidden,
+                    order: updatedPlan.order,
+                    stripe_product_id: updatedPlan.stripe_product_id,
+                    stripe_price_id_monthly: updatedPlan.stripe_price_id_monthly,
+                    stripe_price_id_yearly: updatedPlan.stripe_price_id_yearly
+                };
+                return mappedUpdatedPlan;
             } catch (err) {
                 console.error("Stripe Sync Error (Plan Update Failed):", err);
                 throw new Error("Falha ao atualizar plano: Erro de sincronização com o Stripe.");
@@ -541,10 +540,29 @@ export const api = {
                     throw new Error(`Edge Error: ${createdPlan.error}`);
                 }
 
-                return createdPlan;
-            } catch (err) {
+                const mappedPlan = {
+                    id: createdPlan.id,
+                    label: createdPlan.label,
+                    description: createdPlan.description,
+                    priceMonthly: createdPlan.price_monthly,
+                    priceYearly: createdPlan.price_yearly,
+                    projectLimit: createdPlan.project_limit,
+                    nodeLimit: createdPlan.node_limit,
+                    teamLimit: createdPlan.team_limit,
+                    features: createdPlan.features,
+                    isPopular: createdPlan.is_popular,
+                    isHidden: createdPlan.is_hidden,
+                    order: createdPlan.order,
+                    stripe_product_id: createdPlan.stripe_product_id,
+                    stripe_price_id_monthly: createdPlan.stripe_price_id_monthly,
+                    stripe_price_id_yearly: createdPlan.stripe_price_id_yearly
+                };
+
+                return mappedPlan;
+            } catch (err: any) {
                 console.error("Stripe Sync Error (Plan Creation Failed):", err);
-                throw new Error("Falha ao criar plano: Erro de sincronização com o Stripe.");
+                const errorMessage = err.message || JSON.stringify(err);
+                throw new Error(`Falha ao criar plano: ${errorMessage.replace('Edge Error: ', '')}`);
             }
         },
         delete: async (id: string) => {
@@ -723,8 +741,12 @@ export const api = {
         },
         update: async (c: any) => {
             if (!isOffline) {
-                await supabase.from('system_config').upsert(c);
-                await logAdminAction('UPDATE_CONFIG', 'system_config', 'global', c);
+                // Secure Update via Edge Function (Server-Side Logging)
+                await invokeEdgeFunction('admin-action', {
+                    action: 'UPDATE_CONFIG',
+                    targetId: 'global', // Singleton
+                    payload: c
+                });
             }
         },
         healthCheck: async () => { return { profiles: true, projects: true, templates: true, system_config: true }; }
@@ -733,8 +755,10 @@ export const api = {
         getUsers: async () => {
             if (isOffline) return [];
 
-            // USE SECURE RPC to avoid RLS Recursion/Blocking
-            const { data: profiles, error: profilesError } = await supabase.rpc('get_admin_profiles');
+            // USE SECURE RPC with Pagination
+            const page = 1; // Default to first page for now until UI supports pagination
+            const pageSize = 50; // Safe limit
+            const { data: profiles, error: profilesError } = await supabase.rpc('get_admin_profiles', { p_page: page, p_page_size: pageSize });
 
             if (profilesError) {
                 console.error("RPC Error (get_admin_profiles):", profilesError);

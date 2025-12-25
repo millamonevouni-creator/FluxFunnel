@@ -48,7 +48,11 @@ const ProjectsDashboard = ({
 
     const handleCreateClick = () => {
         if (projects.length >= projectsLimit) {
-            showNotification?.(t('maxProjectsReached') || 'Limite de projetos atingido', 'error');
+            if (onUpgrade) {
+                onUpgrade();
+            } else {
+                showNotification?.(t('maxProjectsReached') || 'Limite de projetos atingido', 'error');
+            }
             return;
         }
         setNewProjectName('');

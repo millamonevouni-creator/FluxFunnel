@@ -85,6 +85,14 @@ serve(async (req: Request) => {
                 result = await supabaseAdmin.auth.admin.deleteUser(targetId)
                 break;
 
+            case 'UPDATE_CONFIG':
+                // System Config is a singleton-like table, usually targetId is 'global' or ignored
+                result = await supabaseAdmin
+                    .from('system_config')
+                    .upsert(payload)
+                    .select()
+                break;
+
             default:
                 throw new Error('Invalid Action')
         }

@@ -72,6 +72,7 @@ const MasterAdminDashboard = ({
     const [planToDelete, setPlanToDelete] = useState<PlanConfig | null>(null);
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const [templateToDelete, setTemplateToDelete] = useState<Template | null>(null);
+    const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
     // Stats State
     const [realStats, setRealStats] = useState({ mrr: 0, totalUsers: 0, activeUsers: 0, health: 100 });
@@ -222,11 +223,11 @@ const MasterAdminDashboard = ({
     };
 
     const stats = useMemo(() => {
-        const mrr = users.reduce((acc, user) => {
-            const plan = plans.find(p => p.id === user.plan);
+        const mrr = (users || []).reduce((acc, user) => {
+            const plan = (plans || []).find(p => p.id === user.plan);
             return acc + (plan ? plan.priceMonthly : 0);
         }, 0);
-        return { totalUsers: users.length, activeUsers: users.filter(u => u.status === 'ACTIVE').length, mrr };
+        return { totalUsers: (users || []).length, activeUsers: (users || []).filter(u => u.status === 'ACTIVE').length, mrr };
     }, [users, plans]);
 
     const filteredUsers = useMemo(() => {
@@ -362,7 +363,7 @@ const MasterAdminDashboard = ({
                             title="Adicionar Modelo de Plano"
                             aria-label="Adicionar Modelo de Plano"
                         >
-                            <Plus size={16} aria-hidden="true" /> Adicionar Modelo
+                            <Plus size={16} aria-hidden="true" /> Adicionar Plano
                         </button>
                     </div>
 
@@ -431,15 +432,15 @@ const MasterAdminDashboard = ({
                                     <h4 className="text-2xl font-black mb-1 tracking-tight group-hover:text-indigo-400 transition-colors uppercase">{plan.label}</h4>
                                     <div className="flex justify-between items-center">
                                         <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">PREÇO MENSAL: R$ {plan.priceMonthly}</p>
-                                        <div className="flex items-center gap-1.5 px-2 py-1 bg-indigo-500/10 rounded-lg border border-indigo-500/20" title={`${users.filter(u => u.plan === plan.id).length} Usuários Ativos`} aria-label={`${users.filter(u => u.plan === plan.id).length} Usuários Ativos`}>
+                                        <div className="flex items-center gap-1.5 px-2 py-1 bg-indigo-500/10 rounded-lg border border-indigo-500/20" title={`${(users || []).filter(u => u.plan === plan.id).length} Usuários Ativos`} aria-label={`${(users || []).filter(u => u.plan === plan.id).length} Usuários Ativos`}>
                                             <Users size={12} className="text-indigo-400" />
-                                            <span className="text-[10px] font-black text-indigo-300">{users.filter(u => u.plan === plan.id).length}</span>
+                                            <span className="text-[10px] font-black text-indigo-300">{(users || []).filter(u => u.plan === plan.id).length}</span>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="space-y-3 mb-8 flex-1">
-                                    {plan.features.map((f, i) => (
+                                    {plan.features?.map((f, i) => (
                                         <div key={i} className="flex items-center gap-3 text-xs font-bold text-slate-400 group-hover:text-slate-200 transition-colors">
                                             <div className="shrink-0 w-5 h-5 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
                                                 <Check size={12} className="text-emerald-500" />
@@ -578,7 +579,7 @@ const MasterAdminDashboard = ({
                                     <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Entregáveis de Valor (Uma por linha)</label>
                                     <textarea
                                         rows={6}
-                                        value={editingPlan.features.join('\n')}
+                                        value={(editingPlan.features || []).join('\n')}
                                         onChange={e => setEditingPlan({ ...editingPlan, features: e.target.value.split('\n') })}
                                         className="w-full p-8 bg-[#020617] border border-slate-800 rounded-[2.5rem] outline-none focus:border-indigo-500 transition-all resize-none text-xs font-bold leading-loose text-slate-400"
                                         placeholder="Ex: Projetos Ilimitados&#10;Audit IA Ativo&#10;Suporte Prioritário"
@@ -835,7 +836,7 @@ const MasterAdminDashboard = ({
                                                     <button onClick={() => { if (window.confirm('Tem certeza que deseja BANIR este usuário? Ele perderá o acesso ao sistema.')) onBanUser && onBanUser(user.id); }} title="Banir Usuário" aria-label="Banir Usuário" className="p-1.5 bg-slate-800 hover:bg-amber-600 text-slate-400 hover:text-white rounded-lg transition-colors">
                                                         <ShieldAlert size={14} aria-hidden="true" />
                                                     </button>
-                                                    <button onClick={() => { if (window.confirm('ATENÇÃO: Tem certeza que deseja EXCLUIR PERMANENTEMENTE este usuário? Todos os dados serão perdidos. Esta ação não pode ser desfeita.')) onDeleteUser(user.id); }} title="Excluir Permanentemente" aria-label="Excluir Permanentemente" className="p-1.5 bg-slate-800 hover:bg-red-600 text-slate-400 hover:text-white rounded-lg transition-colors">
+                                                    <button onClick={() => setUserToDelete(user)} title="Excluir Permanentemente" aria-label="Excluir Permanentemente" className="p-1.5 bg-slate-800 hover:bg-red-600 text-slate-400 hover:text-white rounded-lg transition-colors">
                                                         <Trash2 size={14} aria-hidden="true" />
                                                     </button>
                                                 </div>
@@ -1267,6 +1268,55 @@ const MasterAdminDashboard = ({
                                     </button>
                                     <button
                                         onClick={confirmDeleteTemplate}
+                                        className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-black rounded-xl shadow-lg shadow-red-600/20 transition-all uppercase text-[10px] tracking-widest hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
+                                    >
+                                        <Trash2 size={14} /> Excluir
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )
+                )
+            }
+
+            {/* DELETE USER CONFIRMATION MODAL */}
+            {
+                userToDelete && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-8 bg-black/95 backdrop-blur-md animate-fade-in-up">
+                        <div className="w-full max-w-md bg-[#0f172a] rounded-[2.5rem] border border-red-500/30 overflow-hidden shadow-2xl flex flex-col relative">
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-500 to-transparent opacity-50"></div>
+
+                            <div className="p-8 flex flex-col items-center text-center space-y-6">
+                                <div className="p-4 bg-red-500/10 rounded-full text-red-500 border border-red-500/20 shadow-[0_0_30px_rgba(239,68,68,0.2)] animate-pulse">
+                                    <Trash2 size={48} />
+                                </div>
+
+                                <div>
+                                    <h3 className="text-2xl font-black text-white uppercase tracking-tight mb-2">Excluir Usuário?</h3>
+                                    <p className="text-slate-400 text-sm font-medium leading-relaxed">
+                                        Você está prestes a excluir permanentemente <br />
+                                        <span className="text-white font-bold">{userToDelete.name}</span> <span className="text-slate-500 text-xs">({userToDelete.email})</span>.
+                                    </p>
+                                    <p className="text-red-400 text-[10px] font-black uppercase tracking-widest mt-4 bg-red-500/5 py-2 px-4 rounded-lg border border-red-500/10">
+                                        Todos os dados serão perdidos. Irreversível.
+                                    </p>
+                                </div>
+
+                                <div className="flex gap-3 w-full pt-2">
+                                    <button
+                                        onClick={() => setUserToDelete(null)}
+                                        className="flex-1 py-3 bg-slate-900 hover:bg-slate-800 text-slate-400 font-bold rounded-xl border border-slate-800 transition-all uppercase text-[10px] tracking-widest"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            if (userToDelete) {
+                                                onDeleteUser(userToDelete.id);
+                                                setUserToDelete(null);
+                                            }
+                                        }}
                                         className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-black rounded-xl shadow-lg shadow-red-600/20 transition-all uppercase text-[10px] tracking-widest hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
                                     >
                                         <Trash2 size={14} /> Excluir
