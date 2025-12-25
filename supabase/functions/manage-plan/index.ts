@@ -1,13 +1,14 @@
-import { serve } from "std/http/server.ts";
-import { createClient } from "@supabase/supabase-js";
-import Stripe from "stripe";
+// @ts-nocheck
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req: Request) => {
+// @ts-ignore
+Deno.serve(async (req: Request) => {
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders });
     }
@@ -144,24 +145,64 @@ serve(async (req: Request) => {
         if (operation === 'UPDATE') {
             console.log(`Updating Plan: ${plan.id}`);
 
-            // 1. Update Stripe Product Name (Optional but good for consistency)
-            if (plan.stripe_product_id) {
+            // 1. Fetch CURRENT Plan from DB to compare prices
+            const { data: currentPlan, error: fetchError } = await supabaseAdmin
+                .from('plans')
+                .select('*')
+                .eq('id', plan.id)
+                .single();
+
+            if (fetchError || !currentPlan) {
+                return new Response(JSON.stringify({ success: false, error: "Plan not found for update" }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+            }
+
+            // Update Stripe Product Name if changed
+            if (currentPlan.stripe_product_id) {
                 try {
-                    await stripe.products.update(plan.stripe_product_id, {
-                        name: plan.label
-                        // We avoid updating description as it might be custom in Stripe
-                    });
+                    if (plan.label !== currentPlan.label) {
+                        await stripe.products.update(currentPlan.stripe_product_id, { name: plan.label });
+                    }
                 } catch (e) {
                     console.warn("Stripe Product Update Warning:", e);
-                    // Continue, not fatal
                 }
             }
 
-            // 2. Update Supabase
-            // We exclude stripe IDs from update payload to avoid overwriting them with old data if not provided, 
-            // though they should be in the payload.
+            let newPriceIdMonthly = currentPlan.stripe_price_id_monthly;
+            let newPriceIdYearly = currentPlan.stripe_price_id_yearly;
+
+            // 2. Handle Price Changes (Stripe Prices are immutable, create NEW ones)
+
+            // Checks if Monthly Price Changed
+            if (plan.price_monthly !== currentPlan.price_monthly) {
+                console.log(`Monthly price changed: ${currentPlan.price_monthly} -> ${plan.price_monthly}. Creating new Stripe Price.`);
+                const price = await stripe.prices.create({
+                    product: currentPlan.stripe_product_id,
+                    unit_amount: Math.round(plan.price_monthly * 100),
+                    currency: 'brl',
+                    recurring: { interval: 'month' },
+                    metadata: { type: 'MONTHLY', plan_id: plan.id }
+                });
+                newPriceIdMonthly = price.id;
+            }
+
+            // Checks if Yearly Price Changed
+            if (plan.price_yearly !== currentPlan.price_yearly) {
+                console.log(`Yearly price changed: ${currentPlan.price_yearly} -> ${plan.price_yearly}. Creating new Stripe Price.`);
+                const price = await stripe.prices.create({
+                    product: currentPlan.stripe_product_id,
+                    unit_amount: Math.round(plan.price_yearly * 100),
+                    currency: 'brl',
+                    recurring: { interval: 'year' },
+                    metadata: { type: 'YEARLY', plan_id: plan.id }
+                });
+                newPriceIdYearly = price.id;
+            }
+
+            // 3. Update Supabase
             const dbPayload = {
                 ...plan,
+                stripe_price_id_monthly: newPriceIdMonthly,
+                stripe_price_id_yearly: newPriceIdYearly,
                 updated_at: new Date()
             };
 

@@ -478,18 +478,18 @@ export const api = {
                     id: updatedPlan.id,
                     label: updatedPlan.label,
                     description: updatedPlan.description,
-                    priceMonthly: updatedPlan.price_monthly,
-                    priceYearly: updatedPlan.price_yearly,
-                    projectLimit: updatedPlan.project_limit,
-                    nodeLimit: updatedPlan.node_limit,
-                    teamLimit: updatedPlan.team_limit,
-                    features: updatedPlan.features,
-                    isPopular: updatedPlan.is_popular,
-                    isHidden: updatedPlan.is_hidden,
-                    order: updatedPlan.order,
-                    stripe_product_id: updatedPlan.stripe_product_id,
-                    stripe_price_id_monthly: updatedPlan.stripe_price_id_monthly,
-                    stripe_price_id_yearly: updatedPlan.stripe_price_id_yearly
+                    priceMonthly: updatedPlan.price_monthly !== undefined ? updatedPlan.price_monthly : updatedPlan.priceMonthly,
+                    priceYearly: updatedPlan.price_yearly !== undefined ? updatedPlan.price_yearly : updatedPlan.priceYearly,
+                    projectLimit: updatedPlan.project_limit !== undefined ? updatedPlan.project_limit : updatedPlan.projectLimit,
+                    nodeLimit: updatedPlan.node_limit !== undefined ? updatedPlan.node_limit : updatedPlan.nodeLimit,
+                    teamLimit: updatedPlan.team_limit !== undefined ? updatedPlan.team_limit : updatedPlan.teamLimit,
+                    features: updatedPlan.features || [],
+                    isPopular: updatedPlan.is_popular !== undefined ? updatedPlan.is_popular : updatedPlan.isPopular,
+                    isHidden: updatedPlan.is_hidden !== undefined ? updatedPlan.is_hidden : updatedPlan.isHidden,
+                    order: updatedPlan.order !== undefined ? updatedPlan.order : updatedPlan.order,
+                    stripe_product_id: updatedPlan.stripe_product_id || updatedPlan.stripeProductId,
+                    stripe_price_id_monthly: updatedPlan.stripe_price_id_monthly || updatedPlan.stripePriceIdMonthly,
+                    stripe_price_id_yearly: updatedPlan.stripe_price_id_yearly || updatedPlan.stripePriceIdYearly
                 };
                 return mappedUpdatedPlan;
             } catch (err) {
@@ -533,18 +533,18 @@ export const api = {
                     id: createdPlan.id,
                     label: createdPlan.label,
                     description: createdPlan.description,
-                    priceMonthly: createdPlan.price_monthly,
-                    priceYearly: createdPlan.price_yearly,
-                    projectLimit: createdPlan.project_limit,
-                    nodeLimit: createdPlan.node_limit,
-                    teamLimit: createdPlan.team_limit,
-                    features: createdPlan.features,
-                    isPopular: createdPlan.is_popular,
-                    isHidden: createdPlan.is_hidden,
-                    order: createdPlan.order,
-                    stripe_product_id: createdPlan.stripe_product_id,
-                    stripe_price_id_monthly: createdPlan.stripe_price_id_monthly,
-                    stripe_price_id_yearly: createdPlan.stripe_price_id_yearly
+                    priceMonthly: createdPlan.price_monthly !== undefined ? createdPlan.price_monthly : createdPlan.priceMonthly,
+                    priceYearly: createdPlan.price_yearly !== undefined ? createdPlan.price_yearly : createdPlan.priceYearly,
+                    projectLimit: createdPlan.project_limit !== undefined ? createdPlan.project_limit : createdPlan.projectLimit,
+                    nodeLimit: createdPlan.node_limit !== undefined ? createdPlan.node_limit : createdPlan.nodeLimit,
+                    teamLimit: createdPlan.team_limit !== undefined ? createdPlan.team_limit : createdPlan.teamLimit,
+                    features: createdPlan.features || [],
+                    isPopular: createdPlan.is_popular !== undefined ? createdPlan.is_popular : createdPlan.isPopular,
+                    isHidden: createdPlan.is_hidden !== undefined ? createdPlan.is_hidden : createdPlan.isHidden,
+                    order: createdPlan.order !== undefined ? createdPlan.order : createdPlan.order,
+                    stripe_product_id: createdPlan.stripe_product_id || createdPlan.stripeProductId,
+                    stripe_price_id_monthly: createdPlan.stripe_price_id_monthly || createdPlan.stripePriceIdMonthly,
+                    stripe_price_id_yearly: createdPlan.stripe_price_id_yearly || createdPlan.stripePriceIdYearly
                 };
 
                 return mappedPlan;
