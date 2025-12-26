@@ -15,7 +15,7 @@ const ProfileCompletionBanner = React.lazy(() => import('./components/ProfileCom
 
 import LandingPage from './components/LandingPage';
 import AuthPage from './components/AuthPage';
-import UpgradeModal from './components/UpgradeModal'; // Critical path, kept static
+const UpgradeModal = React.lazy(() => import('./components/UpgradeModal')); // Lazy loaded to save ~200KB (Stripe)
 
 import AnnouncementBanner from './components/AnnouncementBanner';
 import { Project, AppMode, User, Language, AppPage, AppView, FeedbackItem, PlanConfig, TeamMember, Template, SystemConfig } from './types';
@@ -827,23 +827,24 @@ const App = () => {
       {toast?.show && <div className={`fixed top-14 left-1/2 -translate-x-1/2 z-[300] px-6 py-3 rounded-xl shadow-2xl border ${toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>{toast.message}</div>}
 
       {showUpgradeModal && (
-        <UpgradeModal
-          userPlan={user?.plan || 'FREE'}
-          onClose={() => setShowUpgradeModal(false)}
-          initialPlan={upgradeModalInitialState?.planId}
-          initialCycle={upgradeModalInitialState?.cycle}
-          onUpgrade={() => {
-            // Logic handled internally by UpgradeModal (Stripe Checkout)
-            setShowUpgradeModal(false);
-          }}
-          isDark={isDark}
-          plans={plans}
-          limitType={upgradeModalContext.limitType}
-          reason={upgradeModalContext.reason}
-          featureName={upgradeModalContext.featureName}
-          showNotification={showNotification}
-
-        />
+        <React.Suspense fallback={<LoadingScreen />}>
+          <UpgradeModal
+            userPlan={user?.plan || 'FREE'}
+            onClose={() => setShowUpgradeModal(false)}
+            initialPlan={upgradeModalInitialState?.planId}
+            initialCycle={upgradeModalInitialState?.cycle}
+            onUpgrade={() => {
+              // Logic handled internally by UpgradeModal (Stripe Checkout)
+              setShowUpgradeModal(false);
+            }}
+            isDark={isDark}
+            plans={plans}
+            limitType={upgradeModalContext.limitType}
+            reason={upgradeModalContext.reason}
+            featureName={upgradeModalContext.featureName}
+            showNotification={showNotification}
+          />
+        </React.Suspense>
       )}
 
       {showUnsavedModal && (

@@ -168,7 +168,7 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
             {/* Social Proof Logo Strip */}
             <div className="py-10 border-y border-slate-100 bg-white/50 backdrop-blur-sm">
                 <div className="max-w-7xl mx-auto px-6 overflow-hidden">
-                    <p className="text-center text-sm font-bold text-slate-400 uppercase tracking-widest mb-8">Empresas que escalam com FluxFunnel</p>
+                    <p className="text-center text-sm font-bold text-slate-500 uppercase tracking-widest mb-8">Empresas que escalam com FluxFunnel</p>
                     <div className="flex flex-wrap justify-center gap-12 md:gap-20 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
                         {['Stripe', 'Spotify', 'Slack', 'Intercom', 'Notion'].map(brand => (
                             <span key={brand} className="text-2xl md:text-3xl font-black text-slate-300 hover:text-indigo-600 transition-colors cursor-default">{brand}</span>
@@ -298,14 +298,14 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                                     )}
 
                                     <div className="mb-8 text-center md:text-left">
-                                        <h3 className="text-lg font-black uppercase tracking-widest text-slate-400 mb-4">{plan.label}</h3>
+                                        <h3 className="text-lg font-black uppercase tracking-widest text-slate-500 mb-4">{plan.label}</h3>
                                         <div className="flex items-baseline justify-center md:justify-start gap-1">
                                             <span className="text-5xl lg:text-6xl font-black text-slate-900 tracking-tighter whitespace-nowrap">
                                                 R$ {Number(price).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </span>
-                                            {price > 0 && <span className="text-slate-400 font-bold text-sm">{period}</span>}
+                                            {price > 0 && <span className="text-slate-500 font-bold text-sm">{period}</span>}
                                         </div>
-                                        <p className="text-slate-400 text-sm mt-4 font-medium min-h-[40px]">
+                                        <p className="text-slate-500 text-sm mt-4 font-medium min-h-[40px]">
                                             {plan.id === 'FREE' && 'Para iniciantes e estudantes.'}
                                             {plan.id === 'PRO' && 'Para freelancers e consultores.'}
                                             {plan.id === 'PREMIUM' && 'Para agências e times de alta performance.'}
@@ -322,7 +322,7 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                                         </button>
 
                                         <div className="mt-8 space-y-4">
-                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">O que está incluso:</p>
+                                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">O que está incluso:</p>
                                             <ul className="space-y-3">
                                                 <li className="flex items-center gap-3 text-slate-700 text-sm font-bold">
                                                     <div className="p-1 rounded-full bg-indigo-100 text-indigo-600"><CheckCircle size={12} strokeWidth={4} /></div>
