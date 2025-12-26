@@ -4,6 +4,7 @@ import App from './App';
 import './index.css';
 
 import { SpeedInsights } from "@vercel/speed-insights/react"
+import { Analytics } from "@vercel/analytics/react"
 import { GlobalErrorBoundary } from './components/GlobalErrorBoundary';
 
 const rootElement = document.getElementById('root');
@@ -17,6 +18,7 @@ root.render(
     <GlobalErrorBoundary>
       <App />
       <SpeedInsights />
+      <Analytics />
     </GlobalErrorBoundary>
   </React.StrictMode>
 );
