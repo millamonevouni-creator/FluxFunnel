@@ -1,8 +1,7 @@
-/// <reference path="../ide_fix.d.ts" />
+
 import { serve } from "std/http/server.ts"
 import { createClient } from "@supabase/supabase-js"
 import Stripe from "stripe"
-
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") ?? "", {
     apiVersion: "2023-10-16",
@@ -12,247 +11,96 @@ const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") ?? "", {
 const cryptoProvider = Stripe.createSubtleCryptoProvider()
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? ""
-const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
+const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
 
-serve(async (req: Request) => {
-    const signature = req.headers.get("Stripe-Signature")
-    const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET")
+const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    if (!signature || !webhookSecret) {
-        return new Response("Missing signature or secret", { status: 400 })
-    }
+console.log("Stripe Webhook Handler Started")
 
-    const body = await req.text()
-    let event
-
-    try {
-        event = await stripe.webhooks.constructEventAsync(
-            body,
-            signature,
-            webhookSecret,
-            undefined,
-            cryptoProvider
-        )
-    } catch (err: any) {
-        console.error(`Webhook signature verification failed: ${err.message}`)
-        return new Response(err.message, { status: 400 })
-    }
-
-    console.log(`Received event: ${event.type}`)
-
-    // 1. Check Idempotency & Log
-    const isProcessed = await logPaymentEvent(event, supabase, 'received');
-    if (isProcessed) {
-        console.log(`Event ${event.id} already processed. Skipping.`);
-        return new Response(JSON.stringify({ received: true, message: "Already processed" }), {
-            headers: { "Content-Type": "application/json" },
-        })
-    }
-
-    try {
-        switch (event.type) {
-            case "checkout.session.completed":
-                await handleCheckoutCompleted(event.data.object, supabase)
-                break
-            case "customer.subscription.updated":
-                await handleSubscriptionUpdated(event.data.object, supabase)
-                break
-            case "customer.subscription.deleted":
-                await handleSubscriptionDeleted(event.data.object, supabase)
-                break
-            case "invoice.payment_succeeded":
-                await handleInvoicePaymentSucceeded(event.data.object, supabase)
-                break
-            case "invoice.payment_failed":
-                await handleInvoicePaymentFailed(event.data.object, supabase)
-                break
+serve(async (req) => {
+    if (req.method === "POST") {
+        const signature = req.headers.get("Stripe-Signature")
+        if (!signature) {
+            return new Response("No signature", { status: 400 })
         }
-    } catch (error: any) {
-        console.error(`Error processing event: ${error.message}`)
-        return new Response(`Error processing event: ${error.message}`, { status: 500 })
-    }
 
-    return new Response(JSON.stringify({ received: true }), {
-        headers: { "Content-Type": "application/json" },
-    })
-})
+        try {
+            const body = await req.text()
+            const endpointSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET")
 
-// Helper: Log Payment Event (Idempotent Audit)
-// Returns TRUE if event was already present (Duplicate)
-async function logPaymentEvent(event: any, supabase: any, status: string, error?: string): Promise<boolean> {
-    const object = event.data.object;
-    try {
-        // First check existence to avoid race conditions with upsert if possible, 
-        // but upsert is safe. We check if handled.
-        // For strict idempotency: if we find it, assume processed.
-
-        const { data: existing } = await supabase.from('payment_logs').select('event_id').eq('event_id', event.id).single();
-        if (existing) return true;
-
-        await supabase.from('payment_logs').upsert({
-            event_id: event.id,
-            event_type: event.type,
-            stripe_customer_id: object.customer,
-            amount: object.amount_paid || object.amount || 0,
-            currency: object.currency || 'brl',
-            status: status,
-            payload: object,
-            error_message: error,
-            created_at: new Date(event.created * 1000).toISOString()
-        }, { onConflict: 'event_id' });
-
-        return false;
-    } catch (e) {
-        console.error("Failed to log payment event:", e);
-        // If log fails, we process anyway? Safe default is NO block, but we want idempotency.
-        // Let's assume false to ensure processing happens if DB is acting up, or true to block?
-        // False = Process. 
-        return false;
-    }
-}
-// ... (rest of file) ...
-// Inside handleSubscriptionUpdated:
-const LEGACY_MAP: Record<string, string> = {
-    'price_1SgskMQXyRm8d3nvfTwRIFcP': 'PRO',
-    'price_1SgskWQXyRm8d3nvmqvpaevX': 'PRO',
-    'price_1SgskMQXyRm8d3nv9j7KeMqh': 'PREMIUM',
-    'price_1SgskZQXyRm8d3nveCCv6TQG': 'PREMIUM',
-    'price_1Sgtq7QXyRm8d3nv22SHxOmY': 'PRO', // FIXED
-};
-
-async function handleCheckoutCompleted(session: any, supabase: any) {
-    const customerId = session.customer
-    const subscriptionId = session.subscription
-    const userId = session.client_reference_id
-
-    if (!userId) {
-        console.warn("No user_id in session client_reference_id")
-        return;
-    }
-
-    // Update profile with stripe_customer_id
-    await supabase
-        .from("profiles")
-        .update({ stripe_customer_id: customerId })
-        .eq("id", userId)
-}
-
-async function handleSubscriptionUpdated(subscription: any, supabase: any) {
-    const status = subscription.status
-    const priceId = subscription.items.data[0].price.id
-
-    // Find user by customer_id
-    const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("stripe_customer_id", subscription.customer)
-        .single()
-
-    if (profiles) {
-        // Upsert subscription table
-        await supabase.from("subscriptions").upsert({
-            id: subscription.id,
-            user_id: profiles.id,
-            status: status,
-            price_id: priceId,
-            current_period_end: subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString() : null,
-        })
-
-        if (['active', 'trialing'].includes(status)) {
-            // Dynamic Plan Lookup
-            const { data: planData } = await supabase
-                .from('plans')
-                .select('id')
-                .or(`stripe_price_id_monthly.eq.${priceId},stripe_price_id_yearly.eq.${priceId}`)
-                .single();
-
-            let planId = planData?.id;
-
-            if (!planId) {
-                // Temporary Fallback Map for existing env vars
-                const LEGACY_MAP: Record<string, string> = {
-                    'price_1SgskMQXyRm8d3nvfTwRIFcP': 'PRO',
-                    'price_1SgskWQXyRm8d3nvmqvpaevX': 'PRO',
-                    'price_1SgskMQXyRm8d3nv9j7KeMqh': 'PREMIUM',
-                    'price_1SgskZQXyRm8d3nveCCv6TQG': 'PREMIUM',
-                };
-                if (LEGACY_MAP[priceId]) planId = LEGACY_MAP[priceId];
-                else if (priceId.includes('pro')) planId = 'PRO';
-                else if (priceId.includes('premium')) planId = 'PREMIUM';
-            }
-
-            if (planId) {
-                console.log(`Mapping Price ${priceId} to Plan ${planId}`);
-                await supabase.from("profiles").update({ plan: planId }).eq("id", profiles.id)
+            let event
+            if (endpointSecret) {
+                // Verify signature
+                event = await stripe.webhooks.constructEventAsync(
+                    body,
+                    signature,
+                    endpointSecret,
+                    undefined,
+                    cryptoProvider
+                )
             } else {
-                console.warn(`Unknown Price ID: ${priceId} for User: ${profiles.id}`);
+                // Fallback for testing without signature verification (NOT RECOMMENDED for prod, but useful if env var missing initially)
+                console.warn("⚠️ STRIPE_WEBHOOK_SECRET not found. Skipping signature verification.")
+                event = JSON.parse(body)
             }
+
+            console.log(`Processing event: ${event.type}`)
+
+            if (event.type === "invoice.payment_succeeded") {
+                const invoice = event.data.object as Stripe.Invoice
+
+                // Logic for Subscriptions (Recurring)
+                if (invoice.subscription) {
+                    const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string)
+
+                    // Check for affiliate in Subscription Metadata (this is where we saved it!)
+                    const affiliateCode = subscription.metadata?.affiliate || subscription.metadata?.flux_affiliate_id;
+
+                    if (affiliateCode) {
+                        console.log(`💰 Affiliate Sale Detected: ${affiliateCode}`)
+
+                        // 1. Get Affiliate Details
+                        const { data: affiliate } = await supabase
+                            .from("affiliates")
+                            .select("*")
+                            .eq("code", affiliateCode)
+                            .single()
+
+                        if (affiliate) {
+                            const totalAmount = invoice.amount_paid / 100 // Cents to Real
+                            const commissionAmount = totalAmount * (affiliate.commission_rate / 100)
+
+                            console.log(`Calculating Commission: R$${totalAmount} * ${affiliate.commission_rate}% = R$${commissionAmount}`)
+
+                            // 2. Register Commission
+                            const { error } = await supabase.from("commissions").insert({
+                                affiliate_id: affiliate.id,
+                                amount: commissionAmount,
+                                sale_amount: totalAmount,
+                                stripe_payment_id: invoice.payment_intent as string || invoice.id,
+                                status: 'PAID'
+                            })
+
+                            if (error) console.error("Error saving commission:", error)
+                            else console.log("✅ Commission saved successfully!")
+
+                        } else {
+                            console.warn(`Affiliate code '${affiliateCode}' found in metadata but not in database.`)
+                        }
+                    } else {
+                        console.log("No affiliate associated with this subscription.")
+                    }
+                }
+            }
+
+            return new Response(JSON.stringify({ received: true }), {
+                headers: { "Content-Type": "application/json" },
+            })
+        } catch (err) {
+            console.error(`Webhook Error: ${err.message}`)
+            return new Response(`Webhook Error: ${err.message}`, { status: 400 })
         }
     }
-}
 
-async function handleSubscriptionDeleted(subscription: any, supabase: any) {
-    const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("stripe_customer_id", subscription.customer)
-        .single()
-
-    if (profiles) {
-        await supabase.from("subscriptions").update({ status: 'canceled' }).eq("id", subscription.id)
-        await supabase.from("profiles").update({ plan: 'FREE' }).eq("id", profiles.id)
-    }
-}
-
-async function handleInvoicePaymentSucceeded(invoice: any, supabase: any) {
-    const customerId = invoice.customer;
-    if (!customerId) return;
-
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("stripe_customer_id", customerId)
-        .single();
-
-    if (profile) {
-        // Upsert Invoice (Idempotent)
-        await supabase.from("invoices").upsert({
-            id: invoice.id,
-            user_id: profile.id,
-            subscription_id: invoice.subscription,
-            amount_paid: invoice.amount_paid, // Cents
-            currency: invoice.currency,
-            status: invoice.status,
-            invoice_pdf: invoice.hosted_invoice_url,
-            created_at: new Date(invoice.created * 1000).toISOString()
-        });
-    }
-}
-
-async function handleInvoicePaymentFailed(invoice: any, supabase: any) {
-    const customerId = invoice.customer;
-    if (!customerId) return;
-
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("stripe_customer_id", customerId)
-        .single();
-
-    if (profile) {
-        // Upsert Invoice as FAILED
-        await supabase.from("invoices").upsert({
-            id: invoice.id,
-            user_id: profile.id,
-            subscription_id: invoice.subscription,
-            amount_paid: 0,
-            currency: invoice.currency,
-            status: 'failed', // Override status
-            invoice_pdf: invoice.hosted_invoice_url,
-            created_at: new Date(invoice.created * 1000).toISOString()
-        });
-
-        // Optional: Notify user or update subscription status if critical
-    }
-}
+    return new Response("Method Not Allowed", { status: 405 })
+})

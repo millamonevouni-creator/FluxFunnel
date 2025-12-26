@@ -71,7 +71,18 @@ const UpgradeModal = ({ onClose, onUpgrade, isDark, limitType = 'NODES', plans, 
 
             // Call the API function we created
             const { api } = await import('../services/api_fixed');
-            const affiliateId = localStorage.getItem('flux_affiliate_id');
+
+            // Helper to get cookie
+            const getCookie = (name: string) => {
+                const value = `; ${document.cookie}`;
+                const parts = value.split(`; ${name}=`);
+                if (parts.length === 2) return parts.pop()?.split(';').shift();
+            }
+
+            let affiliateId = localStorage.getItem('flux_affiliate_id');
+            if (!affiliateId) {
+                affiliateId = getCookie('flux_affiliate_id') || null;
+            }
             const { sessionId, url } = await api.subscriptions.createCheckoutSession(priceId, {
                 affiliate: affiliateId // Pass affiliate ID
             });

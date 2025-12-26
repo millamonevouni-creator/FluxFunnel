@@ -128,10 +128,12 @@ const App = () => {
 
   useEffect(() => {
     const initApp = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const shareId = params.get('share');
+      let loggedUser = null;
+
       try {
-        const params = new URLSearchParams(window.location.search);
-        const shareId = params.get('share');
-        const loggedUser = await api.auth.getProfile();
+        loggedUser = await api.auth.getProfile();
         if (loggedUser) {
           setUser(loggedUser);
 
@@ -144,8 +146,19 @@ const App = () => {
               await supabase.from('team_members').update({ user_id: loggedUser.id, status: 'ACTIVE' }).eq('id', invite.id);
             }
           }
-          setTeamMembers(await api.team.list());
-          setCustomTemplates(await api.templates.list());
+        }
+
+        // Capture Affiliate ID from URL (Persistent 90 Days)
+        const refId = params.get('ref');
+        if (refId) {
+          localStorage.setItem('flux_affiliate_id', refId);
+          // Set cookie for 90 days (7776000 seconds)
+          document.cookie = `flux_affiliate_id=${refId}; path=/; max-age=7776000; SameSite=Lax`;
+        }
+
+        setTeamMembers(await api.team.list());
+        setCustomTemplates(await api.templates.list());
+        if (loggedUser) {
           const membership = await api.team.checkMembership(loggedUser.id);
           if (membership) {
             // ENFORCE GUEST PLAN PERSISTENCE:
@@ -163,6 +176,7 @@ const App = () => {
             }
           }
         }
+
         setIsDark(safeGet<string>('theme', 'light') === 'dark');
         setLang(safeGet('lang', 'pt'));
         setSystemConfig(await api.system.get());
