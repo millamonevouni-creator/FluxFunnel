@@ -11,7 +11,7 @@ import {
     Zap, Rocket, Target, Users, Monitor, PlayCircle, Lock, Server, Store, ShoppingBag, Star, AlertTriangle, Eye, ShieldAlert
 } from 'lucide-react';
 import { NodeType, Language, Template } from './types';
-import { Node, Edge } from 'reactflow';
+import type { Node, Edge } from 'reactflow';
 
 export const TRANSLATIONS = {
     pt: {

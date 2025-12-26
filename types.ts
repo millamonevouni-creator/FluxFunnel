@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Node, Edge } from 'reactflow';
+import type { Node, Edge } from 'reactflow';
 
 export enum NodeType {
   // Pages

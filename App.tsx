@@ -20,7 +20,7 @@ const UpgradeModal = React.lazy(() => import('./components/UpgradeModal')); // L
 import AnnouncementBanner from './components/AnnouncementBanner';
 import { Project, AppMode, User, Language, AppPage, AppView, FeedbackItem, PlanConfig, TeamMember, Template, SystemConfig } from './types';
 import { INITIAL_NODES, INITIAL_EDGES, TRANSLATIONS, PROJECT_TEMPLATES, NODE_CONFIG, NODE_CATEGORY } from './constants';
-import { Node, Edge } from 'reactflow';
+import type { Node, Edge } from 'reactflow';
 import { safeGet, safeSet, migrateFeedbacks } from './utils/storage';
 import { api } from './services/api_fixed';
 import { supabase, isOffline } from './services/supabaseClient';
