@@ -1,13 +1,15 @@
+// @ts-nocheck
 import { serve } from "std/http/server.ts";
 import { createClient } from "@supabase/supabase-js";
-import { Resend } from "resend";
+// 3rd party imports removed to prevent crash if keys missing
+// import { Resend } from "resend";
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+// const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 serve(async (req: Request) => {
     // 0. Handle CORS Preflight

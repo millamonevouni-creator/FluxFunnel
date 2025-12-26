@@ -327,7 +327,7 @@ const MasterAdminDashboard = ({
                             <Shield className="text-indigo-500" size={18} />
                             <h1 className="text-lg font-black tracking-tight uppercase">Painel Master</h1>
                         </div>
-                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">FluxVision Enterprise</p>
+                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">FluxFunnel Enterprise</p>
                     </div>
                 </div>
                 <div className="flex flex-wrap gap-1 p-1 bg-[#020617] rounded-xl border border-slate-800 shadow-inner">

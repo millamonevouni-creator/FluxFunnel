@@ -9,6 +9,6 @@ export const LoadingScreen = () => (
                 <Sparkles size={16} className="text-indigo-400 animate-pulse" />
             </div>
         </div>
-        <h1 className="text-xl font-black text-white tracking-widest uppercase opacity-80 animate-pulse">Carregando FluxVision...</h1>
+        <h1 className="text-xl font-black text-white tracking-widest uppercase opacity-80 animate-pulse">Carregando FluxFunnel...</h1>
     </div>
 );

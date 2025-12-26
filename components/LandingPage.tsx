@@ -132,12 +132,12 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                     </div>
 
                     <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight mb-8 leading-[1.1] text-slate-900 animate-fade-in-up">
-                        Planeje. Construa. <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600">Escalone Vendas.</span>
+                        Construa Funis de Alta Conversão <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600">sem Escrever Código.</span>
                     </h1>
 
                     <p className="text-xl md:text-2xl text-slate-500 max-w-3xl mx-auto mb-12 leading-relaxed font-medium animate-fade-in-up delay-100">
-                        A plataforma visual definitiva para estrategistas digitais. Mapeie funis complexos, desenhe jornadas de clientes e otimize conversões em minutos, não horas.
+                        Arraste, solte e venda. A ferramenta definitiva para estrategistas que valorizam seu tempo e resultados.
                     </p>
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up delay-200 mb-16">
