@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BaseEdge, EdgeLabelRenderer, EdgeProps, getBezierPath, useReactFlow } from 'reactflow';
+import { BaseEdge, EdgeLabelRenderer, EdgeProps, getSmoothStepPath, useReactFlow } from 'reactflow';
 import { X } from 'lucide-react';
 
 const CustomEdge = ({
@@ -12,7 +12,7 @@ const CustomEdge = ({
   targetPosition,
   style = {},
   markerEnd,
-  selected, 
+  selected,
 }: EdgeProps) => {
   const { setEdges } = useReactFlow();
   const [isHovered, setIsHovered] = useState(false);
@@ -20,33 +20,34 @@ const CustomEdge = ({
   // --- SMART ALIGNMENT LOGIC ---
   // Fixes "wobbly" lines when nodes are vertically aligned but have different widths relative to the grid.
   // If the difference between Source and Target is small (<= 6px), we snap them to the average center.
-  
+
   let sx = sourceX;
   let sy = sourceY;
   let tx = targetX;
   let ty = targetY;
 
   // Vertical Snap (Force straight vertical line)
-  if (Math.abs(sx - tx) <= 6) {
-      const avg = (sx + tx) / 2;
-      sx = avg;
-      tx = avg;
+  if (Math.abs(sx - tx) <= 20) {
+    const avg = (sx + tx) / 2;
+    sx = avg;
+    tx = avg;
   }
 
   // Horizontal Snap (Force straight horizontal line)
-  if (Math.abs(sy - ty) <= 6) {
-      const avg = (sy + ty) / 2;
-      sy = avg;
-      ty = avg;
+  if (Math.abs(sy - ty) <= 20) {
+    const avg = (sy + ty) / 2;
+    sy = avg;
+    ty = avg;
   }
 
-  const [edgePath, labelX, labelY] = getBezierPath({
+  const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX: sx,
     sourceY: sy,
     sourcePosition,
     targetX: tx,
     targetY: ty,
     targetPosition,
+    borderRadius: 15, // Smooth corners for a modern look
   });
 
   const onEdgeClick = (evt: React.MouseEvent) => {
@@ -66,10 +67,10 @@ const CustomEdge = ({
   return (
     <>
       {/* Visible Path - Rendered first (bottom layer) */}
-      <BaseEdge 
-        path={edgePath} 
-        markerEnd={markerEnd} 
-        style={edgeStyle} 
+      <BaseEdge
+        path={edgePath}
+        markerEnd={markerEnd}
+        style={edgeStyle}
       />
 
       {/* Invisible thicker path for easier hover/click detection - Rendered second (top layer) to capture events */}
@@ -92,7 +93,7 @@ const CustomEdge = ({
             fontSize: 12,
             pointerEvents: 'all',
             // Show delete button if hovered OR selected
-            opacity: isHovered || selected ? 1 : 0, 
+            opacity: isHovered || selected ? 1 : 0,
             transition: 'opacity 0.2s ease-in-out',
             zIndex: 1000,
           }}

@@ -843,7 +843,7 @@ const CustomNode = ({ id, data, selected }: NodeProps<FunnelNodeData>) => {
                 {renderLabel()}
 
                 {/* Main Box */}
-                <div className={`relative w-[100px] h-[130px] group`}>
+                <div className={`relative w-[120px] h-[150px] group`}>
 
                     {/* Visual Content - THIS has overflow hidden */}
                     <div className={`

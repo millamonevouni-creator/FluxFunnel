@@ -398,6 +398,7 @@ const FlowCanvas = ({
           nodesDraggable={!isPresentationMode}
           fitView
           snapToGrid={true}
+          snapGrid={[24, 24]}
         >
           {snapLines && <SnapLines snapLines={snapLines} reactFlowInstance={reactFlowInstance} />}
           <Background color={isDark ? "#334155" : "#cbd5e1"} gap={24} variant={BackgroundVariant.Dots} />
