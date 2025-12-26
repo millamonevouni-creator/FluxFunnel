@@ -87,6 +87,7 @@ const App = () => {
   useEffect(() => {
     const handleChunkError = (event: ErrorEvent | PromiseRejectionEvent) => {
       const errorMsg = (event instanceof ErrorEvent ? event.message : event.reason?.message) || '';
+
       if (
         errorMsg.includes('Unable to preload CSS') ||
         errorMsg.includes('Loading chunk') ||
@@ -100,6 +101,19 @@ const App = () => {
           sessionStorage.setItem('flux_chunk_reload', now.toString());
           window.location.reload();
         }
+      }
+
+      // GLOBAL AUTH ERROR HANDLER
+      // Catch "Invalid Refresh Token" which locks users out
+      if (
+        errorMsg.includes('Invalid Refresh Token') ||
+        errorMsg.includes('refresh_token_not_found') ||
+        errorMsg.includes('AuthApiError: Invalid Refresh Token')
+      ) {
+        console.warn("Critical Auth Error detected (Invalid Token). Forcing logout...");
+        supabase.auth.signOut().then(() => {
+          window.location.href = '/';
+        });
       }
     };
 
@@ -710,7 +724,28 @@ const App = () => {
           onCreateUser={(u, p) => { }}
           onImpersonate={handleAdminImpersonate}
           plans={plans}
-          onUpdatePlan={async (p) => { const updated = await api.plans.update(p.id, p); setPlans(prev => prev.map(old => old.id === p.id ? updated : old) as PlanConfig[]); showNotification("Plano atualizado!"); }}
+          onUpdatePlan={async (p) => {
+            // Optimistic Update for regular edits
+            setPlans(prev => prev.map(old => old.id === p.id ? { ...old, ...p } : old));
+            try {
+              await api.plans.update(p.id, p);
+            } catch (e) {
+              console.error(e);
+              showNotification("Erro ao salvar alterações.", "error");
+            }
+          }}
+          onReorderPlans={async (newPlans) => {
+            // Instant UI update for reordering
+            setPlans(newPlans);
+            try {
+              // Persist order changes for all affected plans (or simply all to be safe)
+              await Promise.all(newPlans.map(p => api.plans.update(p.id, { order: p.order })));
+            } catch (e) {
+              console.error("Reorder failed", e);
+              showNotification("Erro ao salvar nova ordem.", "error");
+              // Ideally revert here, but for now we trust the user will retry or refresh
+            }
+          }}
           onDeletePlan={async (id) => { await api.plans.delete(id); setPlans(prev => prev.filter(p => p.id !== id)); showNotification("Plano removido."); }}
           onCreatePlan={async (p) => {
             const newPlan = await api.plans.create(p);
@@ -994,6 +1029,7 @@ const App = () => {
               onImpersonate={handleAdminImpersonate}
               plans={plans}
               onUpdatePlan={async (p) => { await api.plans.update(p.id, p); setPlans(await api.plans.list()); }}
+              onReorderPlans={async (newPlans) => { setPlans(newPlans); await Promise.all(newPlans.map(p => api.plans.update(p.id, { order: p.order }))); }}
               onDeletePlan={async (id) => { await api.plans.delete(id); setPlans(await api.plans.list()); }}
               onCreatePlan={async (p) => { await api.plans.create(p); setPlans(await api.plans.list()); }}
               systemConfig={systemConfig}

@@ -33,6 +33,22 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
 
     // Security States
     const [twoFactor, setTwoFactor] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteConfirmation, setDeleteConfirmation] = useState('');
+
+    const handleDeleteAccount = async () => {
+        if (deleteConfirmation.toUpperCase() !== 'DELETAR') return;
+        setIsSaving(true);
+        try {
+            await api.users.delete(user.id);
+            await api.auth.logout();
+            window.location.href = '/';
+        } catch (e) {
+            console.error(e);
+            alert("Erro ao excluir conta. Entre em contato com o suporte.");
+            setIsSaving(false);
+        }
+    };
 
     const handleSaveProfile = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -583,7 +599,12 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
                                 <div className="mt-8 pt-8 border-t border-red-100 dark:border-red-900/30">
                                     <h4 className="text-red-600 font-bold mb-2 flex items-center gap-2"><AlertTriangle size={18} /> {t('dangerZone')}</h4>
                                     <p className="text-sm text-slate-500 mb-4">{t('deleteWarning')}</p>
-                                    <button className="px-5 py-2.5 border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl text-sm font-bold transition-colors" title={t('deleteAccount')} aria-label={t('deleteAccount')}>
+                                    <button
+                                        onClick={() => setShowDeleteModal(true)}
+                                        className="px-5 py-2.5 border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl text-sm font-bold transition-colors"
+                                        title={t('deleteAccount')}
+                                        aria-label={t('deleteAccount')}
+                                    >
                                         {t('deleteAccount')}
                                     </button>
                                 </div>
@@ -639,6 +660,51 @@ const SettingsDashboard = ({ user, onUpdateUser, isDark, toggleTheme, lang, setL
                     </div>
                 </div>
             </div>
+
+            {/* DELETE CONFIRMATION MODAL */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                    <div className={`w-full max-w-md p-6 rounded-2xl shadow-2xl border ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'} animate-in fade-in zoom-in duration-200`}>
+                        <div className="flex items-center gap-3 mb-4 text-red-600">
+                            <AlertTriangle size={24} />
+                            <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{t('deleteAccount')}?</h3>
+                        </div>
+
+                        <p className={`mb-6 text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                            {t('deleteWarning')}
+                            <br /><br />
+                            Esta ação removerá permanentemente todos os seus projetos, templates e configurações. Não é possível desfazer.
+                            <br /><br />
+                            Para confirmar, digite <strong>DELETAR</strong> abaixo:
+                        </p>
+
+                        <input
+                            type="text"
+                            value={deleteConfirmation}
+                            onChange={e => setDeleteConfirmation(e.target.value)}
+                            placeholder="DELETAR"
+                            className={`w-full p-4 rounded-xl border mb-6 text-center font-black tracking-widest uppercase outline-none focus:ring-2 focus:ring-red-500 ${isDark ? 'bg-slate-950 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'}`}
+                            autoFocus
+                        />
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => { setShowDeleteModal(false); setDeleteConfirmation(''); }}
+                                className={`flex-1 px-4 py-3 rounded-xl font-bold transition-colors ${isDark ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                            >
+                                {t('cancel')}
+                            </button>
+                            <button
+                                onClick={handleDeleteAccount}
+                                disabled={deleteConfirmation.toUpperCase() !== 'DELETAR' || isSaving}
+                                className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-red-500/20"
+                            >
+                                {isSaving ? t('saving') : t('deleteBtn')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

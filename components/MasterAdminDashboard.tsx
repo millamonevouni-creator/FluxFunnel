@@ -38,6 +38,7 @@ interface MasterAdminDashboardProps {
     onUpdatePlan: (plan: PlanConfig) => void;
     onDeletePlan: (id: string) => void;
     onCreatePlan: (plan: PlanConfig) => void;
+    onReorderPlans?: (plans: PlanConfig[]) => void; // Optional for backward compat during refactor
     systemConfig: SystemConfig;
     onUpdateSystemConfig: (config: SystemConfig) => void;
     t: (key: any) => string;
@@ -47,7 +48,7 @@ const MasterAdminDashboard = ({
     onBack, feedbacks, onDeleteFeedback, onUpdateFeedback, onReplyFeedback, onDeleteComment,
     users, onUpdateUser, onDeleteUser, onBanUser,
     onCreateUser, onImpersonate, plans, onUpdatePlan, onDeletePlan,
-    onCreatePlan, systemConfig, onUpdateSystemConfig, t
+    onCreatePlan, onReorderPlans, systemConfig, onUpdateSystemConfig, t
 }: MasterAdminDashboardProps) => {
 
     const [searchTerm, setSearchTerm] = useState('');
@@ -392,13 +393,26 @@ const MasterAdminDashboard = ({
                                         {index > 0 && (
                                             <button
                                                 onClick={() => {
-                                                    const prevPlan = array[index - 1];
-                                                    const currentOrder = plan.order ?? index;
-                                                    const prevOrder = prevPlan.order ?? (index - 1);
+                                                    if (onReorderPlans) {
+                                                        const newPlans = [...array];
+                                                        // Swap elements at index and index-1
+                                                        const currentPlan = newPlans[index];
+                                                        newPlans[index] = newPlans[index - 1];
+                                                        newPlans[index - 1] = currentPlan;
 
-                                                    // Swap orders
-                                                    onUpdatePlan({ ...plan, order: prevOrder });
-                                                    onUpdatePlan({ ...prevPlan, order: currentOrder });
+                                                        // Re-assign distinct orders based on new array position
+                                                        // This fixes the issue where multiple plans have 'order: 0' and swapping doesn't work
+                                                        const reindexedPlans = newPlans.map((p, i) => ({ ...p, order: i }));
+
+                                                        onReorderPlans(reindexedPlans);
+                                                    } else {
+                                                        // Fallback (Legacy)
+                                                        const prevPlan = array[index - 1];
+                                                        const currentOrder = plan.order ?? index;
+                                                        const prevOrder = prevPlan.order ?? (index - 1);
+                                                        onUpdatePlan({ ...plan, order: prevOrder });
+                                                        onUpdatePlan({ ...prevPlan, order: currentOrder });
+                                                    }
                                                 }}
                                                 className="p-3 bg-slate-900/80 border border-slate-800 hover:bg-slate-700 text-slate-500 hover:text-white rounded-xl transition-all shadow-md active:scale-95"
                                                 title="Mover para esquerda"
@@ -410,13 +424,25 @@ const MasterAdminDashboard = ({
                                         {index < array.length - 1 && (
                                             <button
                                                 onClick={() => {
-                                                    const nextPlan = array[index + 1];
-                                                    const currentOrder = plan.order ?? index;
-                                                    const nextOrder = nextPlan.order ?? (index + 1);
+                                                    if (onReorderPlans) {
+                                                        const newPlans = [...array];
+                                                        // Swap elements at index and index+1
+                                                        const currentPlan = newPlans[index];
+                                                        newPlans[index] = newPlans[index + 1];
+                                                        newPlans[index + 1] = currentPlan;
 
-                                                    // Swap orders
-                                                    onUpdatePlan({ ...plan, order: nextOrder });
-                                                    onUpdatePlan({ ...nextPlan, order: currentOrder });
+                                                        // Re-assign distinct orders based on new array position
+                                                        const reindexedPlans = newPlans.map((p, i) => ({ ...p, order: i }));
+
+                                                        onReorderPlans(reindexedPlans);
+                                                    } else {
+                                                        // Fallback (Legacy)
+                                                        const nextPlan = array[index + 1];
+                                                        const currentOrder = plan.order ?? index;
+                                                        const nextOrder = nextPlan.order ?? (index + 1);
+                                                        onUpdatePlan({ ...plan, order: nextOrder });
+                                                        onUpdatePlan({ ...nextPlan, order: currentOrder });
+                                                    }
                                                 }}
                                                 className="p-3 bg-slate-900/80 border border-slate-800 hover:bg-slate-700 text-slate-500 hover:text-white rounded-xl transition-all shadow-md active:scale-95"
                                                 title="Mover para direita"
