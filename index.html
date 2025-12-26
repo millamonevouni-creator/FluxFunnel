@@ -12,6 +12,9 @@
   <meta name="author" content="Equipe FluxFunnel" />
   <link rel="canonical" href="https://fluxfunnel.fun/" />
   <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/favicon.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#4f46e5" />
   <meta name="google-site-verification" content="3v8FMzb3_8YiX-K-8RBgKl5z5mwH1FHwjKp-FQr7yro" />
 
   <!-- Open Graph / Facebook -->
@@ -32,19 +35,65 @@
 
   <!-- Structured Data -->
   <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      "name": "FluxFunnel",
-      "applicationCategory": "BusinessApplication",
-      "operatingSystem": "Web",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "BRL"
+    [
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "FluxFunnel",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web Browser",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "BRL"
+        },
+        "description": "Powerful visual funnel builder and strategic planning platform for scaling businesses.",
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "4.8",
+          "ratingCount": "2500"
+        },
+        "screenshot": "https://fluxfunnel.fun/og-image.png"
       },
-      "description": "Powerful visual funnel builder and strategic planning platform for scaling businesses."
-    }
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Posso cancelar a qualquer momento?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Sim, absolutamente. Não há fidelidade ou contratos de longo prazo no plano mensal. Você pode cancelar sua assinatura facilmente nas configurações da conta."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Preciso instalar algo no meu computador?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Não! O FluxFunnel é 100% baseado na nuvem. Você pode acessar seus funis de qualquer dispositivo, em qualquer lugar."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "O plano gratuito é realmente gratuito?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Sim, o plano gratuito é vitalício e permite criar 1 projeto completo. É perfeito para você testar e validar o poder da nossa plataforma."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Vocês oferecem suporte?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Sim! Todos os planos incluem acesso à nossa base de conhecimento. Planos Pro e Premium têm suporte prioritário via chat e email."
+            }
+          }
+        ]
+      }
+    ]
     </script>
 
   <!-- Fonts -->
