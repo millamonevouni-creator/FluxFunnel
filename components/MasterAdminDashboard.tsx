@@ -584,6 +584,39 @@ const MasterAdminDashboard = ({
                                     </div>
                                 </div>
 
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="space-y-4">
+                                        <label htmlFor="plan-stripe-id-monthly" className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">ID Stripe Mensal</label>
+                                        <div className="relative">
+                                            <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-600 font-bold text-xs" aria-hidden="true">ID</div>
+                                            <input
+                                                id="plan-stripe-id-monthly"
+                                                title="ID do Preço na Stripe (Mensal)"
+                                                type="text"
+                                                value={editingPlan.stripe_price_id_monthly || ''}
+                                                onChange={e => setEditingPlan({ ...editingPlan, stripe_price_id_monthly: e.target.value })}
+                                                className="w-full p-6 pl-14 bg-[#020617] border border-slate-800 rounded-2xl outline-none focus:border-indigo-500 transition-all text-xs font-mono text-slate-300 placeholder:text-slate-800"
+                                                placeholder="price_..."
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <label htmlFor="plan-stripe-id-yearly" className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">ID Stripe Anual</label>
+                                        <div className="relative">
+                                            <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-600 font-bold text-xs" aria-hidden="true">ID</div>
+                                            <input
+                                                id="plan-stripe-id-yearly"
+                                                title="ID do Preço na Stripe (Anual)"
+                                                type="text"
+                                                value={editingPlan.stripe_price_id_yearly || ''}
+                                                onChange={e => setEditingPlan({ ...editingPlan, stripe_price_id_yearly: e.target.value })}
+                                                className="w-full p-6 pl-14 bg-[#020617] border border-slate-800 rounded-2xl outline-none focus:border-indigo-500 transition-all text-xs font-mono text-slate-300 placeholder:text-slate-800"
+                                                placeholder="price_..."
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                                     <div className="space-y-4">
                                         <label htmlFor="plan-project-limit" className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Capacidade de Projetos</label>

@@ -717,9 +717,23 @@ export const api = {
 
                 if (fnError) {
                     console.error("Edge Function Invite Failed:", fnError);
-                    // Extract specific error message if available
-                    // The Supabase invoke error might be wrapped
-                    const specificMessage = safeGetErrorMessage(fnError);
+
+                    let specificMessage = fnError.message || JSON.stringify(fnError);
+
+                    // Supabase-js v2 sometimes returns the raw Response object in context
+                    if (fnError.context && typeof fnError.context.json === 'function') {
+                        try {
+                            const errorBody = await fnError.context.json();
+                            console.log("Parsed Edge Error Body:", errorBody);
+                            if (errorBody?.error) specificMessage = errorBody.error + (errorBody.details ? ` (${errorBody.details})` : '');
+                        } catch (e) {
+                            console.warn("Failed to parse error response JSON:", e);
+                        }
+                    } else if (fnError.context && fnError.context.error) {
+                        // Sometimes it's already parsed
+                        specificMessage = fnError.context.error;
+                    }
+
                     throw new Error(`Erro no envio: ${specificMessage}`);
                 }
 
