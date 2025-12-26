@@ -61,11 +61,12 @@ const invokeEdgeFunction = async (functionName: string, body: any) => {
 
 export const api = {
     subscriptions: {
-        createCheckoutSession: async (priceId: string) => {
+        createCheckoutSession: async (priceId: string, metadata?: any) => {
             // You can also use supabase.functions.invoke here directly
             const { data, error } = await supabase.functions.invoke('create-checkout-session', {
                 body: {
                     priceId,
+                    metadata,
                     successUrl: window.location.origin + '?session_id={CHECKOUT_SESSION_ID}',
                     cancelUrl: window.location.origin
                 }

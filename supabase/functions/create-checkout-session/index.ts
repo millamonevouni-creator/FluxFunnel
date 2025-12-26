@@ -35,7 +35,7 @@ serve(async (req: Request) => {
             throw new Error('User not authenticated')
         }
 
-        const { priceId, successUrl, cancelUrl } = await req.json()
+        const { priceId, successUrl, cancelUrl, metadata } = await req.json()
 
         if (!priceId) {
             throw new Error('Missing Price ID')
@@ -75,11 +75,18 @@ serve(async (req: Request) => {
             success_url: successUrl,
             cancel_url: cancelUrl,
             client_reference_id: user.id,
+            subscription_data: {
+                metadata: {
+                    affiliate: metadata?.affiliate || null,
+                    supabase_user_id: user.id
+                }
+            },
             metadata: {
                 supabase_user_id: user.id,
                 user_email: user.email!,
                 plan_price_id: priceId,
-                environment: Deno.env.get('ENVIRONMENT') || 'production'
+                environment: Deno.env.get('ENVIRONMENT') || 'production',
+                affiliate: metadata?.affiliate || null
             }
         })
 

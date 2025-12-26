@@ -19,6 +19,7 @@ import 'reactflow/dist/style.css';
 import CustomNode from './CustomNode';
 import CustomEdge from './CustomEdge';
 import RoadmapBoard from './RoadmapBoard';
+import AffiliatesDashboard from './AffiliatesDashboard';
 import { api } from '../services/api_fixed';
 
 interface MasterAdminDashboardProps {
@@ -52,7 +53,7 @@ const MasterAdminDashboard = ({
 }: MasterAdminDashboardProps) => {
 
     const [searchTerm, setSearchTerm] = useState('');
-    const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'USERS' | 'TEMPLATES' | 'FEEDBACK' | 'SYSTEM' | 'PLANS'>('OVERVIEW');
+    const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'USERS' | 'TEMPLATES' | 'FEEDBACK' | 'SYSTEM' | 'PLANS' | 'AFFILIATES'>('OVERVIEW');
 
     // Preview State
     const [quickLookTemplate, setQuickLookTemplate] = useState<Template | null>(null);
@@ -338,6 +339,7 @@ const MasterAdminDashboard = ({
                         { id: 'TEMPLATES', label: 'Marketplace' },
                         { id: 'PLANS', label: 'Planos' },
                         { id: 'FEEDBACK', label: 'Roadmap' },
+                        { id: 'AFFILIATES', label: 'Parceiros' },
                         { id: 'SYSTEM', label: 'Sistema' }
                     ].map(tab => (
                         <button
@@ -734,6 +736,9 @@ const MasterAdminDashboard = ({
                     </div>
                 )
             }
+
+            {/* TAB: AFILIADOS (NOVO) */}
+            {activeTab === 'AFFILIATES' && <AffiliatesDashboard />}
 
             {/* ABAS RESTANTES (Sincronização / Skeleton) */}
             {/* TAB: OVERVIEW (DASHBOARD) */}

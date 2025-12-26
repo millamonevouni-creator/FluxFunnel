@@ -71,7 +71,10 @@ const UpgradeModal = ({ onClose, onUpgrade, isDark, limitType = 'NODES', plans, 
 
             // Call the API function we created
             const { api } = await import('../services/api_fixed');
-            const { sessionId, url } = await api.subscriptions.createCheckoutSession(priceId);
+            const affiliateId = localStorage.getItem('flux_affiliate_id');
+            const { sessionId, url } = await api.subscriptions.createCheckoutSession(priceId, {
+                affiliate: affiliateId // Pass affiliate ID
+            });
 
             if (url) {
                 window.location.href = url;
