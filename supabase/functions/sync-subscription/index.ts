@@ -109,12 +109,14 @@ serve(async (req: Request) => {
             }).eq('id', profile.id);
 
             // Upsert Subscription
+            const interval = subscription.items.data[0].price.recurring?.interval || 'month';
             await supabaseAdmin.from("subscriptions").upsert({
                 id: subscription.id,
                 user_id: profile.id,
                 status: status,
                 price_id: priceId,
                 current_period_end: subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString() : null,
+                interval: interval // Add interval
             });
 
             return new Response(JSON.stringify({ success: true, plan: planId, user_id: profile.id }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });

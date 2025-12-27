@@ -317,6 +317,14 @@ const App = () => {
             const apiProjects = await api.projects.list();
             setProjects(apiProjects);
 
+            if (profile.isSystemAdmin) {
+              try {
+                setAllUsers(await api.admin.getUsers());
+              } catch (err) {
+                console.error("Failed to fetch all users on restore", err);
+              }
+            }
+
             // Only switch view if we are effectively seemingly not logged in
             // This is a bit tricky with stale access to state in useEffect.
             // But setting it to APP again is harmless unless it overrides a transition.

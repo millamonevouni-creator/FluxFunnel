@@ -142,6 +142,7 @@ export interface User {
   isInvitedMember?: boolean;
   company_name?: string;
   job_title?: string;
+
 }
 
 export interface PlanConfig {

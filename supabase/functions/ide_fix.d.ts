@@ -15,6 +15,11 @@ declare module "stripe" {
     export default Stripe;
 }
 
+declare namespace Stripe {
+    type Invoice = any;
+    type Subscription = any;
+}
+
 declare module "@supabase/supabase-js" {
     export const createClient: any;
 }

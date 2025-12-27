@@ -1,4 +1,6 @@
 
+/// <reference path="../ide_fix.d.ts" />
+
 import { serve } from "std/http/server.ts"
 import { createClient } from "@supabase/supabase-js"
 import Stripe from "stripe"
@@ -17,7 +19,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 console.log("Stripe Webhook Handler Started")
 
-serve(async (req) => {
+serve(async (req: Request) => {
     if (req.method === "POST") {
         const signature = req.headers.get("Stripe-Signature")
         if (!signature) {
@@ -93,10 +95,44 @@ serve(async (req) => {
                 }
             }
 
+
+            // Handle Subscription Updates (Interval Sync)
+            if (['customer.subscription.created', 'customer.subscription.updated'].includes(event.type)) {
+                const subscription = event.data.object as Stripe.Subscription;
+                const price = subscription.items.data[0].price;
+                const priceId = price.id;
+                const interval = price.recurring?.interval || 'month';
+                const status = subscription.status;
+                const customerId = subscription.customer as string;
+
+                console.log(`🔄 Processing Subscription Sync for ${customerId} (${status}, ${interval})`);
+
+                // Find User by Stripe Customer ID
+                const { data: profile } = await supabase
+                    .from("profiles")
+                    .select("id")
+                    .eq("stripe_customer_id", customerId)
+                    .single();
+
+                if (profile) {
+                    await supabase.from("subscriptions").upsert({
+                        id: subscription.id,
+                        user_id: profile.id,
+                        status: status,
+                        price_id: priceId,
+                        current_period_end: subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString() : null,
+                        interval: interval
+                    });
+                    console.log(`✅ Subscription synced for user ${profile.id}`);
+                } else {
+                    console.warn(`⚠️ User not found for Stripe Customer ${customerId} during subscription sync.`);
+                }
+            }
+
             return new Response(JSON.stringify({ received: true }), {
                 headers: { "Content-Type": "application/json" },
             })
-        } catch (err) {
+        } catch (err: any) {
             console.error(`Webhook Error: ${err.message}`)
             return new Response(`Webhook Error: ${err.message}`, { status: 400 })
         }
