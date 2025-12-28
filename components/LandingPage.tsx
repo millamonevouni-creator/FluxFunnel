@@ -126,280 +126,282 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                 </div >
             </nav >
 
-            {/* Hero Section Premium */}
-            < section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden" >
-                {/* Background Elements */}
-                < div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[800px] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-100 via-slate-50 to-slate-50 opacity-70 -z-10" ></div >
-                <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-gradient-to-br from-violet-200/30 to-fuchsia-200/30 blur-3xl -z-10 rounded-full mix-blend-multiply filter opacity-70 animate-blob"></div>
-                <div className="absolute bottom-0 left-0 w-1/3 h-1/3 bg-gradient-to-tr from-cyan-200/30 to-blue-200/30 blur-3xl -z-10 rounded-full mix-blend-multiply filter opacity-70 animate-blob animation-delay-2000"></div>
+            <main>
+                {/* Hero Section Premium */}
+                < section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden" >
+                    {/* Background Elements */}
+                    < div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[800px] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-100 via-slate-50 to-slate-50 opacity-70 -z-10" ></div >
+                    <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-gradient-to-br from-violet-200/30 to-fuchsia-200/30 blur-3xl -z-10 rounded-full mix-blend-multiply filter opacity-70 animate-blob"></div>
+                    <div className="absolute bottom-0 left-0 w-1/3 h-1/3 bg-gradient-to-tr from-cyan-200/30 to-blue-200/30 blur-3xl -z-10 rounded-full mix-blend-multiply filter opacity-70 animate-blob animation-delay-2000"></div>
 
-                <div className="container mx-auto px-6 text-center relative z-10">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-indigo-100 shadow-sm mb-8 animate-fade-in-up hover:shadow-md transition-shadow cursor-default">
-                        <span className="flex h-2 w-2 rounded-full bg-indigo-500 animate-pulse"></span>
-                        <span className="text-sm font-bold text-slate-600">A Revolução na Criação de Funis</span>
-                        <span className="ml-2 px-2 py-0.5 rounded text-[10px] font-black bg-indigo-100 text-indigo-700 uppercase tracking-wide">Novo</span>
+                    <div className="container mx-auto px-6 text-center relative z-10">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-indigo-100 shadow-sm mb-8 animate-fade-in-up hover:shadow-md transition-shadow cursor-default">
+                            <span className="flex h-2 w-2 rounded-full bg-indigo-500 animate-pulse"></span>
+                            <span className="text-sm font-bold text-slate-600">A Revolução na Criação de Funis</span>
+                            <span className="ml-2 px-2 py-0.5 rounded text-[10px] font-black bg-indigo-100 text-indigo-700 uppercase tracking-wide">Novo</span>
+                        </div>
+
+                        <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight mb-8 leading-[1.1] text-slate-900 animate-fade-in-up">
+                            Construa Funis de Alta Conversão <br />
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600">sem Escrever Código.</span>
+                        </h1>
+
+                        <p className="text-xl md:text-2xl text-slate-500 max-w-3xl mx-auto mb-12 leading-relaxed font-medium animate-fade-in-up delay-100">
+                            Arraste, solte e venda. A ferramenta definitiva para estrategistas que valorizam seu tempo e resultados.
+                        </p>
+
+                        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up delay-200 mb-16">
+                            <button onClick={() => handleActionClick()} className="group relative w-full sm:w-auto px-8 py-4 bg-slate-900 text-white rounded-2xl font-bold text-lg shadow-2xl shadow-slate-900/30 hover:shadow-slate-900/50 hover:-translate-y-1 transition-all overflow-hidden">
+                                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-shimmer"></div>
+                                <span className="flex items-center justify-center gap-3">Começar Gratuitamente <ArrowRight size={20} /></span>
+                            </button>
+                            <button onClick={() => window.location.href = "#how-it-works"} className="w-full sm:w-auto px-8 py-4 bg-white text-slate-700 rounded-2xl font-bold text-lg border border-slate-200 shadow-lg shadow-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all flex items-center justify-center gap-3">
+                                <PlayCircle size={20} className="text-indigo-600" /> Ver Demonstração
+                            </button>
+                        </div>
+
+                        <div className="flex flex-col items-center gap-4 animate-fade-in-up delay-300">
+                            <div className="flex -space-x-4">
+                                {[1, 2, 3, 4, 5].map(i => (
+                                    <img key={i} className="w-12 h-12 rounded-full border-4 border-white shadow-sm" src={`https://i.pravatar.cc/100?img=${i + 10}`} alt="User" />
+                                ))}
+                                <div className="w-12 h-12 rounded-full border-4 border-white bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600">+2k</div>
+                            </div>
+                            <p className="text-sm font-semibold text-slate-500">Junte-se a mais de <span className="text-indigo-600 font-bold">2.000+ estrategistas</span> que usam FluxFunnel</p>
+                            <div className="flex gap-1 text-amber-400">
+                                <Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" />
+                            </div>
+                        </div>
                     </div>
+                </section >
 
-                    <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight mb-8 leading-[1.1] text-slate-900 animate-fade-in-up">
-                        Construa Funis de Alta Conversão <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600">sem Escrever Código.</span>
-                    </h1>
-
-                    <p className="text-xl md:text-2xl text-slate-500 max-w-3xl mx-auto mb-12 leading-relaxed font-medium animate-fade-in-up delay-100">
-                        Arraste, solte e venda. A ferramenta definitiva para estrategistas que valorizam seu tempo e resultados.
-                    </p>
-
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up delay-200 mb-16">
-                        <button onClick={() => handleActionClick()} className="group relative w-full sm:w-auto px-8 py-4 bg-slate-900 text-white rounded-2xl font-bold text-lg shadow-2xl shadow-slate-900/30 hover:shadow-slate-900/50 hover:-translate-y-1 transition-all overflow-hidden">
-                            <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-shimmer"></div>
-                            <span className="flex items-center justify-center gap-3">Começar Gratuitamente <ArrowRight size={20} /></span>
-                        </button>
-                        <button onClick={() => window.location.href = "#how-it-works"} className="w-full sm:w-auto px-8 py-4 bg-white text-slate-700 rounded-2xl font-bold text-lg border border-slate-200 shadow-lg shadow-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all flex items-center justify-center gap-3">
-                            <PlayCircle size={20} className="text-indigo-600" /> Ver Demonstração
-                        </button>
-                    </div>
-
-                    <div className="flex flex-col items-center gap-4 animate-fade-in-up delay-300">
-                        <div className="flex -space-x-4">
-                            {[1, 2, 3, 4, 5].map(i => (
-                                <img key={i} className="w-12 h-12 rounded-full border-4 border-white shadow-sm" src={`https://i.pravatar.cc/100?img=${i + 10}`} alt="User" />
+                {/* Social Proof Logo Strip */}
+                < div className="py-10 border-y border-slate-100 bg-white/50 backdrop-blur-sm" >
+                    <div className="max-w-7xl mx-auto px-6 overflow-hidden">
+                        <p className="text-center text-sm font-bold text-slate-500 uppercase tracking-widest mb-8">Empresas que escalam com FluxFunnel</p>
+                        <div className="flex flex-wrap justify-center gap-12 md:gap-20 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
+                            {['Stripe', 'Spotify', 'Slack', 'Intercom', 'Notion'].map(brand => (
+                                <span key={brand} className="text-2xl md:text-3xl font-black text-slate-400 hover:text-indigo-600 transition-colors cursor-default">{brand}</span>
                             ))}
-                            <div className="w-12 h-12 rounded-full border-4 border-white bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600">+2k</div>
-                        </div>
-                        <p className="text-sm font-semibold text-slate-500">Junte-se a mais de <span className="text-indigo-600 font-bold">2.000+ estrategistas</span> que usam FluxFunnel</p>
-                        <div className="flex gap-1 text-amber-400">
-                            <Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" />
                         </div>
                     </div>
-                </div>
-            </section >
+                </div >
 
-            {/* Social Proof Logo Strip */}
-            < div className="py-10 border-y border-slate-100 bg-white/50 backdrop-blur-sm" >
-                <div className="max-w-7xl mx-auto px-6 overflow-hidden">
-                    <p className="text-center text-sm font-bold text-slate-500 uppercase tracking-widest mb-8">Empresas que escalam com FluxFunnel</p>
-                    <div className="flex flex-wrap justify-center gap-12 md:gap-20 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
-                        {['Stripe', 'Spotify', 'Slack', 'Intercom', 'Notion'].map(brand => (
-                            <span key={brand} className="text-2xl md:text-3xl font-black text-slate-300 hover:text-indigo-600 transition-colors cursor-default">{brand}</span>
-                        ))}
-                    </div>
-                </div>
-            </div >
+                {/* Features Grid */}
+                < section id="features" className="py-24 bg-white relative" >
+                    <div className="max-w-7xl mx-auto px-6">
+                        <div className="text-center mb-20 max-w-3xl mx-auto">
+                            <h2 className="text-indigo-600 font-bold tracking-wide uppercase text-sm mb-3">Poder Ilimitado</h2>
+                            <h3 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight">Tudo o que você precisa para desenhar o sucesso.</h3>
+                            <p className="text-lg text-slate-600">Ferramentas profissionais projetadas para eliminar a confusão e trazer clareza absoluta para suas estratégias de marketing.</p>
+                        </div>
 
-            {/* Features Grid */}
-            < section id="features" className="py-24 bg-white relative" >
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="text-center mb-20 max-w-3xl mx-auto">
-                        <h2 className="text-indigo-600 font-bold tracking-wide uppercase text-sm mb-3">Poder Ilimitado</h2>
-                        <h3 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight">Tudo o que você precisa para desenhar o sucesso.</h3>
-                        <p className="text-lg text-slate-600">Ferramentas profissionais projetadas para eliminar a confusão e trazer clareza absoluta para suas estratégias de marketing.</p>
-                    </div>
-
-                    <div className="grid md:grid-cols-3 gap-8">
-                        {[
-                            { icon: <GitGraph size={32} />, title: 'Mapeamento Visual', desc: 'Arraste e solte elementos para criar fluxos complexos em segundos. Interface intuitiva que flui com seu pensamento.' },
-                            { icon: <Sparkles size={32} />, title: 'Assistente IA', desc: 'Nossa inteligência artificial analisa seus funis e sugere otimizações para aumentar suas taxas de conversão.' },
-                            { icon: <BarChart3 size={32} />, title: 'Previsão de ROI', desc: 'Simule tráfego e conversão em cada etapa para prever o faturamento antes mesmo de lançar a campanha.' },
-                            { icon: <Share size={32} />, title: 'Colaboração em Tempo Real', desc: 'Convide seu time, deixe comentários e construa estratégias juntos, sem versões de arquivos perdidas.' },
-                            { icon: <LayoutDashboard size={32} />, title: 'Modelos Prontos', desc: 'Acesse nossa biblioteca com dezenas de funis validados de alta conversão para diversos nichos.' },
-                            { icon: <Zap size={32} />, title: 'Exportação Rápida', desc: 'Exporte seus diagramas em PDF, PNG ou gere um relatório completo para apresentar aos clientes.' }
-                        ].map((feat, i) => (
-                            <div key={i} className="group p-8 rounded-3xl bg-slate-50 border border-slate-100 hover:border-indigo-100 hover:bg-white hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-300">
-                                <div className="w-14 h-14 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-center text-indigo-600 mb-6 group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
-                                    {feat.icon}
+                        <div className="grid md:grid-cols-3 gap-8">
+                            {[
+                                { icon: <GitGraph size={32} />, title: 'Mapeamento Visual', desc: 'Arraste e solte elementos para criar fluxos complexos em segundos. Interface intuitiva que flui com seu pensamento.' },
+                                { icon: <Sparkles size={32} />, title: 'Assistente IA', desc: 'Nossa inteligência artificial analisa seus funis e sugere otimizações para aumentar suas taxas de conversão.' },
+                                { icon: <BarChart3 size={32} />, title: 'Previsão de ROI', desc: 'Simule tráfego e conversão em cada etapa para prever o faturamento antes mesmo de lançar a campanha.' },
+                                { icon: <Share size={32} />, title: 'Colaboração em Tempo Real', desc: 'Convide seu time, deixe comentários e construa estratégias juntos, sem versões de arquivos perdidas.' },
+                                { icon: <LayoutDashboard size={32} />, title: 'Modelos Prontos', desc: 'Acesse nossa biblioteca com dezenas de funis validados de alta conversão para diversos nichos.' },
+                                { icon: <Zap size={32} />, title: 'Exportação Rápida', desc: 'Exporte seus diagramas em PDF, PNG ou gere um relatório completo para apresentar aos clientes.' }
+                            ].map((feat, i) => (
+                                <div key={i} className="group p-8 rounded-3xl bg-slate-50 border border-slate-100 hover:border-indigo-100 hover:bg-white hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-300">
+                                    <div className="w-14 h-14 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-center text-indigo-600 mb-6 group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
+                                        {feat.icon}
+                                    </div>
+                                    <h4 className="text-xl font-bold text-slate-900 mb-3">{feat.title}</h4>
+                                    <p className="text-slate-500 leading-relaxed group-hover:text-slate-600">{feat.desc}</p>
                                 </div>
-                                <h4 className="text-xl font-bold text-slate-900 mb-3">{feat.title}</h4>
-                                <p className="text-slate-500 leading-relaxed group-hover:text-slate-600">{feat.desc}</p>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
-                </div>
-            </section >
+                </section >
 
-            {/* How it Works */}
-            < section id="how-it-works" className="py-24 bg-slate-900 text-white relative overflow-hidden" >
-                <div className="absolute top-0 left-0 w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10"></div>
-                <div className="max-w-7xl mx-auto px-6 relative z-10">
-                    <div className="text-center mb-20">
-                        <h3 className="text-3xl md:text-5xl font-black mb-6">Do Caos à Clareza em 3 Passos</h3>
-                        <p className="text-slate-400 text-lg max-w-2xl mx-auto">Simplificamos o complexo. Veja como é fácil transformar ideias abstratas em planos de ação concretos.</p>
-                    </div>
+                {/* How it Works */}
+                < section id="how-it-works" className="py-24 bg-slate-900 text-white relative overflow-hidden" >
+                    <div className="absolute top-0 left-0 w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10"></div>
+                    <div className="max-w-7xl mx-auto px-6 relative z-10">
+                        <div className="text-center mb-20">
+                            <h3 className="text-3xl md:text-5xl font-black mb-6">Do Caos à Clareza em 3 Passos</h3>
+                            <p className="text-slate-400 text-lg max-w-2xl mx-auto">Simplificamos o complexo. Veja como é fácil transformar ideias abstratas em planos de ação concretos.</p>
+                        </div>
 
-                    <div className="grid md:grid-cols-3 gap-12 relative">
-                        {/* Connecting Line (Desktop) */}
-                        <div className="hidden md:block absolute top-12 left-[16%] right-[16%] h-0.5 bg-gradient-to-r from-slate-700 via-indigo-500 to-slate-700"></div>
+                        <div className="grid md:grid-cols-3 gap-12 relative">
+                            {/* Connecting Line (Desktop) */}
+                            <div className="hidden md:block absolute top-12 left-[16%] right-[16%] h-0.5 bg-gradient-to-r from-slate-700 via-indigo-500 to-slate-700"></div>
 
-                        {[
-                            { step: 1, title: 'Planeje', desc: 'Escolha um modelo validado ou comece do zero com nossa tela infinita.', icon: <Map /> },
-                            { step: 2, title: 'Personalize', desc: 'Adicione etapas, defina métricas e conecte as ferramentas do seu stack.', icon: <PenTool /> },
-                            { step: 3, title: 'Execute', desc: 'Exporte o plano tático e compartilhe com seu time para implementação.', icon: <Rocket /> }
-                        ].map((item, i) => (
-                            <div key={i} className="relative flex flex-col items-center text-center">
-                                <div className="w-24 h-24 rounded-full bg-slate-800 border-4 border-slate-900 shadow-xl flex items-center justify-center text-indigo-400 mb-8 relative z-10 group hover:scale-110 transition-transform duration-300">
-                                    <span className="absolute -top-2 -right-2 w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center font-black text-white text-sm border-2 border-slate-900">{item.step}</span>
-                                    {React.cloneElement(item.icon as React.ReactElement, { size: 40 })}
+                            {[
+                                { step: 1, title: 'Planeje', desc: 'Escolha um modelo validado ou comece do zero com nossa tela infinita.', icon: <Map /> },
+                                { step: 2, title: 'Personalize', desc: 'Adicione etapas, defina métricas e conecte as ferramentas do seu stack.', icon: <PenTool /> },
+                                { step: 3, title: 'Execute', desc: 'Exporte o plano tático e compartilhe com seu time para implementação.', icon: <Rocket /> }
+                            ].map((item, i) => (
+                                <div key={i} className="relative flex flex-col items-center text-center">
+                                    <div className="w-24 h-24 rounded-full bg-slate-800 border-4 border-slate-900 shadow-xl flex items-center justify-center text-indigo-400 mb-8 relative z-10 group hover:scale-110 transition-transform duration-300">
+                                        <span className="absolute -top-2 -right-2 w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center font-black text-white text-sm border-2 border-slate-900">{item.step}</span>
+                                        {React.cloneElement(item.icon as React.ReactElement, { size: 40 })}
+                                    </div>
+                                    <h4 className="text-2xl font-bold mb-3">{item.title}</h4>
+                                    <p className="text-slate-400 leading-relaxed">{item.desc}</p>
                                 </div>
-                                <h4 className="text-2xl font-bold mb-3">{item.title}</h4>
-                                <p className="text-slate-400 leading-relaxed">{item.desc}</p>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
-                </div>
-            </section >
+                </section >
 
-            {/* Testimonials */}
-            < section className="py-24 bg-slate-50" >
-                <div className="max-w-7xl mx-auto px-6">
-                    <h2 className="text-4xl font-black text-center text-slate-900 mb-16">O que os Experts dizem</h2>
-                    <div className="grid md:grid-cols-3 gap-8">
-                        {[
-                            { name: "Ricardo Silva", role: "Growth Hacker", text: "Antes do FluxFunnel, eu usava 3 ferramentas diferentes para planejar. Agora faço tudo em um lugar só. A economia de tempo é surreal." },
-                            { name: "Amanda Costa", role: "Consultora de Marketing", text: "Meus clientes ficam impressionados quando apresento os fluxos visuais. A ferramenta se pagou no primeiro projeto que fechei." },
-                            { name: "Pedro Alencar", role: "Dono de Agência", text: "A funcionalidade de simulação de ROI mudou o jogo para nós. Conseguimos vender projetos com muito mais segurança." }
-                        ].map((t, i) => (
-                            <div key={i} className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 relative">
-                                <Quote className="text-indigo-100 absolute top-6 right-6" size={48} />
-                                <div className="flex gap-1 text-amber-500 mb-4">
-                                    <Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" />
-                                </div>
-                                <p className="text-slate-600 mb-6 italic relative z-10">"{t.text}"</p>
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-slate-200"></div>
-                                    <div>
-                                        <p className="font-bold text-slate-900 text-sm">{t.name}</p>
-                                        <p className="text-xs text-slate-500">{t.role}</p>
+                {/* Testimonials */}
+                < section className="py-24 bg-slate-50" >
+                    <div className="max-w-7xl mx-auto px-6">
+                        <h2 className="text-4xl font-black text-center text-slate-900 mb-16">O que os Experts dizem</h2>
+                        <div className="grid md:grid-cols-3 gap-8">
+                            {[
+                                { name: "Ricardo Silva", role: "Growth Hacker", text: "Antes do FluxFunnel, eu usava 3 ferramentas diferentes para planejar. Agora faço tudo em um lugar só. A economia de tempo é surreal." },
+                                { name: "Amanda Costa", role: "Consultora de Marketing", text: "Meus clientes ficam impressionados quando apresento os fluxos visuais. A ferramenta se pagou no primeiro projeto que fechei." },
+                                { name: "Pedro Alencar", role: "Dono de Agência", text: "A funcionalidade de simulação de ROI mudou o jogo para nós. Conseguimos vender projetos com muito mais segurança." }
+                            ].map((t, i) => (
+                                <div key={i} className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 relative">
+                                    <Quote className="text-indigo-100 absolute top-6 right-6" size={48} />
+                                    <div className="flex gap-1 text-amber-500 mb-4">
+                                        <Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" />
+                                    </div>
+                                    <p className="text-slate-600 mb-6 italic relative z-10">"{t.text}"</p>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-slate-200"></div>
+                                        <div>
+                                            <p className="font-bold text-slate-900 text-sm">{t.name}</p>
+                                            <p className="text-xs text-slate-500">{t.role}</p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section >
-
-            {/* Pricing Section Refined */}
-            < div id="pricing" className="py-24 bg-white" >
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="text-center mb-16">
-                        <h2 className="text-indigo-600 font-bold tracking-wide uppercase text-sm mb-3">Investimento</h2>
-                        <h2 className="text-4xl font-black mb-6 text-slate-900 tracking-tighter">Escolha seu Nível de Poder</h2>
-                        <div
-                            className="inline-flex items-center bg-slate-100 p-1 rounded-full cursor-pointer select-none border border-slate-200"
-                            onClick={() => setBillingCycle(prev => prev === 'monthly' ? 'yearly' : 'monthly')}
-                        >
-                            <span className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${billingCycle === 'monthly' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}>Mensal</span>
-                            <span className={`px-6 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${billingCycle === 'yearly' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}>
-                                Anual <span className="bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-[10px] uppercase font-black">-20%</span>
-                            </span>
+                            ))}
                         </div>
                     </div>
+                </section >
 
-                    <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto items-start">
-                        {[...(plans || [])].filter(p => !p.isHidden).sort((a, b) => (a.order || 0) - (b.order || 0)).map((plan) => {
-                            const price = billingCycle === 'monthly' ? plan.priceMonthly : plan.priceYearly;
-                            const period = billingCycle === 'monthly' ? '/mês' : '/ano';
+                {/* Pricing Section Refined */}
+                < div id="pricing" className="py-24 bg-white" >
+                    <div className="max-w-7xl mx-auto px-6">
+                        <div className="text-center mb-16">
+                            <h2 className="text-indigo-600 font-bold tracking-wide uppercase text-sm mb-3">Investimento</h2>
+                            <h2 className="text-4xl font-black mb-6 text-slate-900 tracking-tighter">Escolha seu Nível de Poder</h2>
+                            <div
+                                className="inline-flex items-center bg-slate-100 p-1 rounded-full cursor-pointer select-none border border-slate-200"
+                                onClick={() => setBillingCycle(prev => prev === 'monthly' ? 'yearly' : 'monthly')}
+                            >
+                                <span className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${billingCycle === 'monthly' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}>Mensal</span>
+                                <span className={`px-6 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${billingCycle === 'yearly' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}>
+                                    Anual <span className="bg-green-100 text-green-800 px-1.5 py-0.5 rounded text-[10px] uppercase font-black">-20%</span>
+                                </span>
+                            </div>
+                        </div>
 
-                            return (
-                                <div key={plan.id} className={`p-8 lg:p-10 rounded-[2.5rem] border transition-all duration-500 relative flex flex-col ${plan.isPopular ? 'border-indigo-600 shadow-2xl scale-105 z-10 bg-white ring-4 ring-indigo-50' : 'border-slate-200 hover:border-slate-300 bg-white hover:shadow-xl'}`}>
-                                    {plan.isPopular && (
-                                        <div className="absolute -top-5 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg flex items-center gap-1.5 whitespace-nowrap">
-                                            <Crown size={12} fill="currentColor" /> Recomendado
+                        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto items-start">
+                            {[...(plans || [])].filter(p => !p.isHidden).sort((a, b) => (a.order || 0) - (b.order || 0)).map((plan) => {
+                                const price = billingCycle === 'monthly' ? plan.priceMonthly : plan.priceYearly;
+                                const period = billingCycle === 'monthly' ? '/mês' : '/ano';
+
+                                return (
+                                    <div key={plan.id} className={`p-8 lg:p-10 rounded-[2.5rem] border transition-all duration-500 relative flex flex-col ${plan.isPopular ? 'border-indigo-600 shadow-2xl scale-105 z-10 bg-white ring-4 ring-indigo-50' : 'border-slate-200 hover:border-slate-300 bg-white hover:shadow-xl'}`}>
+                                        {plan.isPopular && (
+                                            <div className="absolute -top-5 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg flex items-center gap-1.5 whitespace-nowrap">
+                                                <Crown size={12} fill="currentColor" /> Recomendado
+                                            </div>
+                                        )}
+
+                                        <div className="mb-8 text-center md:text-left">
+                                            <h3 className="text-lg font-black uppercase tracking-widest text-slate-500 mb-4">{plan.label}</h3>
+                                            <div className="flex items-baseline justify-center md:justify-start gap-1">
+                                                <span className="text-5xl lg:text-6xl font-black text-slate-900 tracking-tighter whitespace-nowrap">
+                                                    R$ {Number(price).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                </span>
+                                                {price > 0 && <span className="text-slate-500 font-bold text-sm">{period}</span>}
+                                            </div>
+                                            <p className="text-slate-500 text-sm mt-4 font-medium min-h-[40px]">
+                                                {plan.id === 'FREE' && 'Para iniciantes e estudantes.'}
+                                                {plan.id === 'PRO' && 'Para freelancers e consultores.'}
+                                                {plan.id === 'PREMIUM' && 'Para agências e times de alta performance.'}
+                                            </p>
                                         </div>
-                                    )}
 
-                                    <div className="mb-8 text-center md:text-left">
-                                        <h3 className="text-lg font-black uppercase tracking-widest text-slate-500 mb-4">{plan.label}</h3>
-                                        <div className="flex items-baseline justify-center md:justify-start gap-1">
-                                            <span className="text-5xl lg:text-6xl font-black text-slate-900 tracking-tighter whitespace-nowrap">
-                                                R$ {Number(price).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                            </span>
-                                            {price > 0 && <span className="text-slate-500 font-bold text-sm">{period}</span>}
-                                        </div>
-                                        <p className="text-slate-500 text-sm mt-4 font-medium min-h-[40px]">
-                                            {plan.id === 'FREE' && 'Para iniciantes e estudantes.'}
-                                            {plan.id === 'PRO' && 'Para freelancers e consultores.'}
-                                            {plan.id === 'PREMIUM' && 'Para agências e times de alta performance.'}
-                                        </p>
-                                    </div>
+                                        <div className="flex-1 mb-10">
+                                            <button
+                                                onClick={() => handleActionClick(plan.id)}
+                                                disabled={!systemConfig.allowSignups}
+                                                className={`w-full py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all shadow-lg active:scale-95 ${plan.isPopular ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-200' : 'bg-slate-900 hover:bg-slate-800 text-white shadow-slate-200'} ${!systemConfig.allowSignups ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            >
+                                                {price === 0 ? 'Criar Conta Grátis' : 'Assinar Agora'}
+                                            </button>
 
-                                    <div className="flex-1 mb-10">
-                                        <button
-                                            onClick={() => handleActionClick(plan.id)}
-                                            disabled={!systemConfig.allowSignups}
-                                            className={`w-full py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all shadow-lg active:scale-95 ${plan.isPopular ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-200' : 'bg-slate-900 hover:bg-slate-800 text-white shadow-slate-200'} ${!systemConfig.allowSignups ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                        >
-                                            {price === 0 ? 'Criar Conta Grátis' : 'Assinar Agora'}
-                                        </button>
-
-                                        <div className="mt-8 space-y-4">
-                                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">O que está incluso:</p>
-                                            <ul className="space-y-3">
-                                                <li className="flex items-center gap-3 text-slate-700 text-sm font-bold">
-                                                    <div className="p-1 rounded-full bg-indigo-100 text-indigo-600"><CheckCircle size={12} strokeWidth={4} /></div>
-                                                    {plan.projectLimit >= 9999 ? 'Projetos Ilimitados' : `${plan.projectLimit} Projetos Ativos`}
-                                                </li>
-                                                <li className="flex items-center gap-3 text-slate-700 text-sm font-bold">
-                                                    <div className="p-1 rounded-full bg-indigo-100 text-indigo-600"><CheckCircle size={12} strokeWidth={4} /></div>
-                                                    {plan.nodeLimit >= 9999 ? 'Elementos Ilimitados' : `${plan.nodeLimit} Elementos/Fluxo`}
-                                                </li>
-                                                {(plan.features || []).map((feature, i) => (
-                                                    <li key={i} className="flex items-start gap-3 text-slate-600 text-sm font-medium leading-tight">
-                                                        <div className="p-1 mt-0.5 rounded-full bg-slate-100 text-slate-400"><CheckCircle size={12} strokeWidth={4} /></div>
-                                                        {feature}
+                                            <div className="mt-8 space-y-4">
+                                                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">O que está incluso:</p>
+                                                <ul className="space-y-3">
+                                                    <li className="flex items-center gap-3 text-slate-700 text-sm font-bold">
+                                                        <div className="p-1 rounded-full bg-indigo-100 text-indigo-600"><CheckCircle size={12} strokeWidth={4} /></div>
+                                                        {plan.projectLimit >= 9999 ? 'Projetos Ilimitados' : `${plan.projectLimit} Projetos Ativos`}
                                                     </li>
-                                                ))}
-                                            </ul>
+                                                    <li className="flex items-center gap-3 text-slate-700 text-sm font-bold">
+                                                        <div className="p-1 rounded-full bg-indigo-100 text-indigo-600"><CheckCircle size={12} strokeWidth={4} /></div>
+                                                        {plan.nodeLimit >= 9999 ? 'Elementos Ilimitados' : `${plan.nodeLimit} Elementos/Fluxo`}
+                                                    </li>
+                                                    {(plan.features || []).map((feature, i) => (
+                                                        <li key={i} className="flex items-start gap-3 text-slate-600 text-sm font-medium leading-tight">
+                                                            <div className="p-1 mt-0.5 rounded-full bg-slate-100 text-slate-400"><CheckCircle size={12} strokeWidth={4} /></div>
+                                                            {feature}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            );
-                        })}
+                                );
+                            })}
+                        </div>
                     </div>
-                </div>
-            </div >
+                </div >
 
-            {/* FAQ Section */}
-            < section className="py-24 bg-slate-50" >
-                <div className="max-w-3xl mx-auto px-6">
-                    <h2 className="text-3xl font-black text-center text-slate-900 mb-12">Perguntas Frequentes</h2>
-                    <div className="space-y-4">
-                        {faqs.map((item, idx) => (
-                            <div key={idx} className="bg-white rounded-2xl border border-slate-200 overflow-hidden transition-all duration-300">
-                                <button
-                                    onClick={() => toggleFaq(idx)}
-                                    className="w-full flex items-center justify-between p-6 text-left font-bold text-slate-800 hover:bg-slate-50 transition-colors"
-                                >
-                                    {item.q}
-                                    {openFaq === idx ? <ChevronUp className="text-indigo-600" /> : <ChevronDown className="text-slate-400" />}
-                                </button>
-                                <div className={`px-6 text-slate-600 leading-relaxed overflow-hidden transition-all duration-300 ${openFaq === idx ? 'max-h-40 pb-6 opacity-100' : 'max-h-0 opacity-0'}`}>
-                                    {item.a}
+                {/* FAQ Section */}
+                < section className="py-24 bg-slate-50" >
+                    <div className="max-w-3xl mx-auto px-6">
+                        <h2 className="text-3xl font-black text-center text-slate-900 mb-12">Perguntas Frequentes</h2>
+                        <div className="space-y-4">
+                            {faqs.map((item, idx) => (
+                                <div key={idx} className="bg-white rounded-2xl border border-slate-200 overflow-hidden transition-all duration-300">
+                                    <button
+                                        onClick={() => toggleFaq(idx)}
+                                        className="w-full flex items-center justify-between p-6 text-left font-bold text-slate-800 hover:bg-slate-50 transition-colors"
+                                    >
+                                        {item.q}
+                                        {openFaq === idx ? <ChevronUp className="text-indigo-600" /> : <ChevronDown className="text-slate-400" />}
+                                    </button>
+                                    <div className={`px-6 text-slate-600 leading-relaxed overflow-hidden transition-all duration-300 ${openFaq === idx ? 'max-h-40 pb-6 opacity-100' : 'max-h-0 opacity-0'}`}>
+                                        {item.a}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
-                </div>
-            </section >
+                </section >
 
-            {/* Final CTA - Corrected */}
-            <section className="py-20 bg-indigo-600 text-white overflow-hidden relative">
-                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&q=80')] opacity-10 mix-blend-overlay bg-cover bg-center"></div>
-                <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
-                    <h2 className="text-3xl md:text-5xl font-bold mb-6">Pronto para visualizar seu sucesso?</h2>
-                    <p className="text-xl text-indigo-100 mb-10 max-w-2xl mx-auto">
-                        Junte-se a mais de 2.000 profissionais de marketing que já planejam seus funis no FluxFunnel.
-                    </p>
-                    <button
-                        onClick={() => {
-                            setAuthReturnView('APP');
-                            setCurrentView('AUTH');
-                        }}
-                        className="bg-white text-indigo-600 px-8 py-4 rounded-full font-bold text-lg hover:bg-slate-100 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-                    >
-                        Criar Conta Gratuitamente
-                    </button>
-                    <p className="mt-6 text-sm text-indigo-200 font-medium">Não requer cartão de crédito • Cancelamento a qualquer momento</p>
-                </div>
-            </section>
+                {/* Final CTA - Corrected */}
+                <section className="py-20 bg-indigo-600 text-white overflow-hidden relative">
+                    <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&q=80')] opacity-10 mix-blend-overlay bg-cover bg-center"></div>
+                    <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
+                        <h2 className="text-3xl md:text-5xl font-bold mb-6">Pronto para visualizar seu sucesso?</h2>
+                        <p className="text-xl text-indigo-100 mb-10 max-w-2xl mx-auto">
+                            Junte-se a mais de 2.000 profissionais de marketing que já planejam seus funis no FluxFunnel.
+                        </p>
+                        <button
+                            onClick={() => {
+                                setAuthReturnView('APP');
+                                setCurrentView('AUTH');
+                            }}
+                            className="bg-white text-indigo-600 px-8 py-4 rounded-full font-bold text-lg hover:bg-slate-100 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                        >
+                            Criar Conta Gratuitamente
+                        </button>
+                        <p className="mt-6 text-sm text-indigo-200 font-medium">Não requer cartão de crédito • Cancelamento a qualquer momento</p>
+                    </div>
+                </section>
+            </main>
 
             {/* Footer Enhanced */}
             <footer className="bg-slate-950 text-slate-400 py-20 border-t border-slate-900 text-sm">
@@ -423,7 +425,7 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                         </div>
 
                         <div>
-                            <h4 className="font-bold text-white mb-6 uppercase tracking-wider text-xs">Produto</h4>
+                            <h3 className="font-bold text-white mb-6 uppercase tracking-wider text-xs">Produto</h3>
                             <ul className="space-y-4">
                                 <li><button onClick={() => setCurrentView('FEATURES')} className="hover:text-indigo-400 transition-colors text-left">Funcionalidades</button></li>
                                 <li><button onClick={() => setCurrentView('PRICING')} className="hover:text-indigo-400 transition-colors text-left">Planos e Preços</button></li>
@@ -432,7 +434,7 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                         </div>
 
                         <div>
-                            <h4 className="font-bold text-white mb-6 uppercase tracking-wider text-xs">Recursos</h4>
+                            <h3 className="font-bold text-white mb-6 uppercase tracking-wider text-xs">Recursos</h3>
                             <ul className="space-y-4">
                                 <li><button onClick={() => setCurrentView('BLOG')} className="hover:text-indigo-400 transition-colors text-left">Blog</button></li>
                                 <li><button onClick={() => setCurrentView('HELP')} className="hover:text-indigo-400 transition-colors text-left">Central de Ajuda</button></li>
@@ -442,7 +444,7 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                         </div>
 
                         <div>
-                            <h4 className="font-bold text-white mb-6 uppercase tracking-wider text-xs">Explore</h4>
+                            <h3 className="font-bold text-white mb-6 uppercase tracking-wider text-xs">Explore</h3>
                             <ul className="space-y-4">
                                 <li><a href="/funil-de-vendas" onClick={(e) => { e.preventDefault(); setCurrentView('FUNNEL_SALES'); window.history.pushState({}, '', '/funil-de-vendas'); }} className="hover:text-indigo-400 transition-colors">O que é Funil?</a></li>
                                 <li><a href="/construtor-de-funil" onClick={(e) => { e.preventDefault(); setCurrentView('FUNNEL_BUILDER'); window.history.pushState({}, '', '/construtor-de-funil'); }} className="hover:text-indigo-400 transition-colors">Construtor de Funil</a></li>
