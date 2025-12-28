@@ -437,7 +437,7 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                                 <li><button onClick={() => setCurrentView('BLOG')} className="hover:text-indigo-400 transition-colors text-left">Blog</button></li>
                                 <li><button onClick={() => setCurrentView('HELP')} className="hover:text-indigo-400 transition-colors text-left">Central de Ajuda</button></li>
                                 <li><button onClick={() => setCurrentView('COMMUNITY')} className="hover:text-indigo-400 transition-colors text-left">Comunidade</button></li>
-                                <li><button onClick={() => setCurrentView('STATUS')} className="hover:text-indigo-400 transition-colors text-left">Status do Sistema</button></li>
+
                             </ul>
                         </div>
 
@@ -459,10 +459,7 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                             <a href="#" className="hover:text-white transition-colors">Privacidade</a>
                             <a href="#" className="hover:text-white transition-colors">Cookies</a>
                         </div>
-                        <button onClick={() => setCurrentView('STATUS')} className="flex items-center gap-2 text-xs font-medium bg-slate-900 px-3 py-1 rounded-full hover:bg-slate-800 transition-colors">
-                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                            Sistemas Operacionais
-                        </button>
+
                     </div>
                 </div>
             </footer>
