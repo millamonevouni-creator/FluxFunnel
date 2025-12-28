@@ -46,7 +46,29 @@ import { supabase, isOffline } from './services/supabaseClient';
 const DEFAULT_PROJECT = (t: any): Project => ({ id: 'proj_default', name: t('newProject'), nodes: INITIAL_NODES as any, edges: INITIAL_EDGES, updatedAt: new Date() });
 
 const App = () => {
-  const [currentView, setCurrentView] = useState<AppView>('LANDING');
+  // Synchronous Route Determination (Critical for LCP/Speed)
+  const getInitialView = (): AppView => {
+    const path = window.location.pathname.toLowerCase().replace(/\/$/, '');
+    if (path === '/privacy') return 'PRIVACY';
+    if (path === '/terms') return 'TERMS';
+    if (path === '/cookies') return 'COOKIES';
+    if (path === '/blog') return 'BLOG';
+    if (path === '/help') return 'HELP';
+    if (path === '/community') return 'COMMUNITY';
+    if (path === '/status') return 'STATUS';
+    if (path === '/features') return 'FEATURES';
+    if (path === '/pricing') return 'PRICING';
+    if (path === '/roadmap') return 'ROADMAP';
+    if (path === '/mapa-de-funil') return 'MAP_FUNNEL';
+    if (path === '/micro-saas') return 'MICRO_SAAS';
+    if (path === '/afiliados') return 'AFFILIATES_LANDING';
+    if (path.startsWith('/blog/') && path.length > 6) return 'BLOG_POST';
+    // if (path === '/templates') return 'TEMPLATES_PUBLIC'; 
+
+    return 'LANDING';
+  };
+
+  const [currentView, setCurrentView] = useState<AppView>(getInitialView);
   const [appPage, setAppPage] = useState<AppPage>('PROJECTS');
   const [user, setUser] = useState<User | null>(null);
   const [isDark, setIsDark] = useState(false);
@@ -79,7 +101,12 @@ const App = () => {
   const [feedbacks, setFeedbacks] = useState<FeedbackItem[]>([]);
   const [customTemplates, setCustomTemplates] = useState<Template[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
-  const [plans, setPlans] = useState<PlanConfig[]>([]);
+  const [plans, setPlans] = useState<PlanConfig[]>([
+    { id: 'FREE', label: 'Plano Gratuito', priceMonthly: 0, priceYearly: 0, projectLimit: 1, nodeLimit: 20, features: ['1 Projeto Ativo', '20 Elements no Fluxo', 'Ícones Básicos', 'Modo Apresentação', 'Suporte via Email', 'Modo Escuro & Claro'], isPopular: false, teamLimit: 0, order: 0 },
+    { id: 'PRO', label: 'Plano Pro', priceMonthly: 69.90, priceYearly: 712.98, projectLimit: 5, nodeLimit: 100, features: ['5 Projetos Ativos', '100 Elementos no Fluxo', 'Biblioteca Completa', 'Notas & Anotações', 'Salvar Templates', 'Suporte Dedicado'], isPopular: false, teamLimit: 0, order: 1 },
+    { id: 'PREMIUM', label: 'Plano Premium', priceMonthly: 97.90, priceYearly: 881.10, projectLimit: 9999, nodeLimit: 9999, features: ['Projetos Ilimitados', 'Elementos Ilimitados', 'Colaboração em Equipe', 'IA: Auditoria de Estratégia (Beta)', 'Link de Compartilhamento', 'Suporte Prioritário'], isPopular: true, teamLimit: 10, order: 2 },
+    { id: 'CONVIDADO', label: 'Convidado', priceMonthly: 0, priceYearly: 0, projectLimit: 9999, nodeLimit: 9999, features: ['Acesso a Projetos da Equipe', 'Edição Colaborativa', 'Sem Gestão Financeira'], isPopular: false, teamLimit: 0, order: 99, isHidden: true },
+  ]);
   const [systemConfig, setSystemConfig] = useState<SystemConfig>({ maintenanceMode: false, allowSignups: true, announcements: [], debugMode: false });
   const [isInvitedMode, setIsInvitedMode] = useState(false);
   const [presentationShareProject, setPresentationShareProject] = useState<Project | null>(null);
@@ -88,18 +115,15 @@ const App = () => {
   const t = useCallback((key: keyof typeof TRANSLATIONS['pt']) => TRANSLATIONS[lang][key] || key, [lang]);
   const showNotification = (message: string, type: 'success' | 'error' = 'success') => { setToast({ show: true, message, type }); setTimeout(() => setToast(null), 3000); };
 
+  // Removed redundant initial plans useEffect since state is now pre-filled
+  /*
   useEffect(() => {
     if (!plansInitializedRef.current && plans.length === 0) {
-      const generatedPlans: PlanConfig[] = [
-        { id: 'FREE', label: 'Plano Gratuito', priceMonthly: 0, priceYearly: 0, projectLimit: 1, nodeLimit: 20, features: [t('pricingFreeFeat1'), t('pricingFreeFeat2'), t('pricingFreeFeat3'), t('pricingFreeFeat4'), t('pricingFreeFeat5'), t('pricingFreeFeat6')], isPopular: false, teamLimit: 0, order: 0 },
-        { id: 'PRO', label: 'Plano Pro', priceMonthly: 69.90, priceYearly: 712.98, projectLimit: 5, nodeLimit: 100, features: [t('pricingProFeat1'), t('pricingProFeat2'), t('pricingProFeat3'), t('pricingProFeat4'), t('pricingProFeat5'), t('pricingProFeat6')], isPopular: false, teamLimit: 0, order: 1 },
-        { id: 'PREMIUM', label: 'Plano Premium', priceMonthly: 97.90, priceYearly: 881.10, projectLimit: 9999, nodeLimit: 9999, features: [t('pricingPremiumFeat1'), t('pricingPremiumFeat2'), t('pricingPremiumFeat3'), t('pricingPremiumFeat4'), t('pricingPremiumFeat5'), t('pricingPremiumFeat6')], isPopular: true, teamLimit: 10, order: 2 },
-        { id: 'CONVIDADO', label: 'Convidado', priceMonthly: 0, priceYearly: 0, projectLimit: 9999, nodeLimit: 9999, features: ['Acesso a Projetos da Equipe', 'Edição Colaborativa', 'Sem Gestão Financeira'], isPopular: false, teamLimit: 0, order: 99, isHidden: true },
-      ];
-      setPlans(generatedPlans);
+      // Logic moved to initial state
       plansInitializedRef.current = true;
     }
   }, [lang, t, plans.length]);
+  */
 
   // FIX: Version Mismatch / Chunk Error Handler
   useEffect(() => {
@@ -148,24 +172,6 @@ const App = () => {
     const initApp = async () => {
       const params = new URLSearchParams(window.location.search);
       const shareId = params.get('share');
-
-      // Fast Route Check
-      const path = window.location.pathname.toLowerCase().replace(/\/$/, '');
-      if (path === '/privacy') setCurrentView('PRIVACY');
-      else if (path === '/terms') setCurrentView('TERMS');
-      else if (path === '/cookies') setCurrentView('COOKIES');
-      else if (path === '/blog') setCurrentView('BLOG');
-      else if (path === '/help') setCurrentView('HELP');
-      else if (path === '/community') setCurrentView('COMMUNITY');
-      else if (path === '/status') setCurrentView('STATUS');
-      else if (path === '/features') setCurrentView('FEATURES');
-      else if (path === '/pricing') setCurrentView('PRICING');
-      else if (path === '/roadmap') setCurrentView('ROADMAP');
-      else if (path === '/mapa-de-funil') setCurrentView('MAP_FUNNEL');
-      else if (path === '/micro-saas') setCurrentView('MICRO_SAAS');
-      else if (path === '/afiliados') setCurrentView('AFFILIATES_LANDING');
-      else if (path.startsWith('/blog/') && path.length > 6) setCurrentView('BLOG_POST');
-      // else if (path === '/templates') setCurrentView('TEMPLATES_PUBLIC'); // DISABLED PER USER REQUEST
 
       let loggedUser = null;
 
@@ -664,7 +670,18 @@ const App = () => {
 
 
   if (!isInitialized) {
-    return <LoadingScreen />;
+    // OPTIMIZATION: Don't block public views while awaiting auth/data
+    const isPublicView = [
+      'LANDING', 'PRIVACY', 'TERMS', 'COOKIES', 'HELP',
+      'COMMUNITY', 'STATUS', 'FEATURES', 'PRICING', 'ROADMAP',
+      'FUNNEL_SALES', 'FUNNEL_BUILDER', 'VISUAL_FUNNEL',
+      'ALTERNATIVE_FUNELYTICS', 'MAP_FUNNEL', 'MICRO_SAAS',
+      'AFFILIATES_LANDING', 'BLOG', 'BLOG_POST'
+    ].includes(currentView) || (typeof currentView === 'string' && currentView.startsWith('BLOG_'));
+
+    if (!isPublicView) {
+      return <LoadingScreen />;
+    }
   }
 
   if (systemConfig.maintenanceMode && !user?.isSystemAdmin && currentView !== 'ADMIN' && currentView !== 'AUTH') {
