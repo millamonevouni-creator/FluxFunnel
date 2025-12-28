@@ -29,7 +29,7 @@ const ProjectsDashboard = ({
     const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
     const [creationStep, setCreationStep] = useState<'SELECT' | 'NAME'>('SELECT');
     const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
-    console.log("HMR TEST JETSKI - Dashboard Rendered");
+
     const [newProjectName, setNewProjectName] = useState('');
     const [renamingProject, setRenamingProject] = useState<{ id: string, name: string } | null>(null);
     const [templateTab, setTemplateTab] = useState<'SYSTEM' | 'CUSTOM'>('SYSTEM');

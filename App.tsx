@@ -25,6 +25,14 @@ const Community = React.lazy(() => import('./components/Community'));
 const SystemStatus = React.lazy(() => import('./components/SystemStatus'));
 const FeaturesPage = React.lazy(() => import('./components/FeaturesPage'));
 const PricingPage = React.lazy(() => import('./components/PricingPage'));
+const FunnelSalesPage = React.lazy(() => import('./components/pages/FunnelSalesPage'));
+const FunnelBuilderPage = React.lazy(() => import('./components/pages/FunnelBuilderPage'));
+const VisualFunnelPage = React.lazy(() => import('./components/pages/VisualFunnelPage'));
+const AlternativeFunelyticsPage = React.lazy(() => import('./components/pages/AlternativeFunelyticsPage'));
+const MapFunnelPage = React.lazy(() => import('./components/MapFunnelPage'));
+const MicroSaasPage = React.lazy(() => import('./components/MicroSaasPage'));
+const AffiliatesPage = React.lazy(() => import('./components/AffiliatesPage'));
+const BlogPost = React.lazy(() => import('./components/blog/BlogPost'));
 const PublicTemplatesPage = React.lazy(() => import('./components/PublicTemplatesPage'));
 
 import AnnouncementBanner from './components/AnnouncementBanner';
@@ -153,6 +161,10 @@ const App = () => {
       else if (path === '/features') setCurrentView('FEATURES');
       else if (path === '/pricing') setCurrentView('PRICING');
       else if (path === '/roadmap') setCurrentView('ROADMAP');
+      else if (path === '/mapa-de-funil') setCurrentView('MAP_FUNNEL');
+      else if (path === '/micro-saas') setCurrentView('MICRO_SAAS');
+      else if (path === '/afiliados') setCurrentView('AFFILIATES_LANDING');
+      else if (path.startsWith('/blog/') && path.length > 6) setCurrentView('BLOG_POST');
       // else if (path === '/templates') setCurrentView('TEMPLATES_PUBLIC'); // DISABLED PER USER REQUEST
 
       let loggedUser = null;
@@ -375,8 +387,8 @@ const App = () => {
               setAppPage('PROJECTS');
               // Clear hash to prevent re-triggering (optional, handled by generic clear above)
             } else if (!isInviteFlow && !isRecoveryFlow) {
-              const publicRoutes = ['/privacy', '/terms', '/cookies', '/blog', '/help', '/community', '/status', '/features', '/pricing', '/roadmap', '/templates'];
-              const isPublicRoute = publicRoutes.includes(window.location.pathname);
+              const publicRoutes = ['/privacy', '/terms', '/cookies', '/blog', '/help', '/community', '/status', '/features', '/pricing', '/roadmap', '/templates', '/mapa-de-funil', '/micro-saas', '/afiliados'];
+              const isPublicRoute = publicRoutes.includes(window.location.pathname) || window.location.pathname.startsWith('/blog/');
 
               if (!isPublicRoute) {
                 setCurrentView((prev) => (prev === 'AUTH' || prev === 'LANDING' ? 'APP' : prev));
@@ -410,19 +422,19 @@ const App = () => {
   useEffect(() => { if (isInitialized) safeSet('lang', lang); }, [lang, isInitialized]);
 
   const handleLogin = async (data: any) => {
-    console.log("DEBUG: handleLogin started", data);
+
     if (!systemConfig.allowSignups && data.isSignup) {
       showNotification("Cadastros suspensos pelo administrador.", 'error');
       throw new Error("Cadastros estão temporariamente suspensos.");
     }
 
     try {
-      console.log("DEBUG: Calling api.auth.login/register");
+
       const result = data.isSignup ?
         await api.auth.register(data.email, data.password, data.name) :
         await api.auth.login(data.email, data.password);
 
-      console.log("DEBUG: Auth API returned", result);
+
       const newUser = result.user;
 
       if (data.isSignup && !result.token) {
@@ -436,11 +448,11 @@ const App = () => {
         throw new Error("Conta banida ou suspensa.");
       }
 
-      console.log("DEBUG: Setting user state", newUser);
+
       setUser(newUser);
 
       // Load initial data
-      console.log("DEBUG: Fetching initial data...");
+
 
       const fetchPromise = Promise.all([
         api.projects.list(),
@@ -457,7 +469,7 @@ const App = () => {
 
       const [apiProjects, members, templates] = await Promise.race([fetchPromise, timeoutPromise]) as [any[], any[], any[]];
 
-      console.log("DEBUG: Initial data fetched (or timed out)", { projects: apiProjects?.length, members: members?.length, templates: templates?.length });
+
 
       setProjects(apiProjects || []);
       setTeamMembers(members || []);
@@ -471,7 +483,7 @@ const App = () => {
       }
 
       if (newUser.isSystemAdmin) {
-        console.log("DEBUG: Fetching all users for System Admin");
+
         try {
           setAllUsers(await api.admin.getUsers());
         } catch (err) {
@@ -509,7 +521,7 @@ const App = () => {
       const pendingTemplateId = localStorage.getItem('flux_pending_template_id');
       if (pendingTemplateId) {
         localStorage.removeItem('flux_pending_template_id');
-        console.log("DEBUG: Pending template detected", pendingTemplateId);
+
         // Delay slightly to ensure state is ready
         setTimeout(() => {
           createProject(pendingTemplateId, undefined, true);
@@ -665,7 +677,7 @@ const App = () => {
     );
   }
 
-  if (currentView === 'PRIVACY' || window.location.pathname.replace(/\/$/, '') === '/privacy') {
+  if ((currentView as any) === 'PRIVACY' || window.location.pathname.replace(/\/$/, '') === '/privacy') {
     return (
       <React.Suspense fallback={<LoadingScreen />}>
         <PrivacyPolicy onBack={() => { window.history.pushState({}, '', '/'); setCurrentView('LANDING'); }} lang={lang} />
@@ -673,7 +685,7 @@ const App = () => {
     );
   }
 
-  if (currentView === 'TERMS' || window.location.pathname.replace(/\/$/, '') === '/terms') {
+  if ((currentView as any) === 'TERMS' || window.location.pathname.replace(/\/$/, '') === '/terms') {
     return (
       <React.Suspense fallback={<LoadingScreen />}>
         <TermsOfService onBack={() => { window.history.pushState({}, '', '/'); setCurrentView('LANDING'); }} lang={lang} />
@@ -681,7 +693,7 @@ const App = () => {
     );
   }
 
-  if (currentView === 'COOKIES' || window.location.pathname.replace(/\/$/, '') === '/cookies') {
+  if ((currentView as any) === 'COOKIES' || window.location.pathname.replace(/\/$/, '') === '/cookies') {
     return (
       <React.Suspense fallback={<LoadingScreen />}>
         <CookiesPolicy onBack={() => { window.history.pushState({}, '', '/'); setCurrentView('LANDING'); }} />
@@ -689,15 +701,9 @@ const App = () => {
     );
   }
 
-  if (currentView === 'BLOG' || window.location.pathname.replace(/\/$/, '') === '/blog') {
-    return (
-      <React.Suspense fallback={<LoadingScreen />}>
-        <Blog onBack={() => { window.history.pushState({}, '', '/'); setCurrentView('LANDING'); }} />
-      </React.Suspense>
-    );
-  }
 
-  if (currentView === 'HELP' || window.location.pathname.replace(/\/$/, '') === '/help') {
+
+  if ((currentView as any) === 'HELP' || window.location.pathname.replace(/\/$/, '') === '/help') {
     return (
       <React.Suspense fallback={<LoadingScreen />}>
         <HelpCenter onBack={() => { window.history.pushState({}, '', '/'); setCurrentView('LANDING'); }} />
@@ -705,7 +711,7 @@ const App = () => {
     );
   }
 
-  if (currentView === 'COMMUNITY' || window.location.pathname.replace(/\/$/, '') === '/community') {
+  if ((currentView as any) === 'COMMUNITY' || window.location.pathname.replace(/\/$/, '') === '/community') {
     return (
       <React.Suspense fallback={<LoadingScreen />}>
         <Community onBack={() => { window.history.pushState({}, '', '/'); setCurrentView('LANDING'); }} />
@@ -713,7 +719,7 @@ const App = () => {
     );
   }
 
-  if (currentView === 'STATUS' || window.location.pathname.replace(/\/$/, '') === '/status') {
+  if ((currentView as any) === 'STATUS' || window.location.pathname.replace(/\/$/, '') === '/status') {
     return (
       <React.Suspense fallback={<LoadingScreen />}>
         <SystemStatus onBack={() => { window.history.pushState({}, '', '/'); setCurrentView('LANDING'); }} />
@@ -721,7 +727,7 @@ const App = () => {
     );
   }
 
-  if (currentView === 'FEATURES' || window.location.pathname.replace(/\/$/, '') === '/features') {
+  if ((currentView as any) === 'FEATURES' || window.location.pathname.replace(/\/$/, '') === '/features') {
     return (
       <React.Suspense fallback={<LoadingScreen />}>
         <FeaturesPage onBack={() => { window.history.pushState({}, '', '/'); setCurrentView('LANDING'); }} />
@@ -729,10 +735,91 @@ const App = () => {
     );
   }
 
-  if (currentView === 'PRICING' || window.location.pathname.replace(/\/$/, '') === '/pricing') {
+  if ((currentView as any) === 'PRICING' || window.location.pathname.replace(/\/$/, '') === '/pricing') {
     return (
       <React.Suspense fallback={<LoadingScreen />}>
         <PricingPage onBack={() => { window.history.pushState({}, '', '/'); setCurrentView('LANDING'); }} plans={plans} />
+      </React.Suspense>
+    );
+  }
+
+  if ((currentView as any) === 'FUNNEL_SALES' || window.location.pathname.replace(/\/$/, '') === '/funil-de-vendas') {
+    return (
+      <React.Suspense fallback={<LoadingScreen />}>
+        <FunnelSalesPage onBack={() => { window.history.pushState({}, '', '/'); setCurrentView('LANDING'); }} onGetStarted={() => { window.history.pushState({}, '', '/login'); setAuthReturnView('APP'); setCurrentView('AUTH'); }} />
+      </React.Suspense>
+    );
+  }
+
+  if ((currentView as any) === 'FUNNEL_BUILDER' || window.location.pathname.replace(/\/$/, '') === '/construtor-de-funil') {
+    return (
+      <React.Suspense fallback={<LoadingScreen />}>
+        <FunnelBuilderPage onBack={() => { window.history.pushState({}, '', '/'); setCurrentView('LANDING'); }} onGetStarted={() => { window.history.pushState({}, '', '/login'); setAuthReturnView('APP'); setCurrentView('AUTH'); }} />
+      </React.Suspense>
+    );
+  }
+
+  if ((currentView as any) === 'VISUAL_FUNNEL' || window.location.pathname.replace(/\/$/, '') === '/funil-visual') {
+    return (
+      <React.Suspense fallback={<LoadingScreen />}>
+        <VisualFunnelPage onBack={() => { window.history.pushState({}, '', '/'); setCurrentView('LANDING'); }} onGetStarted={() => { window.history.pushState({}, '', '/login'); setAuthReturnView('APP'); setCurrentView('AUTH'); }} />
+      </React.Suspense>
+    );
+  }
+
+  if ((currentView as any) === 'ALTERNATIVE_FUNELYTICS' || window.location.pathname.replace(/\/$/, '') === '/alternativa-funelytics' || window.location.pathname.replace(/\/$/, '') === '/funelytics-vs-fluxfunnel') {
+    return (
+      <React.Suspense fallback={<LoadingScreen />}>
+        <AlternativeFunelyticsPage onBack={() => { window.history.pushState({}, '', '/'); setCurrentView('LANDING'); }} onGetStarted={() => { window.history.pushState({}, '', '/login'); setAuthReturnView('APP'); setCurrentView('AUTH'); }} />
+      </React.Suspense>
+    );
+  }
+
+  if ((currentView as any) === 'MAP_FUNNEL' || window.location.pathname.replace(/\/$/, '') === '/mapa-de-funil') {
+    return (
+      <React.Suspense fallback={<LoadingScreen />}>
+        <MapFunnelPage onBack={() => { window.history.pushState({}, '', '/'); setCurrentView('LANDING'); }} onGetStarted={() => { window.history.pushState({}, '', '/login'); setAuthReturnView('APP'); setCurrentView('AUTH'); }} />
+      </React.Suspense>
+    );
+  }
+
+  if ((currentView as any) === 'MICRO_SAAS' || window.location.pathname.replace(/\/$/, '') === '/micro-saas') {
+    return (
+      <React.Suspense fallback={<LoadingScreen />}>
+        <MicroSaasPage onBack={() => { window.history.pushState({}, '', '/'); setCurrentView('LANDING'); }} onGetStarted={() => { window.history.pushState({}, '', '/login'); setAuthReturnView('APP'); setCurrentView('AUTH'); }} />
+      </React.Suspense>
+    );
+  }
+
+  if ((currentView as any) === 'AFFILIATES_LANDING' || window.location.pathname.replace(/\/$/, '') === '/afiliados') {
+    return (
+      <React.Suspense fallback={<LoadingScreen />}>
+        <AffiliatesPage onBack={() => { window.history.pushState({}, '', '/'); setCurrentView('LANDING'); }} />
+      </React.Suspense>
+    );
+  }
+
+  if ((currentView as any) === 'BLOG' || window.location.pathname.replace(/\/$/, '') === '/blog') {
+    return (
+      <React.Suspense fallback={<LoadingScreen />}>
+        <Blog
+          onBack={() => { window.history.pushState({}, '', '/'); setCurrentView('LANDING'); }}
+          onNavigate={(slug) => { window.history.pushState({}, '', `/blog/${slug}`); setCurrentView('BLOG_POST'); }}
+        />
+      </React.Suspense>
+    );
+  }
+
+  if ((currentView as any) === 'BLOG_POST' || window.location.pathname.startsWith('/blog/')) {
+    const slug = window.location.pathname.split('/').pop() || '';
+    return (
+      <React.Suspense fallback={<LoadingScreen />}>
+        <BlogPost
+          postSlug={slug}
+          onBack={() => { window.history.pushState({}, '', '/blog'); setCurrentView('BLOG'); }}
+          onNavigate={(path: string) => { window.history.pushState({}, '', path); }}
+          onGetStarted={() => { window.history.pushState({}, '', '/login'); setAuthReturnView('APP'); setCurrentView('AUTH'); }}
+        />
       </React.Suspense>
     );
   }
@@ -759,7 +846,7 @@ const App = () => {
   }
   */
 
-  if (currentView === 'LANDING') return <LandingPage onLoginClick={() => { setAuthReturnView('APP'); setCurrentView('AUTH'); }} onGetStartedClick={() => { setAuthReturnView('APP'); setCurrentView('AUTH'); }} onRoadmapClick={() => setCurrentView('ROADMAP')} onNavigate={setCurrentView} lang={lang} setLang={setLang} t={t} plans={plans} systemConfig={systemConfig} />;
+  if (currentView === 'LANDING') return <LandingPage onLoginClick={() => { setAuthReturnView('APP'); setCurrentView('AUTH'); }} onGetStartedClick={() => { setAuthReturnView('APP'); setCurrentView('AUTH'); }} onRoadmapClick={() => setCurrentView('ROADMAP')} onNavigate={setCurrentView} lang={lang} setLang={setLang} t={t} plans={plans} systemConfig={systemConfig} setCurrentView={setCurrentView} setAuthReturnView={setAuthReturnView} />;
   if (currentView === 'AUTH') {
     // Priority: State from listener > Hash check
     const currentHash = window.location.hash;
@@ -1247,3 +1334,4 @@ const App = () => {
 };
 
 export default App;
+

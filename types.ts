@@ -192,7 +192,7 @@ export type Language = 'pt' | 'en' | 'es';
 
 export type AppPage = 'PROJECTS' | 'BUILDER' | 'SETTINGS' | 'TEAM' | 'MARKETPLACE' | 'MASTER_ADMIN';
 
-export type AppView = 'LANDING' | 'AUTH' | 'APP' | 'ROADMAP' | 'ADMIN' | 'GALLERY' | 'ICONS' | 'SHARED' | 'PRIVACY' | 'TERMS' | 'COOKIES' | 'BLOG' | 'HELP' | 'COMMUNITY' | 'STATUS' | 'FEATURES' | 'PRICING' | 'TEMPLATES_PUBLIC';
+export type AppView = 'LANDING' | 'AUTH' | 'APP' | 'ROADMAP' | 'ADMIN' | 'GALLERY' | 'ICONS' | 'SHARED' | 'PRIVACY' | 'TERMS' | 'COOKIES' | 'BLOG' | 'HELP' | 'COMMUNITY' | 'STATUS' | 'FEATURES' | 'PRICING' | 'TEMPLATES_PUBLIC' | 'FUNNEL_SALES' | 'FUNNEL_BUILDER' | 'VISUAL_FUNNEL' | 'ALTERNATIVE_FUNELYTICS' | 'MAP_FUNNEL' | 'MICRO_SAAS' | 'AFFILIATES_LANDING' | 'BLOG_POST'; // Updated Views Phase 2
 
 export type FeedbackType = 'FEATURE' | 'BUG' | 'IMPROVEMENT' | 'OTHER';
 export type FeedbackStatus = 'PENDING' | 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED' | 'REJECTED';

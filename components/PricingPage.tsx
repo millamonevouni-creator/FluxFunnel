@@ -1,5 +1,7 @@
 import React from 'react';
 import { ArrowLeft, Check } from 'lucide-react';
+import { SEO } from './SEO';
+
 
 interface PricingPageProps {
     onBack: () => void;
@@ -16,7 +18,13 @@ const PricingPage = ({ onBack, plans = [] }: PricingPageProps) => {
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans">
+            <SEO
+                title="Planos e Preços - FluxFunnel"
+                description="Escolha o plano ideal para escalar suas estratégias de funis. Planos gratuitos e premium com recursos exclusivos."
+                keywords="preços fluxfunnel, planos, assinatura, free, pro, premium, funis ilimitados"
+            />
             <header className="bg-white dark:bg-slate-800 shadow-sm sticky top-0 z-10">
+
                 <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <button

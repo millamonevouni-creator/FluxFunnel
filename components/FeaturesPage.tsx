@@ -1,5 +1,7 @@
 import React from 'react';
 import { ArrowLeft, Zap, BarChart, Users, Lock, MousePointer, Share2 } from 'lucide-react';
+import { SEO } from './SEO';
+
 
 interface FeaturesPageProps {
     onBack: () => void;
@@ -8,7 +10,13 @@ interface FeaturesPageProps {
 const FeaturesPage = ({ onBack }: FeaturesPageProps) => {
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans">
+            <SEO
+                title="Funcionalidades - FluxFunnel"
+                description="Conheça todas as funcionalidades do FluxFunnel: Editor Drag & Drop, Simulação de Conversão, Colaboração em Tempo Real e muito mais."
+                keywords="editor de funil, simulador de tráfego, gestão de equipe, templates de funil, segurança de dados, funcionalidades fluxfunnel"
+            />
             <header className="bg-white dark:bg-slate-800 shadow-sm sticky top-0 z-10">
+
                 <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <button

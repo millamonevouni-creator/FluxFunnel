@@ -9,6 +9,8 @@ import {
     BookOpen, Heart, Target, Crown, MessageCircle, Rocket, Layers, Quote
 } from 'lucide-react';
 import { Language, PlanConfig, AppView, SystemConfig } from '../types';
+import { SEO } from './SEO';
+
 
 interface LandingPageProps {
     onLoginClick: () => void;
@@ -20,9 +22,11 @@ interface LandingPageProps {
     t: (key: any) => string;
     plans: PlanConfig[];
     systemConfig: SystemConfig;
+    setCurrentView: (view: AppView) => void;
+    setAuthReturnView: (view: AppView) => void;
 }
 
-const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNavigate, lang, setLang, t, plans, systemConfig }: LandingPageProps) => {
+const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNavigate, lang, setLang, t, plans, systemConfig, setCurrentView, setAuthReturnView }: LandingPageProps) => {
     const [openFaq, setOpenFaq] = useState<number | null>(null);
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
@@ -61,7 +65,7 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                     timestamp: Date.now()
                 };
                 localStorage.setItem('flux_pending_checkout', JSON.stringify(checkoutData));
-                console.log("DEBUG: Stored pending checkout:", checkoutData);
+
 
                 // Open Auth Modal
                 onGetStartedClick();
@@ -86,6 +90,11 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
 
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-indigo-500/30 selection:text-indigo-900 scroll-smooth overflow-x-hidden">
+            <SEO
+                title="FluxFunnel - A Melhor Ferramenta de Funis de Vendas e Estratégia"
+                description="Planeje, desenhe e simule funis de vendas de alta conversão. A ferramenta visual completa para estrategistas digitais."
+                keywords="funil de vendas, estratégias de marketing, lançamentos digitais, perpétuo, plr, dropshipping, mapa mental, fluxograma, simulator de funil"
+            />
 
             {/* Navbar com Glassmorphism */}
             <nav className="fixed w-full z-50 transition-all duration-300 bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-sm">
@@ -95,7 +104,7 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                             <GitGraph className="text-white" size={22} />
                         </div>
                         <span className="font-bold text-2xl tracking-tighter text-slate-900">FluxFunnel</span>
-                    </div>
+                    </div >
 
                     <div className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
                         <a href="#features" className="hover:text-indigo-600 transition-colors">Funcionalidades</a>
@@ -114,13 +123,13 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                             {t('getStarted')}
                         </button>
                     </div>
-                </div>
-            </nav>
+                </div >
+            </nav >
 
             {/* Hero Section Premium */}
-            <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+            < section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden" >
                 {/* Background Elements */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[800px] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-100 via-slate-50 to-slate-50 opacity-70 -z-10"></div>
+                < div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[800px] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-100 via-slate-50 to-slate-50 opacity-70 -z-10" ></div >
                 <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-gradient-to-br from-violet-200/30 to-fuchsia-200/30 blur-3xl -z-10 rounded-full mix-blend-multiply filter opacity-70 animate-blob"></div>
                 <div className="absolute bottom-0 left-0 w-1/3 h-1/3 bg-gradient-to-tr from-cyan-200/30 to-blue-200/30 blur-3xl -z-10 rounded-full mix-blend-multiply filter opacity-70 animate-blob animation-delay-2000"></div>
 
@@ -163,10 +172,10 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                         </div>
                     </div>
                 </div>
-            </section>
+            </section >
 
             {/* Social Proof Logo Strip */}
-            <div className="py-10 border-y border-slate-100 bg-white/50 backdrop-blur-sm">
+            < div className="py-10 border-y border-slate-100 bg-white/50 backdrop-blur-sm" >
                 <div className="max-w-7xl mx-auto px-6 overflow-hidden">
                     <p className="text-center text-sm font-bold text-slate-500 uppercase tracking-widest mb-8">Empresas que escalam com FluxFunnel</p>
                     <div className="flex flex-wrap justify-center gap-12 md:gap-20 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
@@ -175,10 +184,10 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                         ))}
                     </div>
                 </div>
-            </div>
+            </div >
 
             {/* Features Grid */}
-            <section id="features" className="py-24 bg-white relative">
+            < section id="features" className="py-24 bg-white relative" >
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="text-center mb-20 max-w-3xl mx-auto">
                         <h2 className="text-indigo-600 font-bold tracking-wide uppercase text-sm mb-3">Poder Ilimitado</h2>
@@ -205,10 +214,10 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                         ))}
                     </div>
                 </div>
-            </section>
+            </section >
 
             {/* How it Works */}
-            <section id="how-it-works" className="py-24 bg-slate-900 text-white relative overflow-hidden">
+            < section id="how-it-works" className="py-24 bg-slate-900 text-white relative overflow-hidden" >
                 <div className="absolute top-0 left-0 w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10"></div>
                 <div className="max-w-7xl mx-auto px-6 relative z-10">
                     <div className="text-center mb-20">
@@ -236,10 +245,10 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                         ))}
                     </div>
                 </div>
-            </section>
+            </section >
 
             {/* Testimonials */}
-            <section className="py-24 bg-slate-50">
+            < section className="py-24 bg-slate-50" >
                 <div className="max-w-7xl mx-auto px-6">
                     <h2 className="text-4xl font-black text-center text-slate-900 mb-16">O que os Experts dizem</h2>
                     <div className="grid md:grid-cols-3 gap-8">
@@ -265,10 +274,10 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                         ))}
                     </div>
                 </div>
-            </section>
+            </section >
 
             {/* Pricing Section Refined */}
-            <div id="pricing" className="py-24 bg-white">
+            < div id="pricing" className="py-24 bg-white" >
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="text-center mb-16">
                         <h2 className="text-indigo-600 font-bold tracking-wide uppercase text-sm mb-3">Investimento</h2>
@@ -346,10 +355,10 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                         })}
                     </div>
                 </div>
-            </div>
+            </div >
 
             {/* FAQ Section */}
-            <section className="py-24 bg-slate-50">
+            < section className="py-24 bg-slate-50" >
                 <div className="max-w-3xl mx-auto px-6">
                     <h2 className="text-3xl font-black text-center text-slate-900 mb-12">Perguntas Frequentes</h2>
                     <div className="space-y-4">
@@ -369,20 +378,22 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                         ))}
                     </div>
                 </div>
-            </section>
+            </section >
 
-            {/* CTA Final */}
+            {/* Final CTA - Corrected */}
             <section className="py-20 bg-indigo-600 text-white overflow-hidden relative">
-                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
-                <div className="absolute top-0 right-0 w-96 h-96 bg-white opacity-10 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2"></div>
-
+                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&q=80')] opacity-10 mix-blend-overlay bg-cover bg-center"></div>
                 <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
-                    <h2 className="text-4xl md:text-5xl font-black mb-6 tracking-tight">Pronto para transformar seus resultados?</h2>
-                    <p className="text-indigo-100 text-xl mb-10 font-medium">Junte-se a milhares de profissionais que já modernizaram a forma de planejar vendas online.</p>
+                    <h2 className="text-3xl md:text-5xl font-bold mb-6">Pronto para visualizar seu sucesso?</h2>
+                    <p className="text-xl text-indigo-100 mb-10 max-w-2xl mx-auto">
+                        Junte-se a mais de 2.000 profissionais de marketing que já planejam seus funis no FluxFunnel.
+                    </p>
                     <button
-                        onClick={() => handleActionClick()}
-                        disabled={!systemConfig.allowSignups}
-                        className="px-12 py-5 bg-white text-indigo-600 rounded-full font-black text-lg shadow-2xl hover:bg-indigo-50 hover:scale-105 transition-all w-full sm:w-auto"
+                        onClick={() => {
+                            setAuthReturnView('APP');
+                            setCurrentView('AUTH');
+                        }}
+                        className="bg-white text-indigo-600 px-8 py-4 rounded-full font-bold text-lg hover:bg-slate-100 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
                     >
                         Criar Conta Gratuitamente
                     </button>
@@ -414,39 +425,44 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                         <div>
                             <h4 className="font-bold text-white mb-6 uppercase tracking-wider text-xs">Produto</h4>
                             <ul className="space-y-4">
-                                <li><a href="/features" className="hover:text-indigo-400 transition-colors">Funcionalidades</a></li>
-                                <li><a href="/pricing" className="hover:text-indigo-400 transition-colors">Planos e Preços</a></li>
-                                <li><a href="/roadmap" className="hover:text-indigo-400 transition-colors">Roadmap Público</a></li>
-
+                                <li><button onClick={() => setCurrentView('FEATURES')} className="hover:text-indigo-400 transition-colors text-left">Funcionalidades</button></li>
+                                <li><button onClick={() => setCurrentView('PRICING')} className="hover:text-indigo-400 transition-colors text-left">Planos e Preços</button></li>
+                                <li><button onClick={() => setCurrentView('ROADMAP')} className="hover:text-indigo-400 transition-colors text-left">Roadmap Público</button></li>
                             </ul>
                         </div>
 
                         <div>
                             <h4 className="font-bold text-white mb-6 uppercase tracking-wider text-xs">Recursos</h4>
                             <ul className="space-y-4">
-                                <li><a href="/blog" className="hover:text-indigo-400 transition-colors">Blog</a></li>
-                                <li><a href="/help" className="hover:text-indigo-400 transition-colors">Central de Ajuda</a></li>
-                                <li><a href="/community" className="hover:text-indigo-400 transition-colors">Comunidade</a></li>
-                                <li><a href="/status" className="hover:text-indigo-400 transition-colors">Status do Sistema</a></li>
+                                <li><button onClick={() => setCurrentView('BLOG')} className="hover:text-indigo-400 transition-colors text-left">Blog</button></li>
+                                <li><button onClick={() => setCurrentView('HELP')} className="hover:text-indigo-400 transition-colors text-left">Central de Ajuda</button></li>
+                                <li><button onClick={() => setCurrentView('COMMUNITY')} className="hover:text-indigo-400 transition-colors text-left">Comunidade</button></li>
+                                <li><button onClick={() => setCurrentView('STATUS')} className="hover:text-indigo-400 transition-colors text-left">Status do Sistema</button></li>
                             </ul>
                         </div>
 
                         <div>
-                            <h4 className="font-bold text-white mb-6 uppercase tracking-wider text-xs">Legal</h4>
+                            <h4 className="font-bold text-white mb-6 uppercase tracking-wider text-xs">Explore</h4>
                             <ul className="space-y-4">
-                                <li><a href="/terms" className="hover:text-indigo-400 transition-colors">Termos de Uso</a></li>
-                                <li><a href="/privacy" className="hover:text-indigo-400 transition-colors">Política de Privacidade</a></li>
-                                <li><a href="/cookies" className="hover:text-indigo-400 transition-colors">Cookies</a></li>
+                                <li><a href="/funil-de-vendas" onClick={(e) => { e.preventDefault(); setCurrentView('FUNNEL_SALES'); window.history.pushState({}, '', '/funil-de-vendas'); }} className="hover:text-indigo-400 transition-colors">O que é Funil?</a></li>
+                                <li><a href="/construtor-de-funil" onClick={(e) => { e.preventDefault(); setCurrentView('FUNNEL_BUILDER'); window.history.pushState({}, '', '/construtor-de-funil'); }} className="hover:text-indigo-400 transition-colors">Construtor de Funil</a></li>
+                                <li><a href="/funil-visual" onClick={(e) => { e.preventDefault(); setCurrentView('VISUAL_FUNNEL'); window.history.pushState({}, '', '/funil-visual'); }} className="hover:text-indigo-400 transition-colors">Funil Visual</a></li>
+                                <li><a href="/alternativa-funelytics" onClick={(e) => { e.preventDefault(); setCurrentView('ALTERNATIVE_FUNELYTICS'); window.history.pushState({}, '', '/alternativa-funelytics'); }} className="hover:text-indigo-400 transition-colors">Alternativa Funelytics</a></li>
                             </ul>
                         </div>
                     </div>
 
                     <div className="border-t border-slate-900 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
                         <p>© 2025 FluxFunnel Inc. Todos os direitos reservados.</p>
-                        <a href="/status" className="flex items-center gap-2 text-xs font-medium bg-slate-900 px-3 py-1 rounded-full hover:bg-slate-800 transition-colors">
+                        <div className="flex gap-6">
+                            <a href="#" className="hover:text-white transition-colors">Termos</a>
+                            <a href="#" className="hover:text-white transition-colors">Privacidade</a>
+                            <a href="#" className="hover:text-white transition-colors">Cookies</a>
+                        </div>
+                        <button onClick={() => setCurrentView('STATUS')} className="flex items-center gap-2 text-xs font-medium bg-slate-900 px-3 py-1 rounded-full hover:bg-slate-800 transition-colors">
                             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
                             Sistemas Operacionais
-                        </a>
+                        </button>
                     </div>
                 </div>
             </footer>

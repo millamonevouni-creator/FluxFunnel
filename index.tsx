@@ -6,6 +6,8 @@ import './index.css';
 import { SpeedInsights } from "@vercel/speed-insights/react"
 import { Analytics } from "@vercel/analytics/react"
 import { GlobalErrorBoundary } from './components/GlobalErrorBoundary';
+import { HelmetProvider } from 'react-helmet-async';
+
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -16,9 +18,12 @@ const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <GlobalErrorBoundary>
-      <App />
-      <SpeedInsights />
-      <Analytics />
+      <HelmetProvider>
+        <App />
+        <SpeedInsights />
+        <Analytics />
+      </HelmetProvider>
     </GlobalErrorBoundary>
+
   </React.StrictMode>
 );
