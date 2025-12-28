@@ -16,6 +16,16 @@ const ProfileCompletionBanner = React.lazy(() => import('./components/ProfileCom
 import LandingPage from './components/LandingPage';
 import AuthPage from './components/AuthPage';
 const UpgradeModal = React.lazy(() => import('./components/UpgradeModal')); // Lazy loaded to save ~200KB (Stripe)
+const PrivacyPolicy = React.lazy(() => import('./components/PrivacyPolicy'));
+const TermsOfService = React.lazy(() => import('./components/TermsOfService'));
+const CookiesPolicy = React.lazy(() => import('./components/CookiesPolicy'));
+const Blog = React.lazy(() => import('./components/Blog'));
+const HelpCenter = React.lazy(() => import('./components/HelpCenter'));
+const Community = React.lazy(() => import('./components/Community'));
+const SystemStatus = React.lazy(() => import('./components/SystemStatus'));
+const FeaturesPage = React.lazy(() => import('./components/FeaturesPage'));
+const PricingPage = React.lazy(() => import('./components/PricingPage'));
+const PublicTemplatesPage = React.lazy(() => import('./components/PublicTemplatesPage'));
 
 import AnnouncementBanner from './components/AnnouncementBanner';
 import { Project, AppMode, User, Language, AppPage, AppView, FeedbackItem, PlanConfig, TeamMember, Template, SystemConfig } from './types';
@@ -130,6 +140,21 @@ const App = () => {
     const initApp = async () => {
       const params = new URLSearchParams(window.location.search);
       const shareId = params.get('share');
+
+      // Fast Route Check
+      const path = window.location.pathname.toLowerCase().replace(/\/$/, '');
+      if (path === '/privacy') setCurrentView('PRIVACY');
+      else if (path === '/terms') setCurrentView('TERMS');
+      else if (path === '/cookies') setCurrentView('COOKIES');
+      else if (path === '/blog') setCurrentView('BLOG');
+      else if (path === '/help') setCurrentView('HELP');
+      else if (path === '/community') setCurrentView('COMMUNITY');
+      else if (path === '/status') setCurrentView('STATUS');
+      else if (path === '/features') setCurrentView('FEATURES');
+      else if (path === '/pricing') setCurrentView('PRICING');
+      else if (path === '/roadmap') setCurrentView('ROADMAP');
+      // else if (path === '/templates') setCurrentView('TEMPLATES_PUBLIC'); // DISABLED PER USER REQUEST
+
       let loggedUser = null;
 
       try {
@@ -181,7 +206,7 @@ const App = () => {
         setLang(safeGet('lang', 'pt'));
         setSystemConfig(await api.system.get());
 
-        // Check for password recovery hash on initial load
+        // Check for Password Recovery
         if (window.location.hash.includes('type=recovery') || window.location.hash.includes('type=magiclink')) {
           setCurrentView('AUTH');
           setAuthReturnView(null);
@@ -350,9 +375,14 @@ const App = () => {
               setAppPage('PROJECTS');
               // Clear hash to prevent re-triggering (optional, handled by generic clear above)
             } else if (!isInviteFlow && !isRecoveryFlow) {
-              setCurrentView((prev) => (prev === 'AUTH' || prev === 'LANDING' ? 'APP' : prev));
-              if (currentView === 'LANDING' || currentView === 'AUTH') {
-                setAppPage('PROJECTS');
+              const publicRoutes = ['/privacy', '/terms', '/cookies', '/blog', '/help', '/community', '/status', '/features', '/pricing', '/roadmap', '/templates'];
+              const isPublicRoute = publicRoutes.includes(window.location.pathname);
+
+              if (!isPublicRoute) {
+                setCurrentView((prev) => (prev === 'AUTH' || prev === 'LANDING' ? 'APP' : prev));
+                if (currentView === 'LANDING' || currentView === 'AUTH') {
+                  setAppPage('PROJECTS');
+                }
               }
             } else if (isRecoveryFlow) {
               console.log("Recovery flow detected. Staying in AUTH view.");
@@ -473,6 +503,17 @@ const App = () => {
         } catch (e) {
           console.error("Invalid pending checkout data", e);
         }
+      }
+
+      // Check for pending template (from Public Gallery)
+      const pendingTemplateId = localStorage.getItem('flux_pending_template_id');
+      if (pendingTemplateId) {
+        localStorage.removeItem('flux_pending_template_id');
+        console.log("DEBUG: Pending template detected", pendingTemplateId);
+        // Delay slightly to ensure state is ready
+        setTimeout(() => {
+          createProject(pendingTemplateId, undefined, true);
+        }, 500);
       }
 
 
@@ -623,6 +664,100 @@ const App = () => {
       </div>
     );
   }
+
+  if (currentView === 'PRIVACY' || window.location.pathname.replace(/\/$/, '') === '/privacy') {
+    return (
+      <React.Suspense fallback={<LoadingScreen />}>
+        <PrivacyPolicy onBack={() => { window.history.pushState({}, '', '/'); setCurrentView('LANDING'); }} lang={lang} />
+      </React.Suspense>
+    );
+  }
+
+  if (currentView === 'TERMS' || window.location.pathname.replace(/\/$/, '') === '/terms') {
+    return (
+      <React.Suspense fallback={<LoadingScreen />}>
+        <TermsOfService onBack={() => { window.history.pushState({}, '', '/'); setCurrentView('LANDING'); }} lang={lang} />
+      </React.Suspense>
+    );
+  }
+
+  if (currentView === 'COOKIES' || window.location.pathname.replace(/\/$/, '') === '/cookies') {
+    return (
+      <React.Suspense fallback={<LoadingScreen />}>
+        <CookiesPolicy onBack={() => { window.history.pushState({}, '', '/'); setCurrentView('LANDING'); }} />
+      </React.Suspense>
+    );
+  }
+
+  if (currentView === 'BLOG' || window.location.pathname.replace(/\/$/, '') === '/blog') {
+    return (
+      <React.Suspense fallback={<LoadingScreen />}>
+        <Blog onBack={() => { window.history.pushState({}, '', '/'); setCurrentView('LANDING'); }} />
+      </React.Suspense>
+    );
+  }
+
+  if (currentView === 'HELP' || window.location.pathname.replace(/\/$/, '') === '/help') {
+    return (
+      <React.Suspense fallback={<LoadingScreen />}>
+        <HelpCenter onBack={() => { window.history.pushState({}, '', '/'); setCurrentView('LANDING'); }} />
+      </React.Suspense>
+    );
+  }
+
+  if (currentView === 'COMMUNITY' || window.location.pathname.replace(/\/$/, '') === '/community') {
+    return (
+      <React.Suspense fallback={<LoadingScreen />}>
+        <Community onBack={() => { window.history.pushState({}, '', '/'); setCurrentView('LANDING'); }} />
+      </React.Suspense>
+    );
+  }
+
+  if (currentView === 'STATUS' || window.location.pathname.replace(/\/$/, '') === '/status') {
+    return (
+      <React.Suspense fallback={<LoadingScreen />}>
+        <SystemStatus onBack={() => { window.history.pushState({}, '', '/'); setCurrentView('LANDING'); }} />
+      </React.Suspense>
+    );
+  }
+
+  if (currentView === 'FEATURES' || window.location.pathname.replace(/\/$/, '') === '/features') {
+    return (
+      <React.Suspense fallback={<LoadingScreen />}>
+        <FeaturesPage onBack={() => { window.history.pushState({}, '', '/'); setCurrentView('LANDING'); }} />
+      </React.Suspense>
+    );
+  }
+
+  if (currentView === 'PRICING' || window.location.pathname.replace(/\/$/, '') === '/pricing') {
+    return (
+      <React.Suspense fallback={<LoadingScreen />}>
+        <PricingPage onBack={() => { window.history.pushState({}, '', '/'); setCurrentView('LANDING'); }} plans={plans} />
+      </React.Suspense>
+    );
+  }
+
+  /* DISABLED
+  if (currentView === 'TEMPLATES_PUBLIC' || window.location.pathname.replace(/\/$/, '') === '/templates') {
+    return (
+      <React.Suspense fallback={<LoadingScreen />}>
+        <PublicTemplatesPage
+          onBack={() => { window.history.pushState({}, '', '/'); setCurrentView('LANDING'); }}
+          onUseTemplate={(templateId) => {
+            if (user) {
+              createProject(templateId);
+            } else {
+              localStorage.setItem('flux_pending_template_id', templateId);
+              showNotification("Faça login para usar este modelo.", "success");
+              setAuthReturnView('APP');
+              setCurrentView('AUTH');
+            }
+          }}
+        />
+      </React.Suspense>
+    );
+  }
+  */
 
   if (currentView === 'LANDING') return <LandingPage onLoginClick={() => { setAuthReturnView('APP'); setCurrentView('AUTH'); }} onGetStartedClick={() => { setAuthReturnView('APP'); setCurrentView('AUTH'); }} onRoadmapClick={() => setCurrentView('ROADMAP')} onNavigate={setCurrentView} lang={lang} setLang={setLang} t={t} plans={plans} systemConfig={systemConfig} />;
   if (currentView === 'AUTH') {

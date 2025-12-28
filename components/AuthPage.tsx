@@ -182,6 +182,15 @@ const AuthPage = ({ onAuthSuccess, onBack, t, lang, customSubtitle, initialView 
         <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
 
             {/* Brand */}
+            <button
+                onClick={onBack}
+                aria-label="Voltar para o início"
+                className="absolute top-6 left-6 p-2 text-slate-500 hover:text-indigo-600 hover:bg-white/50 rounded-lg transition-all flex items-center gap-2 font-bold group"
+            >
+                <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+                <span>Voltar</span>
+            </button>
+
             <div className="mb-8 flex items-center gap-2 cursor-pointer hover:scale-105 transition-transform" onClick={onBack}>
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
                     <GitGraph className="text-white" size={24} />

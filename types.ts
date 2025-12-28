@@ -192,7 +192,7 @@ export type Language = 'pt' | 'en' | 'es';
 
 export type AppPage = 'PROJECTS' | 'BUILDER' | 'SETTINGS' | 'TEAM' | 'MARKETPLACE' | 'MASTER_ADMIN';
 
-export type AppView = 'LANDING' | 'AUTH' | 'APP' | 'ROADMAP' | 'ADMIN' | 'GALLERY' | 'ICONS' | 'SHARED';
+export type AppView = 'LANDING' | 'AUTH' | 'APP' | 'ROADMAP' | 'ADMIN' | 'GALLERY' | 'ICONS' | 'SHARED' | 'PRIVACY' | 'TERMS' | 'COOKIES' | 'BLOG' | 'HELP' | 'COMMUNITY' | 'STATUS' | 'FEATURES' | 'PRICING' | 'TEMPLATES_PUBLIC';
 
 export type FeedbackType = 'FEATURE' | 'BUG' | 'IMPROVEMENT' | 'OTHER';
 export type FeedbackStatus = 'PENDING' | 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED' | 'REJECTED';

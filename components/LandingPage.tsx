@@ -414,39 +414,39 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                         <div>
                             <h4 className="font-bold text-white mb-6 uppercase tracking-wider text-xs">Produto</h4>
                             <ul className="space-y-4">
-                                <li><a href="#features" className="hover:text-indigo-400 transition-colors">Funcionalidades</a></li>
-                                <li><a href="#pricing" className="hover:text-indigo-400 transition-colors">Planos e Preços</a></li>
-                                <li><button onClick={onRoadmapClick} className="hover:text-indigo-400 transition-colors">Roadmap Público</button></li>
-                                <li><button onClick={() => onNavigate('GALLERY')} className="hover:text-indigo-400 transition-colors">Biblioteca de Modelos</button></li>
+                                <li><a href="/features" className="hover:text-indigo-400 transition-colors">Funcionalidades</a></li>
+                                <li><a href="/pricing" className="hover:text-indigo-400 transition-colors">Planos e Preços</a></li>
+                                <li><a href="/roadmap" className="hover:text-indigo-400 transition-colors">Roadmap Público</a></li>
+
                             </ul>
                         </div>
 
                         <div>
                             <h4 className="font-bold text-white mb-6 uppercase tracking-wider text-xs">Recursos</h4>
                             <ul className="space-y-4">
-                                <li><a href="#" className="hover:text-indigo-400 transition-colors">Blog</a></li>
-                                <li><a href="#" className="hover:text-indigo-400 transition-colors">Central de Ajuda</a></li>
-                                <li><a href="#" className="hover:text-indigo-400 transition-colors">Comunidade</a></li>
-                                <li><a href="#" className="hover:text-indigo-400 transition-colors">Status do Sistema</a></li>
+                                <li><a href="/blog" className="hover:text-indigo-400 transition-colors">Blog</a></li>
+                                <li><a href="/help" className="hover:text-indigo-400 transition-colors">Central de Ajuda</a></li>
+                                <li><a href="/community" className="hover:text-indigo-400 transition-colors">Comunidade</a></li>
+                                <li><a href="/status" className="hover:text-indigo-400 transition-colors">Status do Sistema</a></li>
                             </ul>
                         </div>
 
                         <div>
                             <h4 className="font-bold text-white mb-6 uppercase tracking-wider text-xs">Legal</h4>
                             <ul className="space-y-4">
-                                <li><a href="#" className="hover:text-indigo-400 transition-colors">Termos de Uso</a></li>
-                                <li><a href="#" className="hover:text-indigo-400 transition-colors">Política de Privacidade</a></li>
-                                <li><a href="#" className="hover:text-indigo-400 transition-colors">Cookies</a></li>
+                                <li><a href="/terms" className="hover:text-indigo-400 transition-colors">Termos de Uso</a></li>
+                                <li><a href="/privacy" className="hover:text-indigo-400 transition-colors">Política de Privacidade</a></li>
+                                <li><a href="/cookies" className="hover:text-indigo-400 transition-colors">Cookies</a></li>
                             </ul>
                         </div>
                     </div>
 
                     <div className="border-t border-slate-900 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
                         <p>© 2025 FluxFunnel Inc. Todos os direitos reservados.</p>
-                        <div className="flex items-center gap-2 text-xs font-medium bg-slate-900 px-3 py-1 rounded-full">
+                        <a href="/status" className="flex items-center gap-2 text-xs font-medium bg-slate-900 px-3 py-1 rounded-full hover:bg-slate-800 transition-colors">
                             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
                             Sistemas Operacionais
-                        </div>
+                        </a>
                     </div>
                 </div>
             </footer>
