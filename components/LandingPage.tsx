@@ -452,14 +452,14 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                         </div>
                     </div>
 
-                    <div className="border-t border-slate-900 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-                        <p>© 2025 FluxFunnel Inc. Todos os direitos reservados.</p>
-                        <div className="flex gap-6">
-                            <a href="#" className="hover:text-white transition-colors">Termos</a>
-                            <a href="#" className="hover:text-white transition-colors">Privacidade</a>
-                            <a href="#" className="hover:text-white transition-colors">Cookies</a>
+                    <div className="border-t border-slate-900 pt-8 grid md:grid-cols-3 gap-8 items-center">
+                        <p className="text-center md:text-left">© 2025 FluxFunnel Inc. Todos os direitos reservados.</p>
+                        <div className="flex gap-6 justify-center">
+                            <a href="/terms" onClick={(e) => { e.preventDefault(); setCurrentView('TERMS'); window.history.pushState({}, '', '/terms'); }} className="hover:text-white transition-colors">Termos</a>
+                            <a href="/privacy" onClick={(e) => { e.preventDefault(); setCurrentView('PRIVACY'); window.history.pushState({}, '', '/privacy'); }} className="hover:text-white transition-colors">Privacidade</a>
+                            <a href="/cookies" onClick={(e) => { e.preventDefault(); setCurrentView('COOKIES'); window.history.pushState({}, '', '/cookies'); }} className="hover:text-white transition-colors">Cookies</a>
                         </div>
-
+                        <div className="hidden md:block"></div>
                     </div>
                 </div>
             </footer>
