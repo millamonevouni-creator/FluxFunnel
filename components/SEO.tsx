@@ -7,6 +7,7 @@ interface SEOProps {
     keywords?: string;
     image?: string;
     url?: string;
+    structuredData?: any;
 }
 
 export const SEO: React.FC<SEOProps> = ({
@@ -14,7 +15,8 @@ export const SEO: React.FC<SEOProps> = ({
     description,
     keywords,
     image = 'https://fluxfunnel.fun/og-image.png',
-    url
+    url,
+    structuredData
 }) => {
     const siteTitle = "FluxFunnel";
     // Enforce the preferred domain to avoid "Duplicate without user-selected canonical" issues
@@ -50,6 +52,12 @@ export const SEO: React.FC<SEOProps> = ({
             <meta property="twitter:title" content={finalTitle} />
             <meta property="twitter:description" content={finalDescription} />
             <meta property="twitter:image" content={image} />
+
+            {structuredData && (
+                <script type="application/ld+json">
+                    {JSON.stringify(structuredData)}
+                </script>
+            )}
         </Helmet>
     );
 };

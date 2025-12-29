@@ -63,7 +63,7 @@ const App = () => {
     if (path === '/micro-saas') return 'MICRO_SAAS';
     if (path === '/afiliados') return 'AFFILIATES_LANDING';
     if (path.startsWith('/blog/') && path.length > 6) return 'BLOG_POST';
-    // if (path === '/templates') return 'TEMPLATES_PUBLIC'; 
+    if (path === '/templates') return 'TEMPLATES_PUBLIC';
 
     return 'LANDING';
   };

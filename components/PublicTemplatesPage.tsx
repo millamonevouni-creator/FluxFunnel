@@ -5,6 +5,8 @@ import { Template } from '../types';
 import { LoadingScreen } from './LoadingScreen';
 import { PROJECT_TEMPLATES } from '../constants';
 
+import { SEO } from './SEO';
+
 interface PublicTemplatesPageProps {
     onBack: () => void;
     onUseTemplate: (templateId: string) => void;
@@ -41,6 +43,23 @@ const PublicTemplatesPage = ({ onBack, onUseTemplate }: PublicTemplatesPageProps
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans">
+            <SEO
+                title="Biblioteca de Modelos de Funis de Vendas | FluxFunnel"
+                description="Acesse dezenas de modelos de funis validados gratuitamente. Templates para lançamentos, perpétuo, PLR, webinar e muito mais. Copie e edite agora."
+                keywords="modelos de funil, templates funil de vendas, funil meteórico template, funil perpétuo modelo, funil plr"
+                url="https://fluxfunnel.fun/templates"
+                structuredData={{
+                    "@context": "https://schema.org",
+                    "@type": "ItemList",
+                    "itemListElement": filteredTemplates.map((t, index) => ({
+                        "@type": "ListItem",
+                        "position": index + 1,
+                        "name": getTemplateName(t),
+                        "description": getTemplateDesc(t)
+                    }))
+                }}
+            />
+
             <header className="bg-white dark:bg-slate-800 shadow-sm sticky top-0 z-10">
                 <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-4">

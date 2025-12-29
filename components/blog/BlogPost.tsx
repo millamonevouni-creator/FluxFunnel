@@ -118,12 +118,38 @@ const BlogPost = ({ onBack, postSlug, onNavigate, onGetStarted }: BlogPostProps)
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans pb-20">
+            {/* Progress Bar */}
             <SEO
                 title={`${post.title} | Blog FluxFunnel`}
                 description={post.description}
                 keywords={post.keywords}
                 url={`https://fluxfunnel.fun/blog/${post.slug}`}
                 image={`https://fluxfunnel.fun/og-blog-${post.id}.jpg`} // Placeholder
+                structuredData={{
+                    "@context": "https://schema.org",
+                    "@type": "Article",
+                    "headline": post.title,
+                    "image": [
+                        `https://fluxfunnel.fun/og-blog-${post.id}.jpg`
+                    ],
+                    "datePublished": "2024-12-26T08:00:00+08:00", // Ideally this should be dynamic based on post.date
+                    "dateModified": "2024-12-26T08:00:00+08:00",
+                    "author": [{
+                        "@type": "Organization",
+                        "name": "FluxFunnel",
+                        "url": "https://fluxfunnel.fun"
+                    }],
+                    "publisher": {
+                        "@type": "Organization",
+                        "name": "FluxFunnel",
+                        "logo": {
+                            "@type": "ImageObject",
+                            "url": "https://fluxfunnel.fun/logo.png"
+                        }
+                    },
+                    "description": post.description,
+                    "articleBody": post.content.replace(/[*#_]/g, '') // Simple clean for schema
+                }}
             />
 
             {/* Progress Bar */}

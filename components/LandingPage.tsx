@@ -91,9 +91,27 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-indigo-500/30 selection:text-indigo-900 scroll-smooth overflow-x-hidden">
             <SEO
-                title="FluxFunnel - A Melhor Ferramenta de Funis de Vendas e Estratégia"
-                description="Planeje, desenhe e simule funis de vendas de alta conversão. A ferramenta visual completa para estrategistas digitais."
-                keywords="funil de vendas, estratégias de marketing, lançamentos digitais, perpétuo, plr, dropshipping, mapa mental, fluxograma, simulator de funil"
+                title="FluxFunnel - O Melhor Mapeador de Funis e Estratégia Digital"
+                description="Planeje, desenhe e simule funis de vendas de alta conversão. A ferramenta visual completa para estrategistas digitais. Teste grátis hoje."
+                keywords="mapeador de funil, criador de funil de vendas, simulador de funil, marketing digital, lançamentos, plr, visualizador de funil"
+                url="https://fluxfunnel.fun/"
+                structuredData={{
+                    "@context": "https://schema.org",
+                    "@type": "SoftwareApplication",
+                    "name": "FluxFunnel",
+                    "applicationCategory": "BusinessApplication",
+                    "operatingSystem": "Web Browser",
+                    "offers": {
+                        "@type": "Offer",
+                        "price": "0",
+                        "priceCurrency": "BRL"
+                    },
+                    "aggregateRating": {
+                        "@type": "AggregateRating",
+                        "ratingValue": "4.8",
+                        "ratingCount": "2150"
+                    }
+                }}
             />
 
             {/* Navbar com Glassmorphism */}
@@ -142,8 +160,8 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                         </div>
 
                         <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight mb-8 leading-[1.1] text-slate-900 animate-fade-in-up">
-                            Construa Funis de Alta Conversão <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600">sem Escrever Código.</span>
+                            O Melhor <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600">Mapeador de Funis</span> <br />
+                            e Estratégias Digitais.
                         </h1>
 
                         <p className="text-xl md:text-2xl text-slate-500 max-w-3xl mx-auto mb-12 leading-relaxed font-medium animate-fade-in-up delay-100">

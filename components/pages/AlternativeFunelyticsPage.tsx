@@ -15,6 +15,36 @@ const AlternativeFunelyticsPage: React.FC<Props> = ({ onBack, onGetStarted }) =>
                 description="Procurando uma alternativa ao Funelytics? Conheça o FluxFunnel: mais intuitivo, totalmente em português e com planos acessíveis em Reais. Compare agora."
                 keywords="funelytics alternative, alternativa funelytics, funelytics vs fluxfunnel, concorrente funelytics, funil de vendas brasil, ferramenta de mapa de funil"
                 url="https://fluxfunnel.fun/alternativa-funelytics"
+                structuredData={{
+                    "@context": "https://schema.org",
+                    "@type": "FAQPage",
+                    "mainEntity": [
+                        {
+                            "@type": "Question",
+                            "name": "O FluxFunnel é melhor que o Funelytics?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "Para o mercado brasileiro, sim. O FluxFunnel oferece uma experiência 100% em português, pagamento em Reais (R$) sem IOF, e suporte nativo. Além disso, possui templates focados em estratégias locais como Lançamentos e PLR."
+                            }
+                        },
+                        {
+                            "@type": "Question",
+                            "name": "O Funelytics tem versão gratuita?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "O Funelytics possui uma versão gratuita limitada. O FluxFunnel também oferece um plano gratuito vitalício que permite criar projetos completos com acesso a todos os elementos visuais."
+                            }
+                        },
+                        {
+                            "@type": "Question",
+                            "name": "Quanto custa o FluxFunnel comparado ao Funelytics?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "O FluxFunnel tem planos a partir de R$ 69,90/mês, enquanto as versões pagas do Funelytics são cobradas em Dólar e podem custar centenas de Reais dependendo da cotação. O FluxFunnel é significativamente mais acessível para empresas brasileiras."
+                            }
+                        }
+                    ]
+                }}
             />
 
             <header className="bg-white dark:bg-slate-800 shadow-sm sticky top-0 z-10">
@@ -74,6 +104,53 @@ const AlternativeFunelyticsPage: React.FC<Props> = ({ onBack, onGetStarted }) =>
                         </div>
                     </div>
                 </div>
+
+                {/* SEO Content Block - Injected for Ranking */}
+                <section className="mb-24 prose prose-lg dark:prose-invert max-w-4xl mx-auto">
+                    <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-8 text-center">Por que migrar do Funelytics para o FluxFunnel?</h2>
+
+                    <div className="grid md:grid-cols-2 gap-10 mb-12">
+                        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+                            <h3 className="text-xl font-bold text-indigo-600 dark:text-indigo-400 mb-3">1. Custo-Benefício no Brasil</h3>
+                            <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                                Ferramentas internacionais cobram em Dólar. Com o IOF e a variação cambial, seu custo pode variar todo mês.
+                                O <strong>FluxFunnel</strong> tem preço fixo em Reais, planejado para a realidade do empreendedor brasileiro, sendo muito mais barato que a versão Pro do Funelytics.
+                            </p>
+                        </div>
+                        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+                            <h3 className="text-xl font-bold text-indigo-600 dark:text-indigo-400 mb-3">2. Foco em Lançamentos e PLR</h3>
+                            <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                                Nossos templates não são genéricos. Eles foram criados baseados nas estratégias que mais funcionam no Brasil:
+                                Lançamento Semente, Meteórico, Perpétuo e Funis de PLR validados.
+                            </p>
+                        </div>
+                        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+                            <h3 className="text-xl font-bold text-indigo-600 dark:text-indigo-400 mb-3">3. Suporte nativo em Português</h3>
+                            <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                                Nada pior do que depender de tradutor para resolver um problema técnico urgente. Nosso suporte é 100% brasileiro,
+                                rápido e conhece as ferramentas que você usa (Hotmart, Eduzz, Kiwify, ActiveCampaign).
+                            </p>
+                        </div>
+                        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+                            <h3 className="text-xl font-bold text-indigo-600 dark:text-indigo-400 mb-3">4. Simplicidade Visual</h3>
+                            <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                                Removemos a complexidade desnecessária. O FluxFunnel é "arrastar e soltar" de verdade.
+                                Você não precisa ser um designer ou programador para criar mapas mentais de funis profissionais e bonitos.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-slate-800 dark:to-slate-800/50 p-8 rounded-2xl border border-indigo-100 dark:border-slate-700 relative overflow-hidden">
+                        <div className="relative z-10">
+                            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Conclusão: Qual o melhor construtor de funis?</h3>
+                            <p className="text-slate-700 dark:text-slate-300 text-lg">
+                                Se você é uma empresa global com orçamento em dólar, o Funelytics é uma excelente ferramenta de análise de dados.
+                                Mas se você busca <strong>planejamento visual, estratégia e agilidade</strong> focada no mercado digital brasileiro,
+                                o <strong>FluxFunnel</strong> é a escolha racional e inteligente.
+                            </p>
+                        </div>
+                    </div>
+                </section>
 
                 <div className="text-center">
                     <h2 className="text-3xl font-bold mb-6">Mude para o FluxFunnel hoje</h2>
