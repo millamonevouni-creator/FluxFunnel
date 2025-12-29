@@ -15,6 +15,53 @@ const FunnelSalesPage: React.FC<Props> = ({ onBack, onGetStarted }) => {
                 description="Aprenda tudo sobre Funil de Vendas. Descubra as etapas, evite erros comuns e veja como visualizar sua estratégia na prática com o FluxFunnel."
                 keywords="funil de vendas, o que é funil de vendas, etapas do funil, topo de funil, meio de funil, fundo de funil, jornada do cliente, estratégia de vendas"
                 url="https://www.fluxfunnel.fun/funil-de-vendas"
+                structuredData={[
+                    {
+                        "@context": "https://schema.org",
+                        "@type": "BreadcrumbList",
+                        "itemListElement": [{
+                            "@type": "ListItem",
+                            "position": 1,
+                            "name": "Home",
+                            "item": "https://www.fluxfunnel.fun"
+                        }, {
+                            "@type": "ListItem",
+                            "position": 2,
+                            "name": "Funcionalidades",
+                            "item": "https://www.fluxfunnel.fun/funcionalidades"
+                        }, {
+                            "@type": "ListItem",
+                            "position": 3,
+                            "name": "Funil de Vendas"
+                        }]
+                    },
+                    {
+                        "@context": "https://schema.org",
+                        "@type": "FAQPage",
+                        "mainEntity": [{
+                            "@type": "Question",
+                            "name": "O que é um Funil de Vendas?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "O funil de vendas é o modelo estratégico que mapeia a jornada do seu cliente desde o primeiro contato até o fechamento da compra. Ele é essencial para otimizar conversões e não perder dinheiro com tráfego desqualificado."
+                            }
+                        }, {
+                            "@type": "Question",
+                            "name": "Quais são as etapas do funil?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "As 3 etapas principais são: Topo de Funil (Consciência), onde se atrai visitantes; Meio de Funil (Consideração), onde se nutre leads; e Fundo de Funil (Decisão), onde a venda é realizada."
+                            }
+                        }, {
+                            "@type": "Question",
+                            "name": "Como criar um funil de vendas?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "Para criar um funil eficiente, você deve primeiro definir sua oferta e público-alvo, depois criar conteúdo para atrair (Topo), iscas digitais para capturar contatos (Meio) e ofertas diretas para converter (Fundo). Ferramentas visuais como o FluxFunnel ajudam a planejar essa estrutura."
+                            }
+                        }]
+                    }
+                ]}
             />
 
             <header className="bg-white dark:bg-slate-800 shadow-sm sticky top-0 z-10">

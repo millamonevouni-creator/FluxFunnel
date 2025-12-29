@@ -49,15 +49,15 @@ const App = () => {
   // Synchronous Route Determination (Critical for LCP/Speed)
   const getInitialView = (): AppView => {
     const path = window.location.pathname.toLowerCase().replace(/\/$/, '');
-    if (path === '/privacy') return 'PRIVACY';
-    if (path === '/terms') return 'TERMS';
+    if (path === '/privacy' || path === '/privacidade') return 'PRIVACY';
+    if (path === '/terms' || path === '/termos') return 'TERMS';
     if (path === '/cookies') return 'COOKIES';
     if (path === '/blog') return 'BLOG';
-    if (path === '/help') return 'HELP';
-    if (path === '/community') return 'COMMUNITY';
+    if (path === '/help' || path === '/ajuda') return 'HELP';
+    if (path === '/community' || path === '/comunidade') return 'COMMUNITY';
     if (path === '/status') return 'STATUS';
-    if (path === '/features') return 'FEATURES';
-    if (path === '/pricing') return 'PRICING';
+    if (path === '/features' || path === '/funcionalidades') return 'FEATURES';
+    if (path === '/pricing' || path === '/planos' || path === '/precos') return 'PRICING';
     if (path === '/roadmap') return 'ROADMAP';
     if (path === '/mapa-de-funil') return 'MAP_FUNNEL';
     if (path === '/micro-saas') return 'MICRO_SAAS';
@@ -393,7 +393,7 @@ const App = () => {
               setAppPage('PROJECTS');
               // Clear hash to prevent re-triggering (optional, handled by generic clear above)
             } else if (!isInviteFlow && !isRecoveryFlow) {
-              const publicRoutes = ['/privacy', '/terms', '/cookies', '/blog', '/help', '/community', '/status', '/features', '/pricing', '/roadmap', '/templates', '/mapa-de-funil', '/micro-saas', '/afiliados'];
+              const publicRoutes = ['/privacy', '/privacidade', '/terms', '/termos', '/cookies', '/blog', '/help', '/ajuda', '/community', '/comunidade', '/status', '/features', '/funcionalidades', '/pricing', '/planos', '/precos', '/roadmap', '/templates', '/mapa-de-funil', '/micro-saas', '/afiliados'];
               const isPublicRoute = publicRoutes.includes(window.location.pathname) || window.location.pathname.startsWith('/blog/');
 
               if (!isPublicRoute) {
@@ -676,7 +676,7 @@ const App = () => {
       'COMMUNITY', 'STATUS', 'FEATURES', 'PRICING', 'ROADMAP',
       'FUNNEL_SALES', 'FUNNEL_BUILDER', 'VISUAL_FUNNEL',
       'ALTERNATIVE_FUNELYTICS', 'MAP_FUNNEL', 'MICRO_SAAS',
-      'AFFILIATES_LANDING', 'BLOG', 'BLOG_POST'
+      'AFFILIATES_LANDING', 'BLOG', 'BLOG_POST', 'TEMPLATES_PUBLIC'
     ].includes(currentView) || (typeof currentView === 'string' && currentView.startsWith('BLOG_'));
 
     if (!isPublicView) {

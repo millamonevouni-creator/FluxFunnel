@@ -55,7 +55,7 @@ export const SEO: React.FC<SEOProps> = ({
 
             {structuredData && (
                 <script type="application/ld+json">
-                    {JSON.stringify(structuredData)}
+                    {JSON.stringify(Array.isArray(structuredData) ? { "@context": "https://schema.org", "@graph": structuredData } : structuredData)}
                 </script>
             )}
         </Helmet>

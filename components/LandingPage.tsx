@@ -445,8 +445,8 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                         <div>
                             <h3 className="font-bold text-white mb-6 uppercase tracking-wider text-xs">Produto</h3>
                             <ul className="space-y-4">
-                                <li><button onClick={() => setCurrentView('FEATURES')} className="hover:text-indigo-400 transition-colors text-left">Funcionalidades</button></li>
-                                <li><button onClick={() => setCurrentView('PRICING')} className="hover:text-indigo-400 transition-colors text-left">Planos e Preços</button></li>
+                                <li><button onClick={() => { setCurrentView('FEATURES'); window.history.pushState({}, '', '/funcionalidades'); }} className="hover:text-indigo-400 transition-colors text-left">Funcionalidades</button></li>
+                                <li><button onClick={() => { setCurrentView('PRICING'); window.history.pushState({}, '', '/planos'); }} className="hover:text-indigo-400 transition-colors text-left">Planos e Preços</button></li>
                                 <li><button onClick={() => setCurrentView('ROADMAP')} className="hover:text-indigo-400 transition-colors text-left">Roadmap Público</button></li>
                             </ul>
                         </div>
@@ -455,8 +455,8 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                             <h3 className="font-bold text-white mb-6 uppercase tracking-wider text-xs">Recursos</h3>
                             <ul className="space-y-4">
                                 <li><button onClick={() => setCurrentView('BLOG')} className="hover:text-indigo-400 transition-colors text-left">Blog</button></li>
-                                <li><button onClick={() => setCurrentView('HELP')} className="hover:text-indigo-400 transition-colors text-left">Central de Ajuda</button></li>
-                                <li><button onClick={() => setCurrentView('COMMUNITY')} className="hover:text-indigo-400 transition-colors text-left">Comunidade</button></li>
+                                <li><button onClick={() => { setCurrentView('HELP'); window.history.pushState({}, '', '/ajuda'); }} className="hover:text-indigo-400 transition-colors text-left">Central de Ajuda</button></li>
+                                <li><button onClick={() => { setCurrentView('COMMUNITY'); window.history.pushState({}, '', '/comunidade'); }} className="hover:text-indigo-400 transition-colors text-left">Comunidade</button></li>
 
                             </ul>
                         </div>
@@ -475,8 +475,8 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                     <div className="border-t border-slate-900 pt-8 grid md:grid-cols-3 gap-8 items-center">
                         <p className="text-center md:text-left">© 2025 FluxFunnel Inc. Todos os direitos reservados.</p>
                         <div className="flex gap-6 justify-center">
-                            <a href="/terms" onClick={(e) => { e.preventDefault(); setCurrentView('TERMS'); window.history.pushState({}, '', '/terms'); }} className="hover:text-white transition-colors">Termos</a>
-                            <a href="/privacy" onClick={(e) => { e.preventDefault(); setCurrentView('PRIVACY'); window.history.pushState({}, '', '/privacy'); }} className="hover:text-white transition-colors">Privacidade</a>
+                            <a href="/termos" onClick={(e) => { e.preventDefault(); setCurrentView('TERMS'); window.history.pushState({}, '', '/termos'); }} className="hover:text-white transition-colors">Termos</a>
+                            <a href="/privacidade" onClick={(e) => { e.preventDefault(); setCurrentView('PRIVACY'); window.history.pushState({}, '', '/privacidade'); }} className="hover:text-white transition-colors">Privacidade</a>
                             <a href="/cookies" onClick={(e) => { e.preventDefault(); setCurrentView('COOKIES'); window.history.pushState({}, '', '/cookies'); }} className="hover:text-white transition-colors">Cookies</a>
                         </div>
                         <div className="hidden md:block"></div>

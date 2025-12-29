@@ -116,6 +116,21 @@ const BlogPost = ({ onBack, postSlug, onNavigate, onGetStarted }: BlogPostProps)
         });
     };
 
+    const parseDate = (dateStr: string) => {
+        const months: { [key: string]: string } = {
+            'Jan': '01', 'Fev': '02', 'Mar': '03', 'Abr': '04', 'Mai': '05', 'Jun': '06',
+            'Jul': '07', 'Ago': '08', 'Set': '09', 'Out': '10', 'Nov': '11', 'Dez': '12'
+        };
+        const parts = dateStr.split(' ');
+        if (parts.length !== 3) return new Date().toISOString();
+        const day = parts[0].padStart(2, '0');
+        const month = months[parts[1]] || '01';
+        const year = parts[2];
+        return `${year}-${month}-${day}T08:00:00+00:00`;
+    };
+
+    const formattedDate = post ? parseDate(post.date) : new Date().toISOString();
+
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans pb-20">
             {/* Progress Bar */}
@@ -125,31 +140,52 @@ const BlogPost = ({ onBack, postSlug, onNavigate, onGetStarted }: BlogPostProps)
                 keywords={post.keywords}
                 url={`https://www.fluxfunnel.fun/blog/${post.slug}`}
                 image={`https://www.fluxfunnel.fun/og-blog-${post.id}.jpg`} // Placeholder
-                structuredData={{
-                    "@context": "https://schema.org",
-                    "@type": "Article",
-                    "headline": post.title,
-                    "image": [
-                        `https://fluxfunnel.fun/og-blog-${post.id}.jpg`
-                    ],
-                    "datePublished": "2024-12-26T08:00:00+08:00", // Ideally this should be dynamic based on post.date
-                    "dateModified": "2024-12-26T08:00:00+08:00",
-                    "author": [{
-                        "@type": "Organization",
-                        "name": "FluxFunnel",
-                        "url": "https://fluxfunnel.fun"
-                    }],
-                    "publisher": {
-                        "@type": "Organization",
-                        "name": "FluxFunnel",
-                        "logo": {
-                            "@type": "ImageObject",
-                            "url": "https://fluxfunnel.fun/logo.png"
-                        }
+                structuredData={[
+                    {
+                        "@context": "https://schema.org",
+                        "@type": "BreadcrumbList",
+                        "itemListElement": [{
+                            "@type": "ListItem",
+                            "position": 1,
+                            "name": "Home",
+                            "item": "https://www.fluxfunnel.fun"
+                        }, {
+                            "@type": "ListItem",
+                            "position": 2,
+                            "name": "Blog",
+                            "item": "https://www.fluxfunnel.fun/blog"
+                        }, {
+                            "@type": "ListItem",
+                            "position": 3,
+                            "name": post.title
+                        }]
                     },
-                    "description": post.description,
-                    "articleBody": post.content.replace(/[*#_]/g, '') // Simple clean for schema
-                }}
+                    {
+                        "@context": "https://schema.org",
+                        "@type": "Article",
+                        "headline": post.title,
+                        "image": [
+                            `https://fluxfunnel.fun/og-blog-${post.id}.jpg`
+                        ],
+                        "datePublished": formattedDate,
+                        "dateModified": formattedDate,
+                        "author": [{
+                            "@type": "Organization",
+                            "name": "FluxFunnel",
+                            "url": "https://fluxfunnel.fun"
+                        }],
+                        "publisher": {
+                            "@type": "Organization",
+                            "name": "FluxFunnel",
+                            "logo": {
+                                "@type": "ImageObject",
+                                "url": "https://fluxfunnel.fun/logo.png"
+                            }
+                        },
+                        "description": post.description,
+                        "articleBody": post.content.replace(/[*#_]/g, '')
+                    }
+                ]}
             />
 
             {/* Progress Bar */}

@@ -12,12 +12,12 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://www.fluxfunnel.fun/features</loc>
+    <loc>https://www.fluxfunnel.fun/funcionalidades</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.fluxfunnel.fun/pricing</loc>
+    <loc>https://www.fluxfunnel.fun/planos</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -52,12 +52,12 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.fluxfunnel.fun/community</loc>
+    <loc>https://www.fluxfunnel.fun/comunidade</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.fluxfunnel.fun/help</loc>
+    <loc>https://www.fluxfunnel.fun/ajuda</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
