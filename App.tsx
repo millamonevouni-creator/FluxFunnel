@@ -234,6 +234,18 @@ const App = () => {
         // Check for Stripe Success Redirect
         const sessionId = params.get('session_id');
         if (sessionId && loggedUser) {
+          // Google Ads Conversion Tracking (Purchase)
+          // Value 180 (LTV Conservative Pro 6mo) | Checks localStorage to avoid duplicates
+          const conversionKey = `google_conversion_${sessionId}`;
+          if (typeof window !== 'undefined' && (window as any).gtag && !localStorage.getItem(conversionKey)) {
+            (window as any).gtag('event', 'conversion', {
+              'send_to': 'AW-17834234530/L0HYCNHWotkbEKKlg7hC',
+              'value': 180,
+              'currency': 'BRL',
+              'transaction_id': sessionId
+            });
+            localStorage.setItem(conversionKey, 'true');
+          }
           // Clean URL
           window.history.replaceState({}, document.title, window.location.pathname);
 
