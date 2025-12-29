@@ -82,6 +82,7 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
     };
 
     const faqs = [
+        { q: "O que é o FluxFunnel?", a: "O FluxFunnel é uma plataforma profissional de mapeamento visual e planejamento estratégico. Diferente de um simples desenho, ele permite simular funis de vendas, prever ROI e organizar toda a sua operação de marketing em um só lugar." },
         { q: "Posso cancelar a qualquer momento?", a: "Sim, absolutamente. Não há fidelidade ou contratos de longo prazo no plano mensal. Você pode cancelar sua assinatura facilmente nas configurações da conta." },
         { q: "Preciso instalar algo no meu computador?", a: "Não! O FluxFunnel é 100% baseado na nuvem. Você pode acessar seus funis de qualquer dispositivo, em qualquer lugar." },
         { q: "O plano gratuito é realmente gratuito?", a: "Sim, o plano gratuito é vitalício e permite criar 1 projeto completo. É perfeito para você testar e validar o poder da nossa plataforma." },
