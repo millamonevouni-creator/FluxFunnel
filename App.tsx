@@ -64,6 +64,7 @@ const App = () => {
     if (path === '/afiliados') return 'AFFILIATES_LANDING';
     if (path.startsWith('/blog/') && path.length > 6) return 'BLOG_POST';
     if (path === '/templates') return 'TEMPLATES_PUBLIC';
+    if (path === '/alternativa-funelytics' || path === '/funelytics-vs-fluxfunnel') return 'ALTERNATIVE_FUNELYTICS';
 
     return 'LANDING';
   };

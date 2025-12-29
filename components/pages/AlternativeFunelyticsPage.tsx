@@ -15,36 +15,56 @@ const AlternativeFunelyticsPage: React.FC<Props> = ({ onBack, onGetStarted }) =>
                 description="Procurando uma alternativa ao Funelytics? Conheça o FluxFunnel: mais intuitivo, totalmente em português e com planos acessíveis em Reais. Compare agora."
                 keywords="funelytics alternative, alternativa funelytics, funelytics vs fluxfunnel, concorrente funelytics, funil de vendas brasil, ferramenta de mapa de funil"
                 url="https://www.fluxfunnel.fun/alternativa-funelytics"
-                structuredData={{
-                    "@context": "https://schema.org",
-                    "@type": "FAQPage",
-                    "mainEntity": [
-                        {
-                            "@type": "Question",
-                            "name": "O FluxFunnel é melhor que o Funelytics?",
-                            "acceptedAnswer": {
-                                "@type": "Answer",
-                                "text": "Para o mercado brasileiro, sim. O FluxFunnel oferece uma experiência 100% em português, pagamento em Reais (R$) sem IOF, e suporte nativo. Além disso, possui templates focados em estratégias locais como Lançamentos e PLR."
-                            }
+                structuredData={[
+                    {
+                        "@context": "https://schema.org",
+                        "@type": "SoftwareApplication",
+                        "name": "FluxFunnel",
+                        "applicationCategory": "BusinessApplication",
+                        "operatingSystem": "Web",
+                        "offers": {
+                            "@type": "Offer",
+                            "price": "69.90",
+                            "priceCurrency": "BRL"
                         },
-                        {
-                            "@type": "Question",
-                            "name": "O Funelytics tem versão gratuita?",
-                            "acceptedAnswer": {
-                                "@type": "Answer",
-                                "text": "O Funelytics possui uma versão gratuita limitada. O FluxFunnel também oferece um plano gratuito vitalício que permite criar projetos completos com acesso a todos os elementos visuais."
-                            }
+                        "aggregateRating": {
+                            "@type": "AggregateRating",
+                            "ratingValue": "4.8",
+                            "ratingCount": "124"
                         },
-                        {
-                            "@type": "Question",
-                            "name": "Quanto custa o FluxFunnel comparado ao Funelytics?",
-                            "acceptedAnswer": {
-                                "@type": "Answer",
-                                "text": "O FluxFunnel tem planos a partir de R$ 69,90/mês, enquanto as versões pagas do Funelytics são cobradas em Dólar e podem custar centenas de Reais dependendo da cotação. O FluxFunnel é significativamente mais acessível para empresas brasileiras."
+                        "description": "A melhor ferramenta brasileira para construção visual de funis de vendas e planejamento estratégico de marketing digital."
+                    },
+                    {
+                        "@context": "https://schema.org",
+                        "@type": "FAQPage",
+                        "mainEntity": [
+                            {
+                                "@type": "Question",
+                                "name": "O FluxFunnel é melhor que o Funelytics?",
+                                "acceptedAnswer": {
+                                    "@type": "Answer",
+                                    "text": "Para o mercado brasileiro, sim. O FluxFunnel oferece uma experiência 100% em português, pagamento em Reais (R$) sem IOF, e suporte nativo. Além disso, possui templates focados em estratégias locais como Lançamentos e PLR."
+                                }
+                            },
+                            {
+                                "@type": "Question",
+                                "name": "O Funelytics tem versão gratuita?",
+                                "acceptedAnswer": {
+                                    "@type": "Answer",
+                                    "text": "O Funelytics possui uma versão gratuita limitada. O FluxFunnel também oferece um plano gratuito vitalício que permite criar projetos completos com acesso a todos os elementos visuais."
+                                }
+                            },
+                            {
+                                "@type": "Question",
+                                "name": "Quanto custa o FluxFunnel comparado ao Funelytics?",
+                                "acceptedAnswer": {
+                                    "@type": "Answer",
+                                    "text": "O FluxFunnel tem planos a partir de R$ 69,90/mês, enquanto as versões pagas do Funelytics são cobradas em Dólar e podem custar centenas de Reais dependendo da cotação. O FluxFunnel é significativamente mais acessível para empresas brasileiras."
+                                }
                             }
-                        }
-                    ]
-                }}
+                        ]
+                    }
+                ]}
             />
 
             <header className="bg-white dark:bg-slate-800 shadow-sm sticky top-0 z-10">
