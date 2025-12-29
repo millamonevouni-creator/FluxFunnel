@@ -14,7 +14,7 @@ const AlternativeFunelyticsPage: React.FC<Props> = ({ onBack, onGetStarted }) =>
                 title="Melhor Alternativa ao Funelytics em Português | FluxFunnel vs Funelytics"
                 description="Procurando uma alternativa ao Funelytics? Conheça o FluxFunnel: mais intuitivo, totalmente em português e com planos acessíveis em Reais. Compare agora."
                 keywords="funelytics alternative, alternativa funelytics, funelytics vs fluxfunnel, concorrente funelytics, funil de vendas brasil, ferramenta de mapa de funil"
-                url="https://fluxfunnel.fun/alternativa-funelytics"
+                url="https://www.fluxfunnel.fun/alternativa-funelytics"
                 structuredData={{
                     "@context": "https://schema.org",
                     "@type": "FAQPage",

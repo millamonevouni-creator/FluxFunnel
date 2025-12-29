@@ -14,7 +14,7 @@ const FunnelSalesPage: React.FC<Props> = ({ onBack, onGetStarted }) => {
                 title="Funil de Vendas: O que é, Como Funciona e Como Fazer | FluxFunnel"
                 description="Aprenda tudo sobre Funil de Vendas. Descubra as etapas, evite erros comuns e veja como visualizar sua estratégia na prática com o FluxFunnel."
                 keywords="funil de vendas, o que é funil de vendas, etapas do funil, topo de funil, meio de funil, fundo de funil, jornada do cliente, estratégia de vendas"
-                url="https://fluxfunnel.fun/funil-de-vendas"
+                url="https://www.fluxfunnel.fun/funil-de-vendas"
             />
 
             <header className="bg-white dark:bg-slate-800 shadow-sm sticky top-0 z-10">

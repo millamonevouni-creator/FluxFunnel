@@ -14,7 +14,7 @@ const MicroSaasPage = ({ onBack, onGetStarted }: MicroSaasPageProps) => {
                 title="Funil de Vendas para MicroSaaS: Planeje antes de Escalar | FluxFunnel"
                 description="Founders de MicroSaaS perdem dinheiro com churn e CAC alto por falta de planejamento. O FluxFunnel te ajuda a visualizar e otimizar suas métricas."
                 keywords="micro saas, funil saas, métricas saas, cac, ltv, churn, planejamento saas"
-                url="https://fluxfunnel.fun/micro-saas"
+                url="https://www.fluxfunnel.fun/micro-saas"
             />
 
             <header className="bg-white dark:bg-slate-800 shadow-sm sticky top-0 z-10">

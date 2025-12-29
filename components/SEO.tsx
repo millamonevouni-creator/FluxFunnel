@@ -14,13 +14,13 @@ export const SEO: React.FC<SEOProps> = ({
     title,
     description,
     keywords,
-    image = 'https://fluxfunnel.fun/og-image.png',
+    image = 'https://www.fluxfunnel.fun/og-image.png',
     url,
     structuredData
 }) => {
     const siteTitle = "FluxFunnel";
     // Enforce the preferred domain to avoid "Duplicate without user-selected canonical" issues
-    const BASE_URL = 'https://fluxfunnel.fun';
+    const BASE_URL = 'https://www.fluxfunnel.fun';
     const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
 
     // Use provided URL or construct canonical URL (stripping query params and ensuring correct domain)

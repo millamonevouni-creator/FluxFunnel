@@ -14,7 +14,7 @@ const MapFunnelPage = ({ onBack, onGetStarted }: MapFunnelPageProps) => {
                 title="Mapa de Funil de Vendas: Organize sua Estratégia Visualmente | FluxFunnel"
                 description="O mapa de funil de vendas é a ferramenta essencial para quem quer vender na internet. Entenda o que é, como desenhar e por que o visual converte mais."
                 keywords="mapa de funil, mapeamento de vendas, funil visual, estratégia de vendas, fluxfunnel"
-                url="https://fluxfunnel.fun/mapa-de-funil"
+                url="https://www.fluxfunnel.fun/mapa-de-funil"
             />
 
             <header className="bg-white dark:bg-slate-800 shadow-sm sticky top-0 z-10">

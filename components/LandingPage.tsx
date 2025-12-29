@@ -94,7 +94,7 @@ const LandingPage = ({ onLoginClick, onGetStartedClick, onRoadmapClick, onNaviga
                 title="FluxFunnel - O Melhor Mapeador de Funis e Estratégia Digital"
                 description="Planeje, desenhe e simule funis de vendas de alta conversão. A ferramenta visual completa para estrategistas digitais. Teste grátis hoje."
                 keywords="mapeador de funil, criador de funil de vendas, simulador de funil, marketing digital, lançamentos, plr, visualizador de funil"
-                url="https://fluxfunnel.fun/"
+                url="https://www.fluxfunnel.fun/"
                 structuredData={{
                     "@context": "https://schema.org",
                     "@type": "SoftwareApplication",

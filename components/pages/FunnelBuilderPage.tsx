@@ -14,7 +14,7 @@ const FunnelBuilderPage: React.FC<Props> = ({ onBack, onGetStarted }) => {
                 title="Construtor de Funil de Vendas Visual e Intuitivo | FluxFunnel"
                 description="O melhor construtor de funil de vendas para planejar suas estratégias. Interface visual drag & drop, simulação de conversão e relatórios completos."
                 keywords="construtor de funil, criador de funil, ferramenta de funil, software de funil de vendas, desenhar funil online, funil marketing digital, flux funnel"
-                url="https://fluxfunnel.fun/construtor-de-funil"
+                url="https://www.fluxfunnel.fun/construtor-de-funil"
             />
 
             <header className="bg-white dark:bg-slate-800 shadow-sm sticky top-0 z-10">

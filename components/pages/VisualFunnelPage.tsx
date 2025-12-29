@@ -14,7 +14,7 @@ const VisualFunnelPage: React.FC<Props> = ({ onBack, onGetStarted }) => {
                 title="Funil de Vendas Visual: Entenda o Fluxo Antes de Escalar | FluxFunnel"
                 description="Pare de perder dinheiro com estratégias cegas. O Funil de Vendas Visual te dá clareza total sobre jornadas, gargalos e oportunidades de otimização."
                 keywords="funil visual, mapeamento de funil, fluxograma de vendas, jornada visual do cliente, blueprinte de funil, planejamento visual"
-                url="https://fluxfunnel.fun/funil-visual"
+                url="https://www.fluxfunnel.fun/funil-visual"
             />
 
             <header className="bg-white dark:bg-slate-800 shadow-sm sticky top-0 z-10">

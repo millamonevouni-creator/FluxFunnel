@@ -47,7 +47,7 @@ const PublicTemplatesPage = ({ onBack, onUseTemplate }: PublicTemplatesPageProps
                 title="Biblioteca de Modelos de Funis de Vendas | FluxFunnel"
                 description="Acesse dezenas de modelos de funis validados gratuitamente. Templates para lançamentos, perpétuo, PLR, webinar e muito mais. Copie e edite agora."
                 keywords="modelos de funil, templates funil de vendas, funil meteórico template, funil perpétuo modelo, funil plr"
-                url="https://fluxfunnel.fun/templates"
+                url="https://www.fluxfunnel.fun/templates"
                 structuredData={{
                     "@context": "https://schema.org",
                     "@type": "ItemList",

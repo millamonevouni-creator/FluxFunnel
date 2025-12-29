@@ -123,8 +123,8 @@ const BlogPost = ({ onBack, postSlug, onNavigate, onGetStarted }: BlogPostProps)
                 title={`${post.title} | Blog FluxFunnel`}
                 description={post.description}
                 keywords={post.keywords}
-                url={`https://fluxfunnel.fun/blog/${post.slug}`}
-                image={`https://fluxfunnel.fun/og-blog-${post.id}.jpg`} // Placeholder
+                url={`https://www.fluxfunnel.fun/blog/${post.slug}`}
+                image={`https://www.fluxfunnel.fun/og-blog-${post.id}.jpg`} // Placeholder
                 structuredData={{
                     "@context": "https://schema.org",
                     "@type": "Article",

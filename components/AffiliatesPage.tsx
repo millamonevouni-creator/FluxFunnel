@@ -13,7 +13,7 @@ const AffiliatesPage = ({ onBack }: AffiliatesPageProps) => {
                 title="Programa de Afiliados FluxFunnel: Ganhe Recorrência"
                 description="Torne-se parceiro do FluxFunnel e ganhe comissões recorrentes indicando a melhor ferramenta de funis do Brasil."
                 keywords="afiliados fluxfunnel, programa de parceria, comissão recorrente, renda extra saas"
-                url="https://fluxfunnel.fun/afiliados"
+                url="https://www.fluxfunnel.fun/afiliados"
             />
 
             <header className="bg-white dark:bg-slate-800 shadow-sm sticky top-0 z-10">
